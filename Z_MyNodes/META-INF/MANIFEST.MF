@@ -1,0 +1,19 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: MyDBWriter-Node extension for KNIME Workbench
+Bundle-SymbolicName: de.bund.bfr.knime.other; singleton:=true
+Bundle-Version: 1.0.0
+Bundle-ClassPath: mydbwriter.jar,
+ lib/jgoodies-common-1.2.1.jar,
+ lib/jgoodies-forms-1.4.2.jar,
+ lib/hsqldb.jar
+Bundle-Activator: de.bund.bfr.knime.other.MyDBWriterNodePlugin
+Bundle-Vendor: Armin A. Weiser
+Require-Bundle: org.eclipse.core.runtime,
+ org.knime.workbench.core,
+ org.knime.workbench.repository,
+ org.knime.base
+Bundle-ActivationPolicy: lazy
+Export-Package: de.bund.bfr.knime.other
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+

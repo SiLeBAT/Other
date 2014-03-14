@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: FoodSensitivitySpecificity-Node extension for KNIME Workbench
+Bundle-SymbolicName: de.bund.bfr.knime.fbd; singleton:=true
+Bundle-Version: 1.0.0
+Bundle-ClassPath: foodsensitivityspecificity.jar
+Bundle-Activator: de.bund.bfr.knime.fbd.Activator
+Bundle-Vendor: 
+Require-Bundle: org.eclipse.core.runtime,
+ org.knime.workbench.core,
+ org.knime.workbench.repository,
+ org.knime.base,
+ org.apache.commons.math3
+Bundle-ActivationPolicy: lazy
+Export-Package: de.bund.bfr.knime.fbd
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+
