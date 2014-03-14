@@ -116,10 +116,10 @@ public class MyKrisenInterfacesNodeModel extends NodeModel {
     	
     	System.err.println("Starting Plausibility Checks...");
 		// Date_In <= Date_Out???
-		String sql = "SELECT \"ChargenVerbindungen\".\"ID\" AS \"ID\", \"L1\".\"ID\" AS \"ID_In\", \"L2\".\"ID\" AS \"ID_Out\", \"L1\".\"Lieferdatum\" AS \"Date_In\",\"L2\".\"Lieferdatum\" AS \"Date_Out\" FROM \"Lieferungen\" AS \"L1\" LEFT JOIN \"ChargenVerbindungen\" ON \"L1\".\"ID\"=\"ChargenVerbindungen\".\"Zutat\" LEFT JOIN \"Lieferungen\" AS \"L2\" ON \"L2\".\"Charge\"=\"ChargenVerbindungen\".\"Produkt\" WHERE \"ChargenVerbindungen\".\"ID\" IS NOT NULL AND \"L2\".\"Lieferdatum\" < \"L1\".\"Lieferdatum\"";
+		String sql = "SELECT \"ChargenVerbindungen\".\"ID\" AS \"ID\", \"L1\".\"ID\" AS \"ID_In\", \"L2\".\"ID\" AS \"ID_Out\", \"L1\".\"dd_day\" AS \"Day_In\",\"L2\".\"dd_day\" AS \"Day_Out\", \"L1\".\"dd_month\" AS \"Month_In\",\"L2\".\"dd_month\" AS \"Month_Out\", \"L1\".\"dd_year\" AS \"Year_In\",\"L2\".\"dd_year\" AS \"Year_Out\" FROM \"Lieferungen\" AS \"L1\" LEFT JOIN \"ChargenVerbindungen\" ON \"L1\".\"ID\"=\"ChargenVerbindungen\".\"Zutat\" LEFT JOIN \"Lieferungen\" AS \"L2\" ON \"L2\".\"Charge\"=\"ChargenVerbindungen\".\"Produkt\" WHERE \"ChargenVerbindungen\".\"ID\" IS NOT NULL AND (\"L2\".\"dd_year\" < \"L1\".\"dd_year\" OR \"L2\".\"dd_year\" = \"L1\".\"dd_year\" AND \"L2\".\"dd_month\" < \"L1\".\"dd_month\" OR \"L2\".\"dd_year\" = \"L1\".\"dd_year\" AND \"L2\".\"dd_month\" = \"L1\".\"dd_month\" AND \"L2\".\"dd_day\" < \"L1\".\"dd_day\")";
     	ResultSet rsp = db.pushQuery(sql);
     	while (rsp.next()) {
-    		System.err.println("Dates correct?? In: " + rsp.getInt("ID_In") + " (" + rsp.getDate("Date_In") + ") vs. Out: " + rsp.getInt("ID_Out") + " (" + rsp.getDate("Date_Out") + ")");
+    		System.err.println("Dates correct?? In: " + rsp.getInt("ID_In") + " (" + rsp.getInt("Day_In") + "." + rsp.getInt("Month_In") + "." + rsp.getInt("Year_In") + ") vs. Out: " + rsp.getInt("ID_Out") + " (" + rsp.getInt("Day_Out") + "." + rsp.getInt("Month_Out") + "." + rsp.getInt("Year_Out") + ")");
     	}
 		// Sum(In) <=> Sum(Out)???
     	sql = "select GROUP_CONCAT(\"id1\") AS \"ids_in\",sum(\"Amount_In\") AS \"Amount_In\",min(\"Amount_Out\") AS \"Amount_Out\",min(\"id2\") as \"ids_out\" from (SELECT min(\"L1\".\"ID\") AS \"id1\",GROUP_CONCAT(\"L2\".\"ID\") AS \"id2\",min(\"L1\".\"Unitmenge\") AS \"Amount_In\",sum(\"L2\".\"Unitmenge\") AS \"Amount_Out\" FROM \"Lieferungen\" AS \"L1\" LEFT JOIN \"ChargenVerbindungen\" ON \"L1\".\"ID\"=\"ChargenVerbindungen\".\"Zutat\" LEFT JOIN \"Lieferungen\" AS \"L2\" ON \"L2\".\"Charge\"=\"ChargenVerbindungen\".\"Produkt\" WHERE \"ChargenVerbindungen\".\"ID\" IS NOT NULL GROUP BY \"L1\".\"ID\") GROUP BY \"id2\"";
@@ -203,7 +203,7 @@ public class MyKrisenInterfacesNodeModel extends NodeModel {
         		//if (rs.getObject("Land") != null && rs.getString("Land").equals("Serbia")) toBeMerged.add(stationID);
         		//id2Code.put(stationID, company);
         	    RowKey key = RowKey.createRowKey(rowNumber);
-        	    DataCell[] cells = new DataCell[20];
+        	    DataCell[] cells = new DataCell[17];
         	    cells[0] = new IntCell(stationID);
         	    cells[1] = new StringCell(company);
         	    //cells[2] = new StringCell("square"); // circle, square, triangle
@@ -240,21 +240,7 @@ public class MyKrisenInterfacesNodeModel extends NodeModel {
             		cells[14] = DataType.getMissingCell();
             		cells[15] = DataType.getMissingCell();
             	}
-             	String sComment = rs.getObject("Station.Kommentar") == null ? null : rs.getString("Station.Kommentar");
-        		cells[16] = DataType.getMissingCell();
-        		cells[17] = DataType.getMissingCell();
-        		cells[18] = DataType.getMissingCell();
-        		cells[19] = DataType.getMissingCell();
-        	    if (sComment != null) {
-        	    	String[] sp = sComment.trim().split(";");
-        	    	for (String spi : sp) {
-        	    		String[] spp = spi.trim().split(":");
-        	    		if (spp[0].equals("EndChain")) cells[16] = new StringCell(spp[1]);
-        	    		else if (spp[0].equals("Expl")) cells[17] = new StringCell(spp[1]);
-        	    		else if (spp[0].equals("FurtherTB")) cells[18] = new StringCell(spp[1]);
-        	    		else if (spp[0].equals("Micro")) cells[19] = new StringCell(spp[1]);
-        	    	}
-        	    }
+        	    cells[16] = (rs.getObject("Serial") == null) ? DataType.getMissingCell() : new StringCell(rs.getString("Serial"));
 
         	    
         	    DataRow outputRow = new DefaultRow(key, cells);
@@ -294,7 +280,7 @@ public class MyKrisenInterfacesNodeModel extends NodeModel {
             		int from = id1;//id2Code.get(id1);
             		int to = id2;//id2Code.get(id2);
             	    RowKey key = RowKey.createRowKey(rowNumber);
-            	    DataCell[] cells = new DataCell[17];
+            	    DataCell[] cells = new DataCell[22];
             	    cells[0] = new IntCell(from);
             	    cells[1] = new IntCell(to);
             	    //cells[2] = new StringCell("black"); // black
@@ -303,26 +289,28 @@ public class MyKrisenInterfacesNodeModel extends NodeModel {
             	    cells[4] = (rs.getObject("Prozessierung") == null) ? DataType.getMissingCell() : new StringCell(rs.getString("Prozessierung"));
             	    cells[5] = (rs.getObject("IntendedUse") == null) ? DataType.getMissingCell() : new StringCell(rs.getString("IntendedUse"));
             	    cells[6] = (doAnonymize || rs.getObject("ChargenNr") == null) ? DataType.getMissingCell() : new StringCell(rs.getString("ChargenNr"));
-            	    cells[7] = (rs.getObject("MHD") == null) ? DataType.getMissingCell() : new StringCell(rs.getString("MHD"));
-            	    cells[8] = (rs.getObject("Herstellungsdatum") == null) ? DataType.getMissingCell() : new StringCell(rs.getString("Herstellungsdatum"));
-            	    cells[9] = (rs.getObject("Lieferungen.Lieferdatum") == null) ? DataType.getMissingCell() : new StringCell(rs.getString("Lieferungen.Lieferdatum"));
-            	    Double menge = calcMenge(rs.getObject("#Units1"), rs.getObject("BezUnits1"), rs.getObject("#Units2"),
-            	    		rs.getObject("BezUnits2"), rs.getObject("Unitmenge"), rs.getObject("UnitEinheit"));
+            	    String mhd = sdfFormat(rs.getString("MHD_day"), rs.getString("MHD_month"), rs.getString("MHD_year"));
+            	    cells[7] = (mhd == null) ? DataType.getMissingCell() : new StringCell(mhd);
+            	    String pd = sdfFormat(rs.getString("pd_day"), rs.getString("pd_month"), rs.getString("pd_year"));
+            	    cells[8] = (pd == null) ? DataType.getMissingCell() : new StringCell(pd);
+            	    String dd = sdfFormat(rs.getString("Lieferungen.dd_day"), rs.getString("Lieferungen.dd_month"), rs.getString("Lieferungen.dd_year"));
+            	    cells[9] = (dd == null) ? DataType.getMissingCell() : new StringCell(dd);
+            	    Double menge = calcMenge(rs.getObject("Unitmenge"), rs.getObject("UnitEinheit"));
             	    cells[10] = menge == null ? DataType.getMissingCell() : new DoubleCell(menge / 1000.0); // Menge [kg]
-            	    //cells[10] = (rs.getObject("#Units1") == null) ? DataType.getMissingCell() : new DoubleCell(rs.getDouble("#Units1"));
-            	    //cells[11] = (rs.getObject("BezUnits1") == null) ? DataType.getMissingCell() : new StringCell(rs.getString("BezUnits1"));
-            	    //cells[12] = (rs.getObject("#Units2") == null) ? DataType.getMissingCell() : new DoubleCell(rs.getDouble("#Units2"));
-            	    //cells[13] = (rs.getObject("BezUnits2") == null) ? DataType.getMissingCell() : new StringCell(rs.getString("BezUnits2"));
-            	    //cells[14] = (rs.getObject("Unitmenge") == null) ? DataType.getMissingCell() : new DoubleCell(rs.getDouble("Unitmenge"));
-            	    //cells[15] = (rs.getObject("UnitEinheit") == null) ? DataType.getMissingCell() : new StringCell(rs.getString("UnitEinheit"));
             	    cells[11] = new StringCell("Row" + rowNumber);
                 	cells[12] = filterTrue ? BooleanCell.TRUE : BooleanCell.FALSE; // OnFilter
                 	if (mnt != null) cells[13] = new DoubleCell(mnt.getDeliveryScore(lieferID));
                 	else cells[13] = DataType.getMissingCell();
                 	cells[14] = new IntCell(lieferID);
-            	    cells[15] = (rs.getObject("Lieferungen.Kommentar") == null) ? DataType.getMissingCell() : new StringCell(rs.getString("Lieferungen.Kommentar"));
-            	    cells[16] = (rs.getObject("Chargen.Kommentar") == null) ? DataType.getMissingCell() : new StringCell(rs.getString("Chargen.Kommentar"));
+            	    cells[15] = (rs.getObject("Lieferungen.Serial") == null) ? DataType.getMissingCell() : new StringCell(rs.getString("Lieferungen.Serial"));
+            	    cells[16] = (rs.getObject("Chargen.OriginCountry") == null) ? DataType.getMissingCell() : new StringCell(rs.getString("Chargen.OriginCountry"));
 
+            		cells[17] = (rs.getObject("Lieferungen.EndChain") == null) ? DataType.getMissingCell() : new StringCell(rs.getString("Lieferungen.EndChain"));
+            		cells[18] = (rs.getObject("Lieferungen.Explanation_EndChain") == null) ? DataType.getMissingCell() : new StringCell(rs.getString("Lieferungen.Explanation_EndChain"));
+            		cells[19] = (rs.getObject("Lieferungen.Contact_Questions_Remarks") == null) ? DataType.getMissingCell() : new StringCell(rs.getString("Lieferungen.Contact_Questions_Remarks"));
+            		cells[20] = (rs.getObject("Lieferungen.Further_Traceback") == null) ? DataType.getMissingCell() : new StringCell(rs.getString("Lieferungen.Further_Traceback"));
+            		cells[21] = (rs.getObject("Chargen.MicrobioSample") == null) ? DataType.getMissingCell() : new StringCell(rs.getString("Chargen.MicrobioSample"));
+            		
                 	DataRow outputRow = new DefaultRow(key, cells);
 
             	    output33Links.addRowToTable(outputRow);
@@ -348,6 +336,10 @@ public class MyKrisenInterfacesNodeModel extends NodeModel {
     	System.err.println("Fin!");
     	return new BufferedDataTable[]{output33Nodes.getTable(), output33Links.getTable(), buf.getTable()}; // outputWordle.getTable(), outputBurow.getTable(), outputBurowNew.getTable(), 
     }
+	private String sdfFormat(String day, String month, String year) {
+		if (day == null || day.trim().isEmpty() && month == null || month.trim().isEmpty() && year == null || year.trim().isEmpty()) return null;
+		return day + "." + month + "." + year;
+	}
     /*
     private MyNewTracing getDataModel(BufferedDataTable table) {
     	MyNewTracing newMnt = null;
@@ -379,7 +371,7 @@ public class MyKrisenInterfacesNodeModel extends NodeModel {
 		System.err.println(xml.length());
 		return xml;    		
     }
-    private Double calcMenge(Object u1, Object bu1, Object u2, Object bu2, Object u3, Object bu3) {
+    private Double calcMenge(Object u3, Object bu3) {
     	Double result = null;
     	if (u3 != null && bu3 != null) {
     		Double u3d = (Double) u3;
@@ -387,8 +379,6 @@ public class MyKrisenInterfacesNodeModel extends NodeModel {
     		if (bu3s.equalsIgnoreCase("t")) result = u3d * 1000000;
     		else if (bu3s.equalsIgnoreCase("kg")) result = u3d * 1000;
     		else result = u3d; // if (bu3s.equalsIgnoreCase("g")) 
-    		if (u2 != null) result *= (Double) u2;
-    		if (u1 != null) result *= (Double) u1;
     	}
     	return result;
     }
@@ -422,7 +412,7 @@ public class MyKrisenInterfacesNodeModel extends NodeModel {
     }
     */
     private DataTableSpec getSpec33Nodes() {
-    	DataColumnSpec[] spec = new DataColumnSpec[20];
+    	DataColumnSpec[] spec = new DataColumnSpec[17];
     	spec[0] = new DataColumnSpecCreator("ID", IntCell.TYPE).createSpec();
     	spec[1] = new DataColumnSpecCreator("node", StringCell.TYPE).createSpec();
     	spec[2] = new DataColumnSpecCreator(isDE ? "PLZ" : "ZIP", StringCell.TYPE).createSpec();    
@@ -439,14 +429,11 @@ public class MyKrisenInterfacesNodeModel extends NodeModel {
     	spec[13] = new DataColumnSpecCreator("TracingScore", DoubleCell.TYPE).createSpec();    
     	spec[14] = new DataColumnSpecCreator("DeadStart", BooleanCell.TYPE).createSpec();    
     	spec[15] = new DataColumnSpecCreator("DeadEnd", BooleanCell.TYPE).createSpec();    
-    	spec[16] = new DataColumnSpecCreator("EndChain", StringCell.TYPE).createSpec();    
-    	spec[17] = new DataColumnSpecCreator("ExplanationEndChain", StringCell.TYPE).createSpec();    
-    	spec[18] = new DataColumnSpecCreator("FurtherTB", StringCell.TYPE).createSpec();    
-    	spec[19] = new DataColumnSpecCreator("MicroSample", StringCell.TYPE).createSpec();    
+    	spec[16] = new DataColumnSpecCreator("Serial", StringCell.TYPE).createSpec(); 
     	return new DataTableSpec(spec);
     }
     private DataTableSpec getSpec33Links() {
-    	DataColumnSpec[] spec = new DataColumnSpec[17];
+    	DataColumnSpec[] spec = new DataColumnSpec[22];
     	spec[0] = new DataColumnSpecCreator("from", IntCell.TYPE).createSpec();
     	spec[1] = new DataColumnSpecCreator("to", IntCell.TYPE).createSpec();
     	spec[2] = new DataColumnSpecCreator(isDE ? "Artikelnummer" : "Item Number", StringCell.TYPE).createSpec();
@@ -462,8 +449,13 @@ public class MyKrisenInterfacesNodeModel extends NodeModel {
     	spec[12] = new DataColumnSpecCreator("OnFilter", BooleanCell.TYPE).createSpec();    
     	spec[13] = new DataColumnSpecCreator("TracingScore", DoubleCell.TYPE).createSpec();    
     	spec[14] = new DataColumnSpecCreator("ID", IntCell.TYPE).createSpec();    
-    	spec[15] = new DataColumnSpecCreator("Comment", StringCell.TYPE).createSpec(); 
+    	spec[15] = new DataColumnSpecCreator("Serial", StringCell.TYPE).createSpec(); 
     	spec[16] = new DataColumnSpecCreator("OriginCountry", StringCell.TYPE).createSpec(); 
+    	spec[17] = new DataColumnSpecCreator("EndChain", StringCell.TYPE).createSpec();    
+    	spec[18] = new DataColumnSpecCreator("ExplanationEndChain", StringCell.TYPE).createSpec();    
+    	spec[19] = new DataColumnSpecCreator("Contact_Questions_Remarks", StringCell.TYPE).createSpec();    
+    	spec[20] = new DataColumnSpecCreator("FurtherTB", StringCell.TYPE).createSpec();    
+    	spec[21] = new DataColumnSpecCreator("MicroSample", StringCell.TYPE).createSpec();    
     	return new DataTableSpec(spec);
     }
     
@@ -613,9 +605,20 @@ public class MyKrisenInterfacesNodeModel extends NodeModel {
 	        		" ON " + DBKernel.delimitL("Station") + "." + DBKernel.delimitL("ID") + "=" + DBKernel.delimitL("L2") + "." + DBKernel.delimitL("Empfänger") +
     				" WHERE " + DBKernel.delimitL("L2") + "." + DBKernel.delimitL("ID") + "=" + lieferID +
     				(doETO ?
-						" AND (" + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("Lieferdatum") + " IS NULL" +
-						" OR " + DBKernel.delimitL("L2") + "." + DBKernel.delimitL("Lieferdatum") + " IS NULL" +
-						" OR " + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("Lieferdatum") + ">=" + DBKernel.delimitL("L2") + "." + DBKernel.delimitL("Lieferdatum") + ")"
+						" AND " +
+    					"(" + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("dd_year") + " IS NULL" +
+						" OR " + DBKernel.delimitL("L2") + "." + DBKernel.delimitL("dd_year") + " IS NULL" +
+						" OR " + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("dd_year") + ">" + DBKernel.delimitL("L2") + "." + DBKernel.delimitL("dd_year") + ")"
+    					
+						+ " OR " + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("dd_year") + "=" + DBKernel.delimitL("L2") + "." + DBKernel.delimitL("dd_year") +
+						" AND (" + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("dd_month") + " IS NULL" +
+						" OR " + DBKernel.delimitL("L2") + "." + DBKernel.delimitL("dd_month") + " IS NULL" +
+						" OR " + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("dd_month") + ">" + DBKernel.delimitL("L2") + "." + DBKernel.delimitL("dd_month") + ")"
+    					
+						+ " OR " + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("dd_month") + "=" + DBKernel.delimitL("L2") + "." + DBKernel.delimitL("dd_month") +
+						" AND (" + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("dd_day") + " IS NULL" +
+						" OR " + DBKernel.delimitL("L2") + "." + DBKernel.delimitL("dd_day") + " IS NULL" +
+						" OR " + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("dd_day") + ">=" + DBKernel.delimitL("L2") + "." + DBKernel.delimitL("dd_day") + ")"
     					:
     					"");
 		}
@@ -653,10 +656,21 @@ public class MyKrisenInterfacesNodeModel extends NodeModel {
 	        		" ON " + DBKernel.delimitL("Station") + "." + DBKernel.delimitL("ID") + "=" + DBKernel.delimitL("L2") + "." + DBKernel.delimitL("Empfänger") +
     				" WHERE " + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("ID") + "=" + lieferID +
     				(doETO ?
-	    				" AND (" + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("Lieferdatum") + " IS NULL" +
-	    				" OR " + DBKernel.delimitL("L2") + "." + DBKernel.delimitL("Lieferdatum") + " IS NULL" +
-	    				" OR " + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("Lieferdatum") + ">=" + DBKernel.delimitL("L2") + "." + DBKernel.delimitL("Lieferdatum") + ")"
-	    				:
+						" AND " +
+    					"(" + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("dd_year") + " IS NULL" +
+						" OR " + DBKernel.delimitL("L2") + "." + DBKernel.delimitL("dd_year") + " IS NULL" +
+						" OR " + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("dd_year") + ">" + DBKernel.delimitL("L2") + "." + DBKernel.delimitL("dd_year") + ")"
+    					
+						+ " OR " + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("dd_year") + "=" + DBKernel.delimitL("L2") + "." + DBKernel.delimitL("dd_year") +
+						" AND (" + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("dd_month") + " IS NULL" +
+						" OR " + DBKernel.delimitL("L2") + "." + DBKernel.delimitL("dd_month") + " IS NULL" +
+						" OR " + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("dd_month") + ">" + DBKernel.delimitL("L2") + "." + DBKernel.delimitL("dd_month") + ")"
+    					
+						+ " OR " + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("dd_month") + "=" + DBKernel.delimitL("L2") + "." + DBKernel.delimitL("dd_month") +
+						" AND (" + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("dd_day") + " IS NULL" +
+						" OR " + DBKernel.delimitL("L2") + "." + DBKernel.delimitL("dd_day") + " IS NULL" +
+						" OR " + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("dd_day") + ">=" + DBKernel.delimitL("L2") + "." + DBKernel.delimitL("dd_day") + ")"
+    					:
     					"");
 		}
 		ResultSet rs = db.pushQuery(sql);

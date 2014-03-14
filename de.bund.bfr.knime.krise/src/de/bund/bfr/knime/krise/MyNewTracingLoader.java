@@ -2,7 +2,6 @@ package de.bund.bfr.knime.krise;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -42,7 +41,7 @@ public class MyNewTracingLoader {
 
 		allDeliveries = new HashMap<Integer, MyDelivery>();		
 		// Firstly: get all deliveries
-		sql = "SELECT " + DBKernel.delimitL("ID") + "," + DBKernel.delimitL("Empfänger") + "," + DBKernel.delimitL("Station") + ",UNIX_TIMESTAMP(" + DBKernel.delimitL("Lieferdatum") + ") AS " + DBKernel.delimitL("Lieferdatum") +
+		sql = "SELECT " + DBKernel.delimitL("ID") + "," + DBKernel.delimitL("Empfänger") + "," + DBKernel.delimitL("Station") + "," + DBKernel.delimitL("dd_day") + "," + DBKernel.delimitL("dd_month") + "," + DBKernel.delimitL("dd_year") +
 				" FROM " + DBKernel.delimitL("Lieferungen") +
     			" LEFT JOIN " + DBKernel.delimitL("Chargen") +
     			" ON " + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("Charge") + "=" + DBKernel.delimitL("Chargen") + "." + DBKernel.delimitL("ID") +
@@ -51,9 +50,7 @@ public class MyNewTracingLoader {
 		try {
 			ResultSet rs = db.pushQuery(sql);
 			while (rs.next()) {
-				Calendar cal = Calendar.getInstance();
-				cal.setTimeInMillis(rs.getLong("Lieferdatum"));
-				MyDelivery md = new MyDelivery(rs.getInt("ID"), rs.getInt("Station"), rs.getInt("Empfänger"), rs.getLong("Lieferdatum") == 0 ? null : cal);
+				MyDelivery md = new MyDelivery(rs.getInt("ID"), rs.getInt("Station"), rs.getInt("Empfänger"), (Integer) rs.getObject("dd_day"), (Integer) rs.getObject("dd_month"), (Integer) rs.getObject("dd_year"));
 				allDeliveries.put(rs.getInt("ID"), md);
 			}
 		}
@@ -102,14 +99,14 @@ public class MyNewTracingLoader {
 		return mnt;
 	}
 	private static void assumeCC(Hsqldbiface db, boolean enforceTemporalOrder) {
-		//check: ID 172!!!
-		
 		try {
 			db.pushUpdate("DROP TABLE KRISECCTMP IF EXISTS");
 			String sql = "CREATE TEMPORARY TABLE KRISECCTMP AS (" +
 					"SELECT " + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("ID") + "," +
 					DBKernel.delimitL("Produktkatalog") + "." + DBKernel.delimitL("Station") + "," +
-					DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("Lieferdatum") +
+					DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("dd_day") + "," +
+					DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("dd_month") + "," +
+					DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("dd_year") +
 					" FROM " + DBKernel.delimitL("Lieferungen") +
 	    			" LEFT JOIN " + DBKernel.delimitL("Chargen") +
 	    			" ON " + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("Charge") + "=" + DBKernel.delimitL("Chargen") + "." + DBKernel.delimitL("ID") +
@@ -126,9 +123,21 @@ public class MyNewTracingLoader {
 			MyDelivery md = allDeliveries.get(id);
 			String sql = "SELECT " + DBKernel.delimitL("ID") + " FROM " + DBKernel.delimitL("Lieferungen") +
 					" WHERE " + DBKernel.delimitL("Empfänger") + "=" + md.getSupplierID() +
-					(!enforceTemporalOrder || md.getDeliveryDate() == null ? "" : 
-						" AND (" + DBKernel.delimitL("Lieferdatum") + " IS NULL" +
-						" OR UNIX_TIMESTAMP(" + DBKernel.delimitL("Lieferdatum") + ") <=" + md.getDeliveryDate().getTimeInMillis() + ")");
+					(!enforceTemporalOrder || md.getDeliveryYear() == null ? "" : 
+						" AND " +
+							"(" + DBKernel.delimitL("dd_year") + " IS NULL" +
+							" OR " + DBKernel.delimitL("dd_year") + " <" + md.getDeliveryYear() + ")"
+							
+							+ " OR " + DBKernel.delimitL("dd_year") + " =" + md.getDeliveryYear() +
+							" AND (" + (md.getDeliveryMonth() == null ? "TRUE" : "FALSE") +
+							" OR " + DBKernel.delimitL("dd_month") + " IS NULL" +
+							" OR " + DBKernel.delimitL("dd_month") + "<" + (md.getDeliveryMonth() == null ? 13 : md.getDeliveryMonth()) + ")"
+							
+							+ " OR " + DBKernel.delimitL("dd_month") + " =" + md.getDeliveryMonth() +
+							" AND (" + (md.getDeliveryDay() == null ? "TRUE" : "FALSE") +
+							" OR " + DBKernel.delimitL("dd_day") + " IS NULL" +
+							" OR " + DBKernel.delimitL("dd_day") + "<=" + (md.getDeliveryDay() == null ? 32 : md.getDeliveryDay()) + ")");
+			
 			try {
 				ResultSet rs = db.pushQuery(sql);
 				while (rs.next()) {
@@ -140,22 +149,23 @@ public class MyNewTracingLoader {
 			catch (SQLException e) {
 				e.printStackTrace();
 			}
-			/*
-			sql = "SELECT " + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("ID") + " FROM " + DBKernel.delimitL("Lieferungen") +
-	    			" LEFT JOIN " + DBKernel.delimitL("Chargen") +
-	    			" ON " + DBKernel.delimitL("Lieferungen") + "." + DBKernel.delimitL("Charge") + "=" + DBKernel.delimitL("Chargen") + "." + DBKernel.delimitL("ID") +
-	    			" LEFT JOIN " + DBKernel.delimitL("Produktkatalog") +
-	    			" ON " + DBKernel.delimitL("Chargen") + "." + DBKernel.delimitL("Artikel") + "=" + DBKernel.delimitL("Produktkatalog") + "." + DBKernel.delimitL("ID") +
-	    			" WHERE " + DBKernel.delimitL("Station") + "=" + md.getRecipientID() +
-	    			(md.getDeliveryDateAsSeconds() == null || md.getDeliveryDateAsSeconds() == 0 ? "" : 
-					" AND (" + DBKernel.delimitL("Lieferdatum") + " IS NULL" +
-					" OR UNIX_TIMESTAMP(" + DBKernel.delimitL("Lieferdatum") + ") >=" + md.getDeliveryDateAsSeconds() + ")");
-					*/
+
 			sql = "SELECT " + DBKernel.delimitL("ID") + " FROM " + DBKernel.delimitL("KRISECCTMP") +
 	    			" WHERE " + DBKernel.delimitL("Station") + "=" + md.getRecipientID() +
-	    			(!enforceTemporalOrder || md.getDeliveryDate() == null ? "" : 
-					" AND (" + DBKernel.delimitL("Lieferdatum") + " IS NULL" +
-					" OR UNIX_TIMESTAMP(" + DBKernel.delimitL("Lieferdatum") + ") >=" + md.getDeliveryDate().getTimeInMillis() + ")");
+	    			(!enforceTemporalOrder || md.getDeliveryYear() == null ? "" : 
+						" AND " +
+						"(" + DBKernel.delimitL("dd_year") + " IS NULL" +
+						" OR " + DBKernel.delimitL("dd_year") + " >" + md.getDeliveryYear() + ")"
+						
+						+ " OR " + DBKernel.delimitL("dd_year") + " =" + md.getDeliveryYear() +
+						" AND (" + (md.getDeliveryMonth() == null ? "TRUE" : "FALSE") +
+						" OR " + DBKernel.delimitL("dd_month") + " IS NULL" +
+						" OR " + DBKernel.delimitL("dd_month") + ">" + (md.getDeliveryMonth() == null ? -1 : md.getDeliveryMonth()) + ")"
+						
+						+ " OR " + DBKernel.delimitL("dd_month") + " =" + md.getDeliveryMonth() +
+						" AND (" + (md.getDeliveryDay() == null ? "TRUE" : "FALSE") +
+						" OR " + DBKernel.delimitL("dd_day") + " IS NULL" +
+						" OR " + DBKernel.delimitL("dd_day") + ">=" + (md.getDeliveryDay() == null ? -1 : md.getDeliveryDay()) + ")");
 					
 			try {
 				ResultSet rs = db.pushQuery(sql);
