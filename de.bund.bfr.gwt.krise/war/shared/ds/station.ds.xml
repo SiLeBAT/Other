@@ -1,0 +1,26 @@
+<DataSource
+    ID="station"
+    serverType="sql"
+    tableName="Station"
+    titleField="Name"
+    clientOnly="true"
+    dataFormat="xml"
+>
+   <fields>
+    <field name="ID" type="integer" primaryKey="true" />
+    <field name="Name" type="text" title="Name" length="255" />
+    <field name="Strasse" type="text" title="Street" length="255" />
+    <field name="Hausnummer" type="text" title="House Number" length="10" />
+    <field name="PLZ" type="text" title="Zip" length="10" />
+    <field name="Ort" type="text" title="City" length="60" />
+    <field name="Bundesland" type="text" title="County" length="30" />
+    <field name="Land" type="text" title="Country" length="100" />
+    <field name="Ansprechpartner" type="text" title="Contace Person" length="100" />
+    <field name="Betriebsart" type="text" title="Type of Business" length="255" />
+    <field name="VATnumber" type="text" title="VAT" length="255" />
+    <field name="Code" type="text" title="Code" length="25" />
+    <field name="FallErfuellt" type="Is Case" />
+    <field name="AnzahlFaelle" type="Number of Cases" />
+    <field name="Kommentar" type="text" title="Comment" length="1023" />
+   </fields>
+</DataSource>

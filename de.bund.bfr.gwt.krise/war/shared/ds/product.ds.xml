@@ -1,0 +1,20 @@
+<DataSource
+    ID="dsProduct"
+    serverType="sql"
+    tableName="Produktkatalog"
+    titleField="Bezeichnung"
+    clientOnly="false"
+    dataFormat="xml"
+    testFileName="/ds/test_data/supplyItem.data.xml"
+    dbImportFileName="/examples/shared/ds/test_data/supplyItemLarge.data.xml"
+>
+   <fields>
+    <field name="ID" type="integer" primaryKey="true" />
+    <field name="Artikelnummer" type="text" title="Article Number" length="255" />
+    <field name="Bezeichnung" type="text" title="Denomination" length="1023" />
+    <field name="Prozessierung" type="text" title="Processing" length="255" />
+    <field name="IntendedUse" type="text" title="IntendedUse" length="255" />
+    <field name="Code" type="text" title="Code" length="25" />
+    <field name="Kommentar" type="text" title="Comment" length="1023" />
+   </fields>
+</DataSource>

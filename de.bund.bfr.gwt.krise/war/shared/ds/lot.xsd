@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<xsd:schema xmlns="http://www.w3.org/2001/XMLSchema" 
+targetNamespace="urn:datasources.smartclient.com"
+xmlns:tns="urn:datasources.smartclient.com"
+xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+    <xsd:complexType name="station">
+        <xsd:element name="ID" primaryKey="true" type="xsd:integer"/>
+        <xsd:element name="Zutaten" title="Ingredients">
+            <xsd:simpleType>
+                <xsd:restriction base="xsd:string">
+                    <xsd:maxLength value="255"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+        </xsd:element>
+        <xsd:element name="ChargenNr" title="Lot No">
+            <xsd:simpleType>
+                <xsd:restriction base="xsd:string">
+                    <xsd:maxLength value="255"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+        </xsd:element>
+        <xsd:element name="MHD" title="Expiration Date" type="xsd:date"/>
+        <xsd:element name="Herstellungsdatum" title="Production Date" type="xsd:date"/>
+        <xsd:element name="Menge" title="Amount" type="xsd:float"/>
+        <xsd:element name="Einheit" title="Unit">
+            <xsd:simpleType>
+                <xsd:restriction base="xsd:string">
+                    <xsd:enumeration value="Roll"/>
+                    <xsd:enumeration value="Ea"/>
+                    <xsd:enumeration value="Pkt"/>
+                    <xsd:enumeration value="Set"/>
+                    <xsd:enumeration value="Tube"/>
+                    <xsd:enumeration value="Pad"/>
+                    <xsd:enumeration value="Ream"/>
+                    <xsd:enumeration value="Tin"/>
+                    <xsd:enumeration value="Bag"/>
+                    <xsd:enumeration value="Ctn"/>
+                    <xsd:enumeration value="Box"/>
+                </xsd:restriction>
+                <xsd:restriction base="xsd:string">
+                    <xsd:minLength value="1"/>
+                </xsd:restriction>
+            </xsd:simpleType> 
+        </xsd:element>
+        <xsd:element name="Kommentar" title="Coment">
+            <xsd:simpleType>
+                <xsd:restriction base="xsd:string">
+                    <xsd:maxLength value="1023"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+        </xsd:element>
+    </xsd:complexType>
+</xsd:schema>

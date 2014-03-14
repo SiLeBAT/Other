@@ -1,0 +1,9 @@
+.metadata
+.gwt
+bin
+gwt-unitCache
+war/de_bund_bfr_gwt_krise
+war/WEB-INF/deploy
+war/WEB-INF/lib/*
+war/db
+!war/WEB-INF/lib/hsqldb.jar

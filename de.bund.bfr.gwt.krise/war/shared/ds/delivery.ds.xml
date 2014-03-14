@@ -1,0 +1,33 @@
+<DataSource
+    ID="dsDelivery"
+    serverType="sql"
+    tableName="Lieferungen"
+    titleField="Lieferdatum"
+    clientOnly="false"
+    dataFormat="xml"
+    testFileName="/ds/test_data/supplyItem.data.xml"
+    dbImportFileName="/examples/shared/ds/test_data/supplyItemLarge.data.xml"
+>
+   <fields>
+    <field name="ID" type="integer" primaryKey="true" />
+    <field name="Lieferdatum" type="date" title="Delivery Date" />
+    <field name="UnitMenge" type="float" title="Amount" />
+    <field name="UnitEinheit" type="enum" title="Unit" length="50">
+       <valueMap>
+           <value>Roll</value>
+           <value>Ea</value>
+           <value>Pkt</value>
+           <value>Set</value>
+           <value>Tube</value>
+           <value>Pad</value>
+           <value>Ream</value>
+           <value>Tin</value>
+           <value>Bag</value>
+           <value>Ctn</value>
+           <value>Box</value>
+       </valueMap>
+    </field>
+    <field name="Empfänger" type="integer" title="Recipient" foreignKey="dsStation.Name" />
+    <field name="Kommentar" type="text" title="Comment" length="1023" />
+   </fields>
+</DataSource>
