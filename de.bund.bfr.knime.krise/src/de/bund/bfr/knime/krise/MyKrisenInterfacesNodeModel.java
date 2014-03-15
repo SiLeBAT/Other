@@ -337,7 +337,7 @@ public class MyKrisenInterfacesNodeModel extends NodeModel {
     	return new BufferedDataTable[]{output33Nodes.getTable(), output33Links.getTable(), buf.getTable()}; // outputWordle.getTable(), outputBurow.getTable(), outputBurowNew.getTable(), 
     }
 	private String sdfFormat(String day, String month, String year) {
-		if (day == null || day.trim().isEmpty() && month == null || month.trim().isEmpty() && year == null || year.trim().isEmpty()) return null;
+		if ((day == null || day.trim().isEmpty()) && (month == null || month.trim().isEmpty()) && (year == null || year.trim().isEmpty())) return null;
 		return day + "." + month + "." + year;
 	}
     /*
