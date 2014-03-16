@@ -17,6 +17,7 @@ import java.util.Random;
 
 public class BatchExperimentScenario {
 
+	// Number of case reports
 	public static final int MAX_NO_OF_REPORTS = 100;
 
 	// Used for Likelihood algorithm
@@ -38,14 +39,16 @@ public class BatchExperimentScenario {
 
 		productDistributions = new double[numProducts][numRegions];
 		products = new double[numProducts][numRegions];
-
+		
+		/* assign data from file to respective lists */
 		for (int productIndex = 0; productIndex < numProducts; productIndex++) {
-			double s = MathOps.sum(prods.get(productIndex));
+			double sumOfAllProductValues = MathOps.sum(prods.get(productIndex));
 
 			for (int regionIndex = 0; regionIndex < numRegions; regionIndex++) {
+				/* productDistributions = product fraction of total amount for region */
 				productDistributions[productIndex][regionIndex] = prods.get(
 						productIndex).get(regionIndex)
-						/ s;
+						/ sumOfAllProductValues;
 				products[productIndex][regionIndex] = prods.get(productIndex)
 						.get(regionIndex);
 			}

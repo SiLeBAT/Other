@@ -30,25 +30,36 @@ public class EmpiricalDataset {
 
 		BufferedReader br = new BufferedReader(new FileReader(
 				foodDistributionFile));
-		int lines = 0;
+		int num_lines = 0;
 
+		/* count entries/rows in file */
 		for (String line = br.readLine(); line != null; line = br.readLine()) {
-			lines++;
+			num_lines++;
 		}
-
+		/* go back to the beginning of the file */
 		br = new BufferedReader(new FileReader(foodDistributionFile));
 
-		for (int j = 0; j < lines; j++) {
+		/* file data structure is as follows:
+		 * 
+		 * i	0			1				2				3				4
+		 * 0	ZIP CODE| 	Product 0 	| 	Product 1 	| 	Product 2	|	...
+		 * 1	01234	|	6.123		|	1.234		|	4.561		|	...
+		 * 2	01235	|	0.312		|	3.211		|	3.112		|	...
+		 * 3	01312	|	0.001		|	2.321		|	0.222		|	...
+		 * 4	...		|	...			|	...			|	...			|	...
+		 * 
+		 */
+		for (int line_index = 0; line_index < num_lines; line_index++) {
 			String[] row = br.readLine().split(DELIMITER);
 
 			if (foodDistributionNames == null) {
 				foodDistributionNames = Arrays.copyOfRange(row, 1, row.length);
-				foodDistributions = new double[foodDistributionNames.length][lines - 1];
+				foodDistributions = new double[foodDistributionNames.length][num_lines - 1];
 				continue;
 			}
 
-			for (int i = 1; i < row.length; i++) {
-				foodDistributions[i - 1][j - 1] = Double.parseDouble(row[i]);
+			for (int product_index = 1; product_index < row.length; product_index++) {
+				foodDistributions[product_index - 1][line_index - 1] = Double.parseDouble(row[product_index]);
 			}
 		}
 	}

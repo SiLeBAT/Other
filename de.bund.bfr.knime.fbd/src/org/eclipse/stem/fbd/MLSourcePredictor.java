@@ -143,6 +143,7 @@ public class MLSourcePredictor {
 		double[] distribution = probDistributionList.get(reportNumber);
 		double[] normedDistribution = new double[numProducts];
 
+		// Normalization
 		if (!spearman) {
 			double s = MathOps.sumLogs(distribution);
 
