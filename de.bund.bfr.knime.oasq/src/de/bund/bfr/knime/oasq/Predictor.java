@@ -1,4 +1,4 @@
-package org.eclipse.stem.fbd;
+package de.bund.bfr.knime.oasq;
 
 /*******************************************************************************
  * Copyright (c) 2007 IBM Corporation and others.
@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class MLSourcePredictor {
+public class Predictor {
 
 	private static final int MAX_ACCURACY = 200;
 
@@ -37,14 +37,14 @@ public class MLSourcePredictor {
 	private int numProducts;
 	private int numRegions;
 
-	public MLSourcePredictor(double[][] productDistributions,
+	public Predictor(double[][] productDistributions,
 			double[][] products, double[] normProducts,
-			double[][] productsMinusMean, boolean spearman) {
+			double[][] productsMinusMean, boolean method) {
 		this.productDistributions = productDistributions;
 		this.products = products;
 		this.normProducts = normProducts;
 		this.productsMinusMean = productsMinusMean;
-		this.spearman = spearman;
+		this.spearman = method;
 
 		numProducts = products.length;
 		numRegions = products[0].length;

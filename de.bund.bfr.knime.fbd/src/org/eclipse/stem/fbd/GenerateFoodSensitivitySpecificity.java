@@ -19,9 +19,9 @@ public class GenerateFoodSensitivitySpecificity {
 		}
 	}
 
+	// index of the contaminated(guilty) product
 	static int guiltyProd;
-
-	static ArrayList<Integer> productFilter;
+	static ArrayList<Integer> productFilter; // ???
 
 	// Whether to drop products with zero (or close to zero) probabilities from
 	// selectivity analysis
@@ -172,9 +172,7 @@ public class GenerateFoodSensitivitySpecificity {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
 		// Write AUC.csv file
-
 	}
 
 	static BatchExperimentScenario scenario;
@@ -384,7 +382,6 @@ public class GenerateFoodSensitivitySpecificity {
 					skippedTrueNegativesForCaseReport.set(caseReports,
 							skippedTrueNegativesForCaseReport.get(caseReports)
 									+ skippedTrueNegatives);
-
 			}
 		}
 

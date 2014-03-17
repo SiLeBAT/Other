@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<knimeNode icon="./default.png" type="Manipulator" xmlns="http://knime.org/node/v2.8" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://knime.org/node/v2.8 http://knime.org/node/v2.8.xsd">
+    <name>Outbreak Analysis</name>
+    
+    <shortDescription>
+        Status quo implementation of LBM and SPC
+    </shortDescription>
+    
+    <fullDescription>
+        <intro>This node computes a possible guilty item for a disease outbreak. The input data are sales data and outbreak cases. Both data inputs need to have a common key on the spatial dimension like a zip code. From the distribution of items and the distribution of outbreaks, the likelihood value for each item is computed according to the defined method. Available methods are the Spearman's rank correlation coefficient (SPC) and the a likelihood-based approach (LBM) introduced by IBM.</intro>
+        
+        <option name="Method">Choose the method to create the ranking.</option>
+    </fullDescription>
+    
+    <ports>
+        <inPort index="0" name="Sales Data">This port needs sales data as an input. A column header is expected, but its values will not be used for the output. A row key is expected to be an integer (spatial key, e.g. zip code). The cell values must be numeric values (usually double values). NULL values are not allowed.</inPort>
+        <inPort index="1" name="Outbreak Data">This port needs outbreak data as an input. The input has one column which is the number of outbreak cases per region (key). A cell value must be a positive integer or zero. The key needs to correspond to a key in the sales data. Not all keys from the sales data have to have a value in the outbreak input. </inPort>
+        <outPort index="0" name="Ranking">The output comprises of an items column index in the input data and a value to that item according to the used method. Any value is in range of 0 to 1.</outPort>
+    </ports>    
+    <views>
+        <view index="0" name="main view">main view</view>
+    </views>
+</knimeNode>

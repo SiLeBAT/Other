@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<knimeNode icon="./default.png" type="Manipulator" xmlns="http://knime.org/node/v2.8" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://knime.org/node/v2.8 http://knime.org/node/v2.8.xsd">
+    <name>Magic Table Sampling</name>
+    
+    <shortDescription>
+        This node creates random samples based on a given distribution. A.J. Walkers method is used.
+    </shortDescription>
+    
+    <fullDescription>
+        <intro>This node creates random samples based on a given distribution. The input is expected to have at least one column with numeric values. The input keys are the items that are randomly chosen (e.g., zip codes). A magic table algorithm based on A.J. Walkers method is used for choosing a random item.  The output is a table with one column. The output key is the key of the input item. An output column cell value determines how often the corresponding input item was chosen randomly. Any input item is listed, even if not chosen at all (value=0).</intro>
+                        
+        <option name="Number of samples">Number of iterations for a random choice and therefore number of samples in the output.</option>
+        <option name="Column">If you have more than one column, this is the index to choose. Only the values from the column you define here will be used for the computation. If you have only one column as an input, "0" is the right value choice here.</option>
+    </fullDescription>
+    
+    <ports>
+        <inPort index="0" name="Distribution">The input is expected to have at least one column with numeric values. The input keys have to be of type integer. A header row is expected but not processed.
+        </inPort>
+        <outPort index="0" name="Samples">The output is a table with one column. The output key is the key of the input item. An output column cell value determines how often the corresponding input item was chosen randomly. Any input item is listed, even if not chosen at all (value=0).
+		</outPort>
+    </ports>    
+</knimeNode>
