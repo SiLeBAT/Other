@@ -12,6 +12,8 @@ import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
+import org.knime.core.data.collection.CollectionCellFactory;
+import org.knime.core.data.collection.ListCell;
 import org.knime.core.data.def.DefaultRow;
 import org.knime.core.data.def.DoubleCell;
 import org.knime.core.data.def.StringCell;
@@ -55,7 +57,11 @@ public class SbmlReaderNodeModel extends NodeModel {
 	private static final String MODEL_ID = "ModelID";
 	private static final String ORGANISM = "Organism";
 	private static final String MATRIX = "Matrix";
-	private static final String FORMULA = "Formula";
+	private static final String FORMULA_LEFT = "FormulaLeft";
+	private static final String FORMULA_RIGHT = "FormulaRight";
+	private static final String DEPENDENT_VARIABLE = "DependentVariable";
+	private static final String INDEPENDENT_VARIABLES = "IndependentVariables";
+	private static final String PARAMETERS = "Parameters";
 
 	private static final String UNIT = " Unit";
 
@@ -79,7 +85,7 @@ public class SbmlReaderNodeModel extends NodeModel {
 		}
 
 		Map<String, DataType> columns = new LinkedHashMap<String, DataType>();
-		List<Map<String, Object>> rows = new ArrayList<Map<String, Object>>();
+		List<Map<String, DataCell>> rows = new ArrayList<Map<String, DataCell>>();
 		File[] files = path.listFiles();
 		int index1 = 0;
 
@@ -96,12 +102,11 @@ public class SbmlReaderNodeModel extends NodeModel {
 		BufferedDataContainer container = exec.createDataContainer(spec);
 		int index2 = 0;
 
-		for (Map<String, Object> row : rows) {
+		for (Map<String, DataCell> row : rows) {
 			DataCell[] cells = new DataCell[spec.getNumColumns()];
 
 			for (int i = 0; i < spec.getNumColumns(); i++) {
-				cells[i] = IO.createCellFromObject(row.get(spec
-						.getColumnNames()[i]));
+				cells[i] = row.get(spec.getColumnNames()[i]);
 			}
 
 			container.addRowToTable(new DefaultRow(index2 + "", cells));
@@ -174,16 +179,16 @@ public class SbmlReaderNodeModel extends NodeModel {
 			CanceledExecutionException {
 	}
 
-	private void readSBML(SBMLDocument doc, Map<String, DataType> columns,
-			List<Map<String, Object>> rows) {
+	private static void readSBML(SBMLDocument doc,
+			Map<String, DataType> columns, List<Map<String, DataCell>> rows) {
 		Model model = doc.getModel();
-		Map<String, Object> row = new LinkedHashMap<String, Object>();
+		Map<String, DataCell> row = new LinkedHashMap<String, DataCell>();
 
 		if (!columns.containsKey(MODEL_ID)) {
 			columns.put(MODEL_ID, StringCell.TYPE);
 		}
 
-		row.put(MODEL_ID, model.getId());
+		row.put(MODEL_ID, IO.createCell(model.getId()));
 
 		Species organism = model.getSpecies(0);
 		Compartment matrix = model.getCompartment(0);
@@ -193,7 +198,7 @@ public class SbmlReaderNodeModel extends NodeModel {
 				columns.put(ORGANISM, StringCell.TYPE);
 			}
 
-			row.put(ORGANISM, organism.getName());
+			row.put(ORGANISM, IO.createCell(organism.getName()));
 		}
 
 		if (matrix != null) {
@@ -201,39 +206,81 @@ public class SbmlReaderNodeModel extends NodeModel {
 				columns.put(MATRIX, StringCell.TYPE);
 			}
 
-			row.put(MATRIX, matrix.getName());
+			row.put(MATRIX, IO.createCell(matrix.getName()));
 		}
 
-		AlgebraicRule formula = getAssignmentRule(model.getListOfRules());
+		AlgebraicRule rule = getAssignmentRule(model.getListOfRules());
 
-		if (!columns.containsKey(FORMULA)) {
-			columns.put(FORMULA, StringCell.TYPE);
+		if (!columns.containsKey(FORMULA_LEFT)) {
+			columns.put(FORMULA_LEFT, StringCell.TYPE);
 		}
 
-		row.put(FORMULA, formula.getMath().toFormula());
+		if (!columns.containsKey(FORMULA_RIGHT)) {
+			columns.put(FORMULA_RIGHT, StringCell.TYPE);
+		}
+
+		row.put(FORMULA_LEFT,
+				IO.createCell(rule.getMath().getChild(0).toFormula()));
+		row.put(FORMULA_RIGHT,
+				IO.createCell(rule.getMath().getChild(1).toFormula()));
+
+		String dependentVariable = null;
+		List<DataCell> independentVariables = new ArrayList<DataCell>();
+		List<DataCell> paramters = new ArrayList<DataCell>();
 
 		for (Parameter param : model.getListOfParameters()) {
-			String name = param.getId();
-			UnitDefinition unit = param.getUnitsInstance();
+			if (!param.isConstant()) {
+				String name = param.getId();
+				UnitDefinition unit = param.getUnitsInstance();
 
-			if (unit != null) {
-				if (!columns.containsKey(name + UNIT)) {
-					columns.put(name + UNIT, StringCell.TYPE);
+				if (unit != null) {
+					if (!columns.containsKey(name + UNIT)) {
+						columns.put(name + UNIT, StringCell.TYPE);
+					}
+
+					row.put(name + UNIT, IO.createCell(unit.toString()));
 				}
 
-				row.put(name + UNIT, unit.toString());
+				if (dependentVariable == null) {
+					dependentVariable = name;
+				} else {
+					independentVariables.add(IO.createCell(name));
+				}
 			}
 		}
 
 		for (Parameter param : model.getListOfParameters()) {
-			String name = param.getId();
+			if (param.isConstant()) {
+				String name = param.getId();
 
-			if (!columns.containsKey(name)) {
-				columns.put(name, DoubleCell.TYPE);
+				if (!columns.containsKey(name)) {
+					columns.put(name, DoubleCell.TYPE);
+				}
+
+				row.put(name, IO.createCell(param.getValue()));
+				paramters.add(IO.createCell(name));
 			}
-
-			row.put(name, param.getValue());
 		}
+
+		if (!columns.containsKey(DEPENDENT_VARIABLE)) {
+			columns.put(DEPENDENT_VARIABLE, StringCell.TYPE);
+		}
+
+		row.put(DEPENDENT_VARIABLE, IO.createCell(dependentVariable));
+
+		if (!columns.containsKey(INDEPENDENT_VARIABLES)) {
+			columns.put(INDEPENDENT_VARIABLES,
+					ListCell.getCollectionType(StringCell.TYPE));
+		}
+
+		row.put(INDEPENDENT_VARIABLES,
+				CollectionCellFactory.createListCell(independentVariables));
+
+		if (!columns.containsKey(PARAMETERS)) {
+			columns.put(PARAMETERS, ListCell.getCollectionType(StringCell.TYPE));
+		}
+
+		row.put(PARAMETERS, CollectionCellFactory.createListCell(paramters));
 
 		rows.add(row);
 	}
