@@ -13,6 +13,8 @@ import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
 import org.knime.core.data.def.DefaultRow;
+import org.knime.core.data.def.DoubleCell;
+import org.knime.core.data.def.StringCell;
 import org.knime.core.node.BufferedDataContainer;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
@@ -23,8 +25,16 @@ import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.sbml.jsbml.AlgebraicRule;
+import org.sbml.jsbml.Compartment;
+import org.sbml.jsbml.ListOf;
+import org.sbml.jsbml.Model;
+import org.sbml.jsbml.Parameter;
+import org.sbml.jsbml.Rule;
 import org.sbml.jsbml.SBMLDocument;
 import org.sbml.jsbml.SBMLReader;
+import org.sbml.jsbml.Species;
+import org.sbml.jsbml.UnitDefinition;
 
 import de.bund.bfr.knime.IO;
 import de.bund.bfr.knime.KnimeUtilities;
@@ -41,6 +51,13 @@ public class SbmlReaderNodeModel extends NodeModel {
 
 	private SettingsModelString inPath = new SettingsModelString(CFG_IN_PATH,
 			null);
+
+	private static final String MODEL_ID = "ModelID";
+	private static final String ORGANISM = "Organism";
+	private static final String MATRIX = "Matrix";
+	private static final String FORMULA = "Formula";
+
+	private static final String UNIT = " Unit";
 
 	/**
 	 * Constructor for the node model.
@@ -89,6 +106,7 @@ public class SbmlReaderNodeModel extends NodeModel {
 
 			container.addRowToTable(new DefaultRow(index2 + "", cells));
 			exec.checkCanceled();
+			index2++;
 		}
 
 		container.close();
@@ -158,7 +176,66 @@ public class SbmlReaderNodeModel extends NodeModel {
 
 	private void readSBML(SBMLDocument doc, Map<String, DataType> columns,
 			List<Map<String, Object>> rows) {
-		// TODO
+		Model model = doc.getModel();
+		Map<String, Object> row = new LinkedHashMap<String, Object>();
+
+		if (!columns.containsKey(MODEL_ID)) {
+			columns.put(MODEL_ID, StringCell.TYPE);
+		}
+
+		row.put(MODEL_ID, model.getId());
+
+		Species organism = model.getSpecies(0);
+		Compartment matrix = model.getCompartment(0);
+
+		if (organism != null) {
+			if (!columns.containsKey(ORGANISM)) {
+				columns.put(ORGANISM, StringCell.TYPE);
+			}
+
+			row.put(ORGANISM, organism.getName());
+		}
+
+		if (matrix != null) {
+			if (!columns.containsKey(MATRIX)) {
+				columns.put(MATRIX, StringCell.TYPE);
+			}
+
+			row.put(MATRIX, matrix.getName());
+		}
+
+		AlgebraicRule formula = getAssignmentRule(model.getListOfRules());
+
+		if (!columns.containsKey(FORMULA)) {
+			columns.put(FORMULA, StringCell.TYPE);
+		}
+
+		row.put(FORMULA, formula.getMath().toFormula());
+
+		for (Parameter param : model.getListOfParameters()) {
+			String name = param.getId();
+			UnitDefinition unit = param.getUnitsInstance();
+
+			if (unit != null) {
+				if (!columns.containsKey(name + UNIT)) {
+					columns.put(name + UNIT, StringCell.TYPE);
+				}
+
+				row.put(name + UNIT, unit.toString());
+			}
+		}
+
+		for (Parameter param : model.getListOfParameters()) {
+			String name = param.getId();
+
+			if (!columns.containsKey(name)) {
+				columns.put(name, DoubleCell.TYPE);
+			}
+
+			row.put(name, param.getValue());
+		}
+
+		rows.add(row);
 	}
 
 	private static DataTableSpec createSpec(Map<String, DataType> columns) {
@@ -170,6 +247,10 @@ public class SbmlReaderNodeModel extends NodeModel {
 		}
 
 		return new DataTableSpec(specs.toArray(new DataColumnSpec[0]));
+	}
+
+	private static AlgebraicRule getAssignmentRule(ListOf<Rule> rules) {
+		return (AlgebraicRule) rules.get(0);
 	}
 
 }
