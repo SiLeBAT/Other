@@ -12,8 +12,6 @@ import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
-import org.knime.core.data.collection.CollectionCellFactory;
-import org.knime.core.data.collection.ListCell;
 import org.knime.core.data.def.DefaultRow;
 import org.knime.core.data.def.DoubleCell;
 import org.knime.core.data.def.StringCell;
@@ -225,8 +223,8 @@ public class SbmlReaderNodeModel extends NodeModel {
 				IO.createCell(rule.getMath().getChild(1).toFormula()));
 
 		String dependentVariable = null;
-		List<DataCell> independentVariables = new ArrayList<DataCell>();
-		List<DataCell> paramters = new ArrayList<DataCell>();
+		List<String> independentVariables = new ArrayList<String>();
+		List<String> paramters = new ArrayList<String>();
 
 		for (Parameter param : model.getListOfParameters()) {
 			if (!param.isConstant()) {
@@ -244,7 +242,7 @@ public class SbmlReaderNodeModel extends NodeModel {
 				if (dependentVariable == null) {
 					dependentVariable = name;
 				} else {
-					independentVariables.add(IO.createCell(name));
+					independentVariables.add(name);
 				}
 			}
 		}
@@ -258,7 +256,7 @@ public class SbmlReaderNodeModel extends NodeModel {
 				}
 
 				row.put(name, IO.createCell(param.getValue()));
-				paramters.add(IO.createCell(name));
+				paramters.add(name);
 			}
 		}
 
@@ -269,18 +267,18 @@ public class SbmlReaderNodeModel extends NodeModel {
 		row.put(DEPENDENT_VARIABLE, IO.createCell(dependentVariable));
 
 		if (!columns.containsKey(INDEPENDENT_VARIABLES)) {
-			columns.put(INDEPENDENT_VARIABLES,
-					ListCell.getCollectionType(StringCell.TYPE));
+			columns.put(INDEPENDENT_VARIABLES, StringCell.TYPE);
 		}
 
-		row.put(INDEPENDENT_VARIABLES,
-				CollectionCellFactory.createListCell(independentVariables));
+		row.put(INDEPENDENT_VARIABLES, IO.createCell(KnimeUtilities
+				.listToString(independentVariables)));
 
 		if (!columns.containsKey(PARAMETERS)) {
-			columns.put(PARAMETERS, ListCell.getCollectionType(StringCell.TYPE));
+			columns.put(PARAMETERS, StringCell.TYPE);
 		}
 
-		row.put(PARAMETERS, CollectionCellFactory.createListCell(paramters));
+		row.put(PARAMETERS,
+				IO.createCell(KnimeUtilities.listToString(paramters)));
 
 		rows.add(row);
 	}
