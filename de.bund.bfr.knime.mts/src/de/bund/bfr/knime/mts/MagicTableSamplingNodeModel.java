@@ -95,14 +95,13 @@ public class MagicTableSamplingNodeModel extends NodeModel {
 
         System.out.println("init MT...");
 		aliasContSrc = new MagicTable<Object>(new Random(guiltyColumn),
-				setup.getProductDistributions()); 
+				setup.getProductDistributions());
 		
         System.out.println("create samples...");
 		int[] samples = new int[countValue];
 		for(int i = 0; i < countValue; i++) {
-			int sampleIndex = (aliasContSrc.sampleIndex());
+			int sampleIndex = aliasContSrc.sampleIndex();
 			samples[i] = sales_dataset.getPlzDict()[sampleIndex];
-			System.out.println(sampleIndex + " " + sales_dataset.getPlzDict()[sampleIndex]);
 		}
         
         System.out.println("output results...");

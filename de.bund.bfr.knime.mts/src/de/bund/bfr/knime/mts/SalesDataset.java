@@ -9,6 +9,7 @@ import org.knime.core.data.DataCell;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.container.CloseableRowIterator;
 import org.knime.core.node.BufferedDataTable;
+import org.knime.core.node.streamable.RowInput;
 
 /* Modification of EmpiricalDataSet.java */
 
@@ -40,7 +41,7 @@ public class SalesDataset {
 			// this line does not need a comment because the method is awesomely named 
 			Double[] currentRowValues = convertCellsToDoubleArray(currentRow.iterator()); 
 			plzDict[row_index] = Integer.parseInt(currentRow.getKey().getString());
-			foodDistributions[row_index] = currentRowValues[0];
+			foodDistributions[row_index] = currentRowValues[guiltyColumn];
 			row_index++;
 		}
 	}
