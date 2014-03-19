@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: OASQ-Node extension for KNIME Workbench
 Bundle-SymbolicName: de.bund.bfr.knime.oasq; singleton:=true
-Bundle-Version: 1.0.0
+Bundle-Version: 1.0.0.qualifier
 Bundle-ClassPath: oasq.jar
 Bundle-Activator: de.bund.bfr.knime.oasq.OASQNodePlugin
 Bundle-Vendor: Markus Freitag
