@@ -11,6 +11,7 @@ public class ScenarioSetup {
 		products = this.sales.getFoodDistributions();
 		
 		int numRegions = products.length;
+		System.out.println("num_regions: " + numRegions);
 
 		productDistributions = new double[numRegions];
 
