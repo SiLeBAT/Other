@@ -36,10 +36,10 @@ along with this program.  If not, see &quot;http://www.gnu.org/licenses/&quot;.
       <import plugin="org.knime.base"/>
       <import plugin="org.eclipse.ui"/>
       <import plugin="org.eclipse.core.resources"/>
-      <import plugin="org.knime.ext.svg"/>
-      <import plugin="org.apache.commons.io"/>
       <import plugin="org.apache.poi"/>
       <import plugin="org.knime.ext.jfreechart"/>
+      <import plugin="org.knime.ext.svg"/>
+      <import plugin="org.apache.commons.io"/>
       <import plugin="org.knime.core"/>
       <import plugin="org.knime.ext.jep"/>
    </requires>
@@ -89,12 +89,6 @@ along with this program.  If not, see &quot;http://www.gnu.org/licenses/&quot;.
          install-size="0"
          version="0.0.0"
          unpack="false"/>
-
-   <plugin
-         id="com.thoughtworks.xstream"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"/>
 
    <plugin
          id="de.bund.bfr.knime.gis.util"
@@ -147,6 +141,12 @@ along with this program.  If not, see &quot;http://www.gnu.org/licenses/&quot;.
 
    <plugin
          id="com.jgoodies"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"/>
+
+   <plugin
+         id="com.thoughtworks.xstream"
          download-size="0"
          install-size="0"
          version="0.0.0"/>
