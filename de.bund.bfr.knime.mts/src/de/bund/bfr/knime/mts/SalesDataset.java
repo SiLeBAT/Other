@@ -2,14 +2,12 @@ package de.bund.bfr.knime.mts;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.container.CloseableRowIterator;
 import org.knime.core.node.BufferedDataTable;
-import org.knime.core.node.streamable.RowInput;
 
 /* Modification of EmpiricalDataSet.java */
 
