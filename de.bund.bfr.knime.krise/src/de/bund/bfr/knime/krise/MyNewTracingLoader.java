@@ -18,7 +18,7 @@ public class MyNewTracingLoader {
 	private static HashSet<Integer> ccStations = null;
 	private static double caseSum = 0;
 
-	public static MyNewTracing getNewTracingModel(Hsqldbiface db, boolean assumeCrossContamination, boolean enforceTemporalOrder, boolean tryClustering) {
+	public static MyNewTracing getNewTracingModel(Hsqldbiface db, boolean assumeCrossContamination, boolean enforceTemporalOrder) {
 		// Zeroly: get all cases
 		caseStations = new HashMap<Integer, Double>();
 		ccStations = new HashSet<Integer>();
@@ -83,18 +83,6 @@ public class MyNewTracingLoader {
 			}
 		}
 		
-		// Thirdly, in case of tryClustering redefine caseStations bzw. assume cross-contamination one step before the case
-		if (tryClustering) {
-			HashSet<Integer> newCaseStations = new HashSet<Integer> ();
-			for (int caseStationID : caseStations.keySet()) {
-				for (MyDelivery md : allDeliveries.values()) {
-					if (md.getRecipientID() == caseStationID) {
-						newCaseStations.add(md.getSupplierID());
-					}
-				}
-			}
-		}
-
 		MyNewTracing mnt = new MyNewTracing(allDeliveries, caseStations, ccStations, caseSum);
 		return mnt;
 	}
