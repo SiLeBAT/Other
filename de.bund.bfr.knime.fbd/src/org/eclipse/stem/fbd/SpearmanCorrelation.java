@@ -3,8 +3,6 @@ package org.eclipse.stem.fbd;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.commons.math3.stat.correlation.SpearmansCorrelation;
-
 /**
  * A sample word count Stratosphere job.
  * <p>
@@ -137,12 +135,9 @@ public class SpearmanCorrelation {
 
 	public static void main(String[] args) throws Exception {
 		List<Integer> sales = Arrays.asList(3, 2, 3, 10, 1, 34);
-		List<Integer> cases = Arrays.asList(12, 2, 0, 10, 1, 34);
-		SpearmansCorrelation corr = new SpearmansCorrelation();
+		List<Integer> cases = Arrays.asList(12, 2, 0, 10, 1, 34);		
 
 		System.out.println(calculate_spc(sales, cases));
-		System.out.println(calculate_spc2(sales, cases));
-		System.out.println(corr.correlation(toDoubleArray(sales),
-				toDoubleArray(cases)));
+		System.out.println(calculate_spc2(sales, cases));		
 	}
 }
