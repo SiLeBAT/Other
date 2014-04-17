@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<site>
-   <feature url="features/de.bund.bfr.knime.krise.feature_1.0.0.qualifier.jar" id="de.bund.bfr.knime.krise.feature" version="1.0.0.qualifier">
-      <category name="FoodChainLab"/>
-   </feature>
-   <category-def name="FoodChainLab" label="FoodChainLab"/>
-</site>
