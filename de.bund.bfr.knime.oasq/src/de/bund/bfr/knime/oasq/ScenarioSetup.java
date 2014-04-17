@@ -1,5 +1,7 @@
 package de.bund.bfr.knime.oasq;
 
+import java.util.Arrays;
+
 
 public class ScenarioSetup {
 
@@ -28,7 +30,13 @@ public class ScenarioSetup {
 		/* assign data from file to respective lists */
 		for (int productIndex = 0; productIndex < numProducts; productIndex++) {
 			double sumOfAllProductValues = MathOps.sum(products[productIndex]);
-
+			/*
+			 *  nothing sold
+			 */
+			if(sumOfAllProductValues == 0.0) {
+				Arrays.fill(productDistributions[productIndex], 0.0);
+				continue;
+			}
 			for (int regionIndex = 0; regionIndex < numRegions; regionIndex++) {
 				/*
 				 * productDistributions = product fraction of total amount for

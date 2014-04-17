@@ -103,12 +103,12 @@ public class OASQNodeModel extends NodeModel {
         System.out.println("output results...");
         /* 	output format
          * 
-         *	product	|	[SPC|LBM] value
-         * 	4		|	0.37	
+         *	product|	[SPC|LBM] value
+         * 	4			|	0.37	
          * 	11		|	0.91
          * 	13		|	0.84	
          * 	12		|	0.52
-         *  ...		|	...
+         *  ...			|	...
          */
         double[] probabilitites = pred.getProbDistributionFor(outbreak_dataset.getNumCases() - 1);
         
