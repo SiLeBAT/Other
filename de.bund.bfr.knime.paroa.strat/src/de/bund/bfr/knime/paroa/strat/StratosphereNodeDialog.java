@@ -1,5 +1,9 @@
 package de.bund.bfr.knime.paroa.strat;
 
+import java.awt.JobAttributes.DialogType;
+
+import javax.swing.JFileChooser;
+
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentFileChooser;
 import org.knime.core.node.defaultnodesettings.DialogComponentString;
@@ -26,41 +30,44 @@ public class StratosphereNodeDialog extends DefaultNodeSettingsPane {
                 new SettingsModelString(
                     StratosphereNodeModel.CFGKEY_METHODS,
                     StratosphereNodeModel.DEFAULT_METHODS),
-                    "Method to apply:", StratosphereNodeModel.METHODS);
-        
-        DialogComponentFileChooser jar = new DialogComponentFileChooser(
-        		new SettingsModelString(
-        				StratosphereNodeModel.CFGKEY_JAR,
-        				StratosphereNodeModel.DEFAULT_EMPTYSTRING),
-        				"null", 0, ".jar");
-        
+                    "Method to apply:", StratosphereNodeModel.METHOD_CHIOCES);
+       /* 
         DialogComponentStringSelection local = new DialogComponentStringSelection(
         		new SettingsModelString(
         				StratosphereNodeModel.CFGKEY_LOCAL,
         				StratosphereNodeModel.DEFAULT_EMPTYSTRING),
         				"Run locally or on attached cluster:", StratosphereNodeModel.LOCAL);
-        
-        DialogComponentFileChooser input_path = new DialogComponentFileChooser(
+        */
+        DialogComponentFileChooser jar = new DialogComponentFileChooser(
         		new SettingsModelString(
-        				StratosphereNodeModel.CFGKEY_INPUT,
+        				StratosphereNodeModel.CFGKEY_JAR,
         				StratosphereNodeModel.DEFAULT_EMPTYSTRING),
-        				"Input Path:", 1, true, ".*");
+        				"Executable JAR:", 0, false, ".jar");
                     
-        DialogComponentFileChooser output_path = new DialogComponentFileChooser(
+        DialogComponentFileChooser inputSales_path = new DialogComponentFileChooser(
         		new SettingsModelString(
-        				StratosphereNodeModel.CFGKEY_OUTPUT,
+        				StratosphereNodeModel.CFGKEY_INPUT_SALES,
         				StratosphereNodeModel.DEFAULT_EMPTYSTRING),
-        				"Output Path:", 2, true, ".*");
+        				"Sales Data Path:");
+        
+        DialogComponentFileChooser strat_path = new DialogComponentFileChooser(
+        		new SettingsModelString(
+        				StratosphereNodeModel.CFGKEY_STRAT_PATH,
+        				StratosphereNodeModel.DEFAULT_STRAT_PATH),
+        				"Strat Path:", 
+        				JFileChooser.DIRECTORIES_ONLY , 
+        				true);
         
         jar.setBorderTitle("Executable JAR:");
-        input_path.setBorderTitle("Input Path:");
-        output_path.setBorderTitle("Output Path:");
+        inputSales_path.setBorderTitle("Sales Data Location:");
+        strat_path.setBorderTitle("Stratosphere Location:");
         
         addDialogComponent(methods);
-        addDialogComponent(local);
+        addDialogComponent(strat_path);
+//      addDialogComponent(local);
         addDialogComponent(jar);
-        addDialogComponent(input_path);
-        addDialogComponent(output_path);
+        addDialogComponent(inputSales_path);
+
     }
 }
 
