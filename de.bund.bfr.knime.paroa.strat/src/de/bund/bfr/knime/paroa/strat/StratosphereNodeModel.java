@@ -81,11 +81,11 @@ public class StratosphereNodeModel extends NodeModel {
 	private final SettingsModelString m_jar = new SettingsModelString(
 			StratosphereNodeModel.CFGKEY_JAR,
 			StratosphereNodeModel.DEFAULT_EMPTYSTRING);
-
+/*
 	private final SettingsModelString m_local = new SettingsModelString(
 			StratosphereNodeModel.CFGKEY_LOCAL,
 			StratosphereNodeModel.DEFAULT_EMPTYSTRING);
-
+*/
 	private final SettingsModelString m_inputSales = new SettingsModelString(
 			StratosphereNodeModel.CFGKEY_INPUT_SALES,
 			StratosphereNodeModel.DEFAULT_EMPTYSTRING);
