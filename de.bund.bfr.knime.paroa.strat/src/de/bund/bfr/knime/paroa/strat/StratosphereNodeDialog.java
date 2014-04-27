@@ -1,6 +1,7 @@
 package de.bund.bfr.knime.paroa.strat;
 
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
@@ -345,9 +346,10 @@ public class StratosphereNodeDialog extends NodeDialogPane {
     }
     
     private JPanel createMethodPanel() {
-    	JPanel methodPanel = createGridLayoutPanel("Method(s)");
-
+    	JPanel methodPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    	methodPanel.setBorder(BorderFactory.createTitledBorder("Method(s)"));
         m_methodChoiceBox = new JComboBox<String>();
+        m_methodChoiceBox.setPreferredSize(buttonDimension);
         m_methodChoiceBox.addItem("BOTH");
         m_methodChoiceBox.addItem("SPC");
         m_methodChoiceBox.addItem("LBM");
