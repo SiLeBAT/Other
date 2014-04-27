@@ -52,6 +52,7 @@ public class StratosphereNodeModel extends NodeModel {
 	static final String CFGKEY_JAR = "Stratosphere jar";
 	static final String CFGKEY_LOCAL = "local";
 	static final String CFGKEY_INPUT_SALES = "Sales Data Input";
+	static final String CFGKEY_INPUT_OUTBREAKS = "Outbreak Data Input";
 	static final String CFGKEY_STRAT_PATH = "Stratosphere Path";
 
 	static final String STRAT_OUTBREAKS = "/data/outbreaks/";
@@ -69,6 +70,7 @@ public class StratosphereNodeModel extends NodeModel {
 	static final String DEFAULT_STRAT_PATH = "/opt/stratosphere/";
 	static final String DEFAULT_METHODS = METHODS.BOTH.name();
 	static final String DEFAULT_EMPTYSTRING = "";
+	static final String DEFAULT_NULL = null;
 	
 	public static final String[] METHOD_CHIOCES = { METHODS.BOTH.name(),
 			METHODS.SPC.name(), METHODS.LBM.name() };
@@ -80,15 +82,15 @@ public class StratosphereNodeModel extends NodeModel {
 
 	private final SettingsModelString m_jar = new SettingsModelString(
 			StratosphereNodeModel.CFGKEY_JAR,
-			StratosphereNodeModel.DEFAULT_EMPTYSTRING);
-
-	private final SettingsModelString m_local = new SettingsModelString(
-			StratosphereNodeModel.CFGKEY_LOCAL,
-			StratosphereNodeModel.DEFAULT_EMPTYSTRING);
+			StratosphereNodeModel.DEFAULT_NULL);
 
 	private final SettingsModelString m_inputSales = new SettingsModelString(
 			StratosphereNodeModel.CFGKEY_INPUT_SALES,
-			StratosphereNodeModel.DEFAULT_EMPTYSTRING);
+			StratosphereNodeModel.DEFAULT_NULL);
+
+	private final SettingsModelString m_inputOutbreaks = new SettingsModelString(
+			StratosphereNodeModel.CFGKEY_INPUT_OUTBREAKS,
+			StratosphereNodeModel.DEFAULT_NULL);
 
 	private final SettingsModelString m_stratospherePath = new SettingsModelString(
 			StratosphereNodeModel.CFGKEY_STRAT_PATH,
@@ -99,9 +101,13 @@ public class StratosphereNodeModel extends NodeModel {
 	 */
 	protected StratosphereNodeModel() {
 
-		super(new PortType[] { FlowVariablePortObject.TYPE,
-				BufferedDataTable.TYPE }, new PortType[] {
-				BufferedDataTable.TYPE, BufferedDataTable.TYPE });
+		super(
+			new PortType[] { 
+				FlowVariablePortObject.TYPE,
+				FlowVariablePortObject.TYPE },
+			new PortType[] {
+				BufferedDataTable.TYPE, 
+				BufferedDataTable.TYPE });
 	}
 
 	/**
@@ -113,18 +119,16 @@ public class StratosphereNodeModel extends NodeModel {
 
 		String methodsChoice = m_methods.getStringValue();
 		String jarChoice = m_jar.getStringValue();
-//		String localChoice = m_local.getStringValue();
 		String inputSalesChoice = m_inputSales.getStringValue();
+		String inputOutbreaksChoice = m_inputOutbreaks.getStringValue();
 		String stratospherePathChoice = m_stratospherePath.getStringValue();
 
 		logger.debug(methodsChoice);
 		logger.debug(jarChoice);
-//		logger.debug(localChoice);
 		logger.debug(inputSalesChoice);
 
 		StratosphereConnection paroa_connection = new StratosphereConnection(stratospherePathChoice);
-		FileHandle outbreaksFile = createFileFromOutbreaks((BufferedDataTable) inData[INPUTS.OUTBREAKS.ordinal()]);
-		FileHandle paroa_inputOutbreaks = outbreaksFile;
+		FileHandle paroa_inputOutbreaks = new FileHandle(inputOutbreaksChoice);
 		FileHandle paroa_inputSales = new FileHandle(inputSalesChoice);
 		FileHandle paroa_jars = new FileHandle(jarChoice);
 		FileHandle paroa_output = new FileHandle(stratospherePathChoice
@@ -138,15 +142,17 @@ public class StratosphereNodeModel extends NodeModel {
 				paroa_output
 		);
 
-		DataColumnSpec[] allColSpecs = new DataColumnSpec[2];
+		DataColumnSpec[] allColSpecs = new DataColumnSpec[3];
 		allColSpecs[0] = new DataColumnSpecCreator("Product", StringCell.TYPE)
 				.createSpec();
 		allColSpecs[1] = new DataColumnSpecCreator("Value", DoubleCell.TYPE)
 				.createSpec();
+		allColSpecs[2] = new DataColumnSpecCreator("Scenario", StringCell.TYPE)
+		.createSpec();
 		DataTableSpec outputSpec = new DataTableSpec(allColSpecs);
 
 		// reading results file
-		File resultFile = new File(paroa_output.getPath());
+		File resultFile = new File(paroa_output.getPath() + "scores.csv");
 		FileInputStream stream = new FileInputStream(resultFile);
 		InputStreamReader reader = new InputStreamReader(stream);
 		BufferedReader buffered_reader = new BufferedReader(reader);
@@ -156,15 +162,18 @@ public class StratosphereNodeModel extends NodeModel {
 		BufferedDataContainer lbmContainer = exec
 				.createDataContainer(outputSpec);
 
+		int keyIndex = 0;
 		String currentLine = buffered_reader.readLine();
 		while (currentLine != null) {
 			String[] lineValues = currentLine.split(";");
 
 			int method = Integer.parseInt(lineValues[0]);
-			RowKey key = new RowKey(lineValues[1]);
-			DataCell[] cells = new DataCell[2];
+			RowKey key = new RowKey("i" + keyIndex);
+			DataCell[] cells = new DataCell[3];
 			cells[0] = new StringCell(lineValues[1]);
 			cells[1] = new DoubleCell(Double.parseDouble(lineValues[2]));
+			cells[2] = new StringCell(lineValues[3]);
+
 
 			DataRow row = new DefaultRow(key, cells);
 			if (method == 0)
@@ -178,6 +187,7 @@ public class StratosphereNodeModel extends NodeModel {
 			exec.checkCanceled();
 
 			currentLine = buffered_reader.readLine();
+			keyIndex++;
 		}
 
 		spcContainer.close();
@@ -252,7 +262,7 @@ public class StratosphereNodeModel extends NodeModel {
 
 		m_methods.saveSettingsTo(settings);
 		m_stratospherePath.saveSettingsTo(settings);
-//		m_local.saveSettingsTo(settings);
+		m_inputOutbreaks.saveSettingsTo(settings);
 		m_jar.saveSettingsTo(settings);
 		m_inputSales.saveSettingsTo(settings);
 	}
@@ -266,9 +276,9 @@ public class StratosphereNodeModel extends NodeModel {
 
 		m_methods.loadSettingsFrom(settings);
 		m_stratospherePath.loadSettingsFrom(settings);
-//		m_local.loadSettingsFrom(settings);
 		m_jar.loadSettingsFrom(settings);
 		m_inputSales.loadSettingsFrom(settings);
+		m_inputOutbreaks.loadSettingsFrom(settings);
 	}
 
 	/**
@@ -280,7 +290,7 @@ public class StratosphereNodeModel extends NodeModel {
 
 		m_methods.validateSettings(settings);
 		m_stratospherePath.validateSettings(settings);
-//		m_local.validateSettings(settings);
+		m_inputOutbreaks.validateSettings(settings);
 		m_jar.validateSettings(settings);
 		m_inputSales.validateSettings(settings);
 
