@@ -29,7 +29,6 @@ import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
@@ -44,10 +43,6 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  */
 public class OASQNodeModel extends NodeModel {
     
-    // the logger instance
-    private static final NodeLogger logger = NodeLogger
-            .getLogger(OASQNodeModel.class);
-        
     /** the settings key which is used to retrieve and 
         store the settings (from the dialog or from a settings file)    
        (package visibility to be usable from the dialog). */

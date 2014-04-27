@@ -18,7 +18,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import org.eclipse.gef.ui.actions.SetActivePaletteToolAction;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeSettingsRO;
@@ -64,10 +63,10 @@ public class StratosphereNodeDialog extends NodeDialogPane {
 	private JCheckBox m_defaultStratLocationCheckbox;
 	private JCheckBox m_defaultInputOutbreaksCheckbox;
 	
-    private JComboBox m_strat_location_selectBox;
-    private JComboBox m_jar_location_selectBox;
-    private JComboBox m_input_sales_selectBox;
-    private JComboBox m_input_outbreaks_selectBox;
+    private JComboBox<String> m_strat_location_selectBox;
+    private JComboBox<String> m_jar_location_selectBox;
+    private JComboBox<String> m_input_sales_selectBox;
+    private JComboBox<String> m_input_outbreaks_selectBox;
 	
     protected StratosphereNodeDialog() {
         super();
@@ -381,8 +380,9 @@ public class StratosphereNodeDialog extends NodeDialogPane {
 		return fileChooser;
 	}
 	
-	private JComboBox createPathSelectBox () {
-		JComboBox selectBox = new JComboBox();
+	@SuppressWarnings("unchecked")
+	private JComboBox<String> createPathSelectBox () {
+		JComboBox<String> selectBox = new JComboBox<String>();
 		selectBox.setPreferredSize(pathBoxDimensionDimension);
 		selectBox.setEditable(true);
 		selectBox.setRenderer(new ConvenientComboBoxRenderer());

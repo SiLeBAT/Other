@@ -58,10 +58,6 @@ public class HsqldbServiceImpl extends RemoteServiceServlet implements HsqldbSer
 		}
 		else if (table == MyTracingData.DELIVERY) {
 			rs = getResultSet("SELECT * FROM \"Lieferungen\" WHERE \"Charge\" = " + id);
-			excludingCols.add("#Units1");
-			excludingCols.add("BezUnits1");
-			excludingCols.add("#Units2");
-			excludingCols.add("BezUnits2");
 			excludingCols.add("Charge");
 		}
 		if (rs != null) {
@@ -119,7 +115,7 @@ public class HsqldbServiceImpl extends RemoteServiceServlet implements HsqldbSer
 													}
 												} while (rs4.next());
 											}
-											lhmsb.put(rs3.getString("Produktkatalog.Bezeichnung") + ";" + rs3.getString("Chargen.ChargenNr") + ";" + rs3.getString("Lieferungen.Lieferdatum"), isZutat);
+											lhmsb.put(rs3.getString("Produktkatalog.Bezeichnung") + ";" + rs3.getString("Chargen.ChargenNr") + ";" + rs3.getString("Lieferungen.dd_day")+"."+rs3.getString("Lieferungen.dd_month")+"."+rs3.getString("Lieferungen.dd_year"), isZutat);
 										} while (rs3.next());
 										lhmsb0.put(record.get(0), lhmsb);
 									}

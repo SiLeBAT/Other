@@ -1,14 +1,10 @@
 package de.bund.bfr.knime.paroa.strat;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
@@ -16,7 +12,6 @@ import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.RowKey;
-import org.knime.core.data.container.CloseableRowIterator;
 import org.knime.core.data.def.DefaultRow;
 import org.knime.core.data.def.DoubleCell;
 import org.knime.core.data.def.StringCell;
@@ -200,32 +195,6 @@ public class StratosphereNodeModel extends NodeModel {
 		output[1] = lbmTable;
 
 		return output;
-	}
-
-	private FileHandle createFileFromOutbreaks(BufferedDataTable outBreakData)
-			throws FileNotFoundException {
-		File outbreaksFile = new File(m_stratospherePath.getStringValue() + STRAT_OUTBREAKS
-				+ "outbreak_" + outBreakData.hashCode());
-		FileOutputStream stream = new FileOutputStream(outbreaksFile);
-		OutputStreamWriter writer = new OutputStreamWriter(stream);
-		BufferedWriter bufferedWriter = new BufferedWriter(writer);
-
-		CloseableRowIterator allRows = outBreakData.iterator();
-		try {
-			while (allRows.hasNext()) {
-				DataRow currentRow = allRows.next();
-				String plz = currentRow.getKey().toString();
-				String cases = currentRow.getCell(0).toString();
-				bufferedWriter.write(plz + "," + cases + "\n");
-			}
-			bufferedWriter.flush();
-			bufferedWriter.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		String path = outbreaksFile.getAbsolutePath();
-		return new FileHandle(path);
 	}
 
 	/**
