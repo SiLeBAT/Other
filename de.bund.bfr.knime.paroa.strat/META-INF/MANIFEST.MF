@@ -2,8 +2,14 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Stratosphere-Node extension for KNIME Workbench
 Bundle-SymbolicName: de.bund.bfr.knime.paroa.strat; singleton:=true
-Bundle-Version: 1.0.0
-Bundle-ClassPath: stratosphere.jar
+Bundle-Version: 1.0.812
+Bundle-ClassPath: stratosphere.jar, 
+ lib/stratosphere-clients-0.4-hadoop2.jar,
+ lib/stratosphere-compiler-0.4-hadoop2.jar,
+ lib/stratosphere-core-0.4-hadoop2.jar,
+ lib/stratosphere-runtime-0.4-hadoop2.jar,
+ lib/stratosphere-java-0.4-hadoop2.jar,
+ lib/commons-logging-1.1.1.jar
 Bundle-Activator: de.bund.bfr.knime.paroa.strat.StratosphereNodePlugin
 Bundle-Vendor: Markus Freitag
 Require-Bundle: org.eclipse.core.runtime,

@@ -17,6 +17,10 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.knime.core.node.InvalidSettingsException;
@@ -27,6 +31,8 @@ import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.util.ConvenientComboBoxRenderer;
+
+import de.bund.bfr.knime.paroa.strat.StratosphereNodeModel.METHODS;
 
 /**
  * <code>NodeDialog</code> for the "Stratosphere" Node.
@@ -43,45 +49,58 @@ public class StratosphereNodeDialog extends NodeDialogPane {
 
 	private String m_strat_location;
 	private String m_jar_location;
-	private String m_input_sales_location;
 	private String m_method;
+	private String m_input_sales_location;
 	private String m_input_outbreaks_location;
+	private String m_input_coordinates_location;
+	private Integer m_num_scenarios;
 	
-	private final int SPACE_HORIZ = 10;
+	private final int SPACE_HORIZ = 15;
 	private final int ITEM_HEIGHT = 20;		// height for any atomic element, e.g. the browse buttons
-	private final int PANEL_WIDTH = 560;	// total width for the whole panel/tab AND for each subcategory
-	private final int PANEL_MAIN_HEIGHT = 250; // total height for the whole panel/tab
+	private final int PANEL_WIDTH = 720;	// total width for the whole panel/tab AND for each subcategory
+	private final int PANEL_MAIN_HEIGHT = 350; // total height for the whole panel/tab
 	
 	/* change these values to adapt the sizes of the elements within the subcategories */
 	private final Dimension buttonDimension = new Dimension(80, ITEM_HEIGHT);
-	private final Dimension checkboxFieldDimension = new Dimension(210, ITEM_HEIGHT);
-	private final Dimension pathBoxDimensionDimension = new Dimension(240, ITEM_HEIGHT);
+	private final Dimension checkboxFieldDimension = new Dimension(300, ITEM_HEIGHT);
+	private final Dimension pathBoxDimensionDimension = new Dimension(250, ITEM_HEIGHT);
 	
 	private JComboBox<String> m_methodChoiceBox;
-	
-	private JCheckBox m_defaultInputSalesCheckbox;
+	private SpinnerNumberModel m_scenariosChoiceField;
+
 	private JCheckBox m_defaultJarCheckbox;
 	private JCheckBox m_defaultStratLocationCheckbox;
+	private JCheckBox m_defaultInputSalesCheckbox;
 	private JCheckBox m_defaultInputOutbreaksCheckbox;
+	private JCheckBox m_defaultInputCoordinatesCheckbox;
+	
+	// the follwing fields need to be able to be disabled
+	private JButton m_inputCoordinatesBrowseButton;
+	private JPanel m_scenariosPanel;
+	private JPanel m_inputCoordinatesPanel;
+	private JSpinner m_spinner;
 	
     private JComboBox<String> m_strat_location_selectBox;
     private JComboBox<String> m_jar_location_selectBox;
     private JComboBox<String> m_input_sales_selectBox;
     private JComboBox<String> m_input_outbreaks_selectBox;
+    private JComboBox<String> m_input_coordinates_selectBox;
 	
     protected StratosphereNodeDialog() {
         super();
     	JPanel stratosphereTab = new JPanel();
-    	stratosphereTab.setLayout(new GridLayout(5, 1, 5, 5));
+    	stratosphereTab.setLayout(new GridLayout(7, 1, 5, 5));
 
     	stratosphereTab.setMinimumSize(new Dimension(PANEL_WIDTH, PANEL_MAIN_HEIGHT));
     	stratosphereTab.setPreferredSize(new Dimension(PANEL_WIDTH, PANEL_MAIN_HEIGHT));
     	stratosphereTab.setMaximumSize(new Dimension(PANEL_WIDTH, PANEL_MAIN_HEIGHT));
         stratosphereTab.add(createMethodPanel());
+        stratosphereTab.add(createScenariosPanel());
         stratosphereTab.add(createStratosphereLocationPanel());
         stratosphereTab.add(createJarPanel());
         stratosphereTab.add(createInputPanel());
         stratosphereTab.add(createInputOutbreakPanel());   	
+        stratosphereTab.add(createInputCoordinatesPanel());   	
         
         super.addTab("Settings", stratosphereTab);
     }
@@ -93,9 +112,11 @@ public class StratosphereNodeDialog extends NodeDialogPane {
     		try {
 				m_input_sales_location = settings.getString(StratosphereNodeModel.CFGKEY_INPUT_SALES);
 				m_input_outbreaks_location = settings.getString(StratosphereNodeModel.CFGKEY_INPUT_OUTBREAKS);
+				m_input_coordinates_location = settings.getString(StratosphereNodeModel.CFGKEY_INPUT_COORDINATES);
 				m_strat_location = settings.getString(StratosphereNodeModel.CFGKEY_STRAT_PATH);
 				m_jar_location = settings.getString(StratosphereNodeModel.CFGKEY_JAR);
 				m_method = settings.getString(StratosphereNodeModel.CFGKEY_METHODS);
+				m_num_scenarios = settings.getInt(StratosphereNodeModel.CFGKEY_SCENARIOS);
 			} catch (InvalidSettingsException e) {
 				e.printStackTrace();
 			}
@@ -104,17 +125,31 @@ public class StratosphereNodeDialog extends NodeDialogPane {
 
 
     private void updatePanelValues() {
-    	if(m_input_sales_location != null)
+    	if(m_input_sales_location != null) {
     		m_defaultInputSalesCheckbox.setSelected(false);
-    	if(m_input_outbreaks_location != null)
+    		m_input_sales_selectBox.setSelectedItem(m_input_sales_location);
+    	}
+    	if(m_input_outbreaks_location != null){
     		m_defaultInputOutbreaksCheckbox.setSelected(false);
-    	if(m_strat_location != null)
+    		m_input_outbreaks_selectBox.setSelectedItem(m_input_outbreaks_location);
+    	}
+    	if(m_input_coordinates_location != null) {
+    		m_defaultInputCoordinatesCheckbox.setSelected(false);
+    		m_input_coordinates_selectBox.setSelectedItem(m_input_coordinates_location);
+    	}
+    	if(m_strat_location.equals(StratosphereNodeModel.DEFAULT_STRAT_PATH))
+    		m_defaultStratLocationCheckbox.setSelected(true);
+    	else 
     		m_defaultStratLocationCheckbox.setSelected(false);
-    		m_strat_location_selectBox.setSelectedItem(m_strat_location);
-    	if(m_jar_location != null)
+    	m_strat_location_selectBox.setSelectedItem(m_strat_location);
+    	if(m_jar_location != null) {
     		m_defaultJarCheckbox.setSelected(false);
+    		m_jar_location_selectBox.setSelectedItem(m_jar_location);
+    	}
     	if(m_method != null)
     		m_methodChoiceBox.setSelectedItem(m_method);		
+    	if(m_num_scenarios != null)
+    		m_scenariosChoiceField.setValue(m_num_scenarios);		
 	}
 
 	/** {@inheritDoc} */
@@ -131,10 +166,12 @@ public class StratosphereNodeDialog extends NodeDialogPane {
     	else
     		settings.addString(StratosphereNodeModel.CFGKEY_INPUT_OUTBREAKS, StratosphereNodeModel.DEFAULT_EMPTYSTRING);
  
-    	if(m_strat_location != null && !m_defaultStratLocationCheckbox.isSelected())
-    		settings.addString(StratosphereNodeModel.CFGKEY_STRAT_PATH, m_strat_location);
+    	if(m_input_coordinates_location != null && !m_defaultInputCoordinatesCheckbox.isSelected())
+    		settings.addString(StratosphereNodeModel.CFGKEY_INPUT_COORDINATES, m_input_coordinates_location);
     	else
-    		settings.addString(StratosphereNodeModel.CFGKEY_STRAT_PATH, StratosphereNodeModel.DEFAULT_STRAT_PATH);   
+    		settings.addString(StratosphereNodeModel.CFGKEY_INPUT_COORDINATES, StratosphereNodeModel.DEFAULT_EMPTYSTRING);
+    	
+   		settings.addString(StratosphereNodeModel.CFGKEY_STRAT_PATH, m_strat_location);
     	
     	if(m_methodChoiceBox.getSelectedItem() != null)
         	settings.addString(StratosphereNodeModel.CFGKEY_METHODS, (String)m_methodChoiceBox.getSelectedItem());
@@ -145,6 +182,11 @@ public class StratosphereNodeDialog extends NodeDialogPane {
        		settings.addString(StratosphereNodeModel.CFGKEY_JAR, m_jar_location);    
        	else
        		settings.addString(StratosphereNodeModel.CFGKEY_JAR, StratosphereNodeModel.DEFAULT_EMPTYSTRING);
+       	
+       	if(m_num_scenarios != null) 
+       		settings.addInt(StratosphereNodeModel.CFGKEY_SCENARIOS, m_num_scenarios);    
+       	else
+        	settings.addInt(StratosphereNodeModel.CFGKEY_SCENARIOS, StratosphereNodeModel.DEFAULT_SCENARIOS);
     }
     
     private JPanel createStratosphereLocationPanel() {
@@ -152,7 +194,6 @@ public class StratosphereNodeDialog extends NodeDialogPane {
         final JFileChooser locationChooser = createFileChooser(m_strat_location, JFileChooser.DIRECTORIES_ONLY);
 
         final JButton locationBrowseButton = new JButton("Browse...");
-        locationBrowseButton.setPreferredSize(buttonDimension);
         locationBrowseButton.setEnabled(false);
         
         locationBrowseButton.addActionListener(new ActionListener() {
@@ -161,7 +202,7 @@ public class StratosphereNodeDialog extends NodeDialogPane {
             	locationChooser.showOpenDialog(getPanel().getParent());
                 String currentLocation = locationChooser.getSelectedFile().getAbsolutePath();
                 if (currentLocation != null) {
-                	m_strat_location_selectBox.addItem(currentLocation);
+//                	m_strat_location_selectBox.addItem(currentLocation);
                 	m_strat_location_selectBox.setSelectedItem(currentLocation);
                 }
             }
@@ -173,11 +214,12 @@ public class StratosphereNodeDialog extends NodeDialogPane {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
             	m_strat_location = e.getItem().toString();
+            	System.out.println(m_strat_location);
             	locationChooser.setCurrentDirectory(new File(e.getItem().toString()));
 			}
 		});
         
-    	m_defaultStratLocationCheckbox = createNamedCheckbox("use default location");
+    	m_defaultStratLocationCheckbox = createNamedCheckbox("Use default (Linux) location");
         m_defaultStratLocationCheckbox.addItemListener(new ItemListener() {
 
             @Override
@@ -185,6 +227,8 @@ public class StratosphereNodeDialog extends NodeDialogPane {
                 boolean selected = m_defaultStratLocationCheckbox.isSelected();
                 locationBrowseButton.setEnabled(!selected);
                 m_strat_location_selectBox.setEnabled(!selected);
+                if(selected)
+                	m_strat_location_selectBox.setSelectedItem(StratosphereNodeModel.DEFAULT_STRAT_PATH);
             }
         });
                 
@@ -345,14 +389,66 @@ public class StratosphereNodeDialog extends NodeDialogPane {
     	return inputOutbreakPanel;
     }
     
+    private JPanel createInputCoordinatesPanel() {
+    	m_inputCoordinatesPanel = createGridLayoutPanel("Input coordinates file");
+    	final JFileChooser inputCoordinatesChooser = createFileChooser(m_input_coordinates_location, JFileChooser.FILES_ONLY) ;
+    	
+    	m_inputCoordinatesBrowseButton = new JButton("Browse...");
+    	m_inputCoordinatesBrowseButton.setEnabled(false);
+    	
+    	m_inputCoordinatesBrowseButton.addActionListener(new ActionListener() {
+    		@Override
+    		public void actionPerformed(final ActionEvent e) {
+    			inputCoordinatesChooser.showOpenDialog(getPanel().getParent());
+    			String currentLocation = inputCoordinatesChooser.getSelectedFile().getAbsolutePath();
+    			if (currentLocation != null) {
+    				m_input_coordinates_selectBox.addItem(currentLocation);
+    				m_input_coordinates_selectBox.setSelectedItem(currentLocation);
+    			}
+    		}
+    	});
+    	
+    	m_input_coordinates_selectBox = createPathSelectBox();
+    	m_input_coordinates_selectBox.addItemListener(new ItemListener() {
+    		@Override
+    		public void itemStateChanged(ItemEvent e) {
+    			m_input_coordinates_location = e.getItem().toString();
+    			inputCoordinatesChooser.setCurrentDirectory(new File(e.getItem().toString()));
+    		}
+    	});
+    	
+    	m_defaultInputCoordinatesCheckbox = createNamedCheckbox("Use standard variable (\"coordinates\")");
+    	m_defaultInputCoordinatesCheckbox.addItemListener(new ItemListener() {
+    		
+    		@Override
+    		public void itemStateChanged(final ItemEvent e) {
+    			boolean selected = m_defaultInputCoordinatesCheckbox.isSelected();
+    			m_inputCoordinatesBrowseButton.setEnabled(!selected);
+    			m_input_coordinates_selectBox.setEnabled(!selected);
+    		}
+    	});
+    	
+		m_defaultInputCoordinatesCheckbox.setEnabled(false);
+		m_input_coordinates_selectBox.setEnabled(false);
+		m_inputCoordinatesBrowseButton.setEnabled(false);
+		m_inputCoordinatesPanel.setEnabled(false);
+		
+    	m_inputCoordinatesPanel.add(m_defaultInputCoordinatesCheckbox);        
+    	m_inputCoordinatesPanel.add(Box.createHorizontalStrut(SPACE_HORIZ ));
+    	m_inputCoordinatesPanel.add(m_input_coordinates_selectBox);
+    	m_inputCoordinatesPanel.add(Box.createHorizontalStrut(SPACE_HORIZ ));
+    	m_inputCoordinatesPanel.add(m_inputCoordinatesBrowseButton);
+    	
+    	return m_inputCoordinatesPanel;
+    }
+    
     private JPanel createMethodPanel() {
     	JPanel methodPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     	methodPanel.setBorder(BorderFactory.createTitledBorder("Method(s)"));
         m_methodChoiceBox = new JComboBox<String>();
         m_methodChoiceBox.setPreferredSize(buttonDimension);
-        m_methodChoiceBox.addItem("BOTH");
-        m_methodChoiceBox.addItem("SPC");
-        m_methodChoiceBox.addItem("LBM");
+        m_methodChoiceBox.addItem(METHODS.LBM.name());
+        m_methodChoiceBox.addItem(METHODS.SYRJALA.name());
         
         m_methodChoiceBox.addActionListener(new ActionListener() {
 			
@@ -360,11 +456,47 @@ public class StratosphereNodeDialog extends NodeDialogPane {
 			public void actionPerformed(ActionEvent arg0) {
 				String choice = (String)m_methodChoiceBox.getSelectedItem();
 				m_method = choice;
-				System.out.println(m_method);
+				if(m_method.equals(METHODS.SYRJALA.name())) {
+					m_defaultInputCoordinatesCheckbox.setEnabled(true);
+					m_inputCoordinatesPanel.setEnabled(true);
+					m_scenariosPanel.setEnabled(false);
+					m_spinner.setEnabled(false);
+				}
+				else {
+					m_defaultInputCoordinatesCheckbox.setEnabled(false);
+					m_input_coordinates_selectBox.setEnabled(false);
+					m_inputCoordinatesBrowseButton.setEnabled(false);
+					m_inputCoordinatesPanel.setEnabled(false);
+					m_scenariosPanel.setEnabled(true);
+					m_spinner.setEnabled(true);
+				}
 			}
 		});
         methodPanel.add(m_methodChoiceBox);
     	return methodPanel;
+    }
+    
+    private JPanel createScenariosPanel() {
+    	m_scenariosPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    	m_spinner = new JSpinner();
+    	
+    	m_scenariosPanel.setBorder(BorderFactory.createTitledBorder("Number of Generated Outbreak Scenarios"));
+    	m_scenariosChoiceField = new SpinnerNumberModel();
+    	m_scenariosChoiceField.setMinimum(0);
+    	m_scenariosChoiceField.setStepSize(1);
+    	m_scenariosChoiceField.setValue(1);
+    	
+    	m_scenariosChoiceField.addChangeListener(new ChangeListener() {
+			
+			@Override
+			public void stateChanged(ChangeEvent arg0) {
+    			int choice = m_scenariosChoiceField.getNumber().intValue();
+    			m_num_scenarios = choice;
+			}
+		});
+    	m_spinner.setModel(m_scenariosChoiceField);
+    	m_scenariosPanel.add(m_spinner);
+    	return m_scenariosPanel;
     }
     
     private JPanel createGridLayoutPanel(String title) {

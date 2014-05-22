@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-logging-1.1.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/stratosphere-java-0.4-hadoop2.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
+	<classpathentry kind="src" path="lib"/>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="lib/stratosphere-clients-0.4-hadoop2.jar"/>
+	<classpathentry kind="lib" path="lib/stratosphere-compiler-0.4-hadoop2.jar"/>
+	<classpathentry kind="lib" path="lib/stratosphere-core-0.4-hadoop2.jar" sourcepath="lib/stratosphere-core-0.4-hadoop2.jar"/>
+	<classpathentry kind="lib" path="lib/stratosphere-runtime-0.4-hadoop2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

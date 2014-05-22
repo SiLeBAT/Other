@@ -7,7 +7,7 @@
     </shortDescription>
     
     <fullDescription>
-        <intro>Insert long description here...</intro>
+        <intro>For information about the nodes progress, please set the KNIMG GUI log level to 'INFO' (File > Preferences -> KNIME -> KNIME GUI)</intro>
         
         
         <option name="short name of first option (like in the dialog)">description of first option</option>
@@ -27,7 +27,7 @@
     <ports>
         <inPort index="0" name="Sales Data">Sales Data</inPort>
         <inPort index="1" name="Outbreak Data">Outbreak Data</inPort>
-        <outPort index="0" name="SPC Values">SPC Values</outPort>
+        <outPort index="0" name="MCL Ranks">MCL Ranks</outPort>
         <outPort index="1" name="LBM Values">LBM Values</outPort>
     </ports>    
     <views>

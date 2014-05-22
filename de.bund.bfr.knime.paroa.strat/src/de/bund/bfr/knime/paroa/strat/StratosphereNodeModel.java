@@ -3,6 +3,7 @@ package de.bund.bfr.knime.paroa.strat;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
@@ -14,6 +15,7 @@ import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.RowKey;
 import org.knime.core.data.def.DefaultRow;
 import org.knime.core.data.def.DoubleCell;
+import org.knime.core.data.def.IntCell;
 import org.knime.core.data.def.StringCell;
 import org.knime.core.node.BufferedDataContainer;
 import org.knime.core.node.BufferedDataTable;
@@ -25,6 +27,7 @@ import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.defaultnodesettings.SettingsModelInteger;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
@@ -44,18 +47,29 @@ public class StratosphereNodeModel extends NodeModel {
 			.getLogger(StratosphereNodeModel.class);
 
 	static final String CFGKEY_METHODS = "methods";
+	static final String CFGKEY_SCENARIOS = "scenarios";
 	static final String CFGKEY_JAR = "Stratosphere jar";
 	static final String CFGKEY_LOCAL = "local";
 	static final String CFGKEY_INPUT_SALES = "Sales Data Input";
 	static final String CFGKEY_INPUT_OUTBREAKS = "Outbreak Data Input";
+	static final String CFGKEY_INPUT_COORDINATES = "Coordinates Data Input";
 	static final String CFGKEY_STRAT_PATH = "Stratosphere Path";
 
 	static final String STRAT_OUTBREAKS = "/data/outbreaks/";
 	static final String STRAT_SALES = "/data/sales/";
-	static final String STRAT_RESULTS = "/data/results/";
+	static final String STRAT_RESULTS = "data/results/";
+	
+	static final String MSG_READING_DATA = "Reading paths and settings.";
+	static final String MSG_CONFIG_STRATO = "Configuring Stratosphere call.";
+	static final String MSG_STRATO_CON = "Establishing Stratosphere connection.";
+	static final String MSG_RUN_STRATO = "Executing Stratosphere operations.";
+	static final String MSG_STRATO_CALL = "Stratosphere call arguments: ";
+	static final String MSG_STRATO_FIN = "Stratosphere execution successful.";
+	static final String MSG_STRATO_ERROR = "Stratosphere execution could not be completed sucessfully.";
+
 
 	enum METHODS {
-		BOTH, SPC, LBM
+		SYRJALA, LBM
 	};
 
 	enum INPUTS {
@@ -63,12 +77,13 @@ public class StratosphereNodeModel extends NodeModel {
 	}; // order matters!
 
 	static final String DEFAULT_STRAT_PATH = "/opt/stratosphere/";
-	static final String DEFAULT_METHODS = METHODS.BOTH.name();
+	static final String DEFAULT_METHODS = METHODS.LBM.name();
 	static final String DEFAULT_EMPTYSTRING = "";
 	static final String DEFAULT_NULL = null;
+	static final int DEFAULT_SCENARIOS = 1;
 	
-	public static final String[] METHOD_CHIOCES = { METHODS.BOTH.name(),
-			METHODS.SPC.name(), METHODS.LBM.name() };
+	public static final String[] METHOD_CHIOCES = { METHODS.SYRJALA.name(),
+			METHODS.LBM.name() };
 	public static final String[] LOCAL = { "LOCAL", "CLUSTER" };
 
 	private final SettingsModelString m_methods = new SettingsModelString(
@@ -90,6 +105,14 @@ public class StratosphereNodeModel extends NodeModel {
 	private final SettingsModelString m_stratospherePath = new SettingsModelString(
 			StratosphereNodeModel.CFGKEY_STRAT_PATH,
 			StratosphereNodeModel.DEFAULT_STRAT_PATH);
+	
+	private final SettingsModelString m_inputCoordinates = new SettingsModelString(
+			StratosphereNodeModel.CFGKEY_INPUT_COORDINATES,
+			StratosphereNodeModel.DEFAULT_NULL);
+	
+	private final SettingsModelInteger m_scenarios = new SettingsModelInteger(
+			StratosphereNodeModel.CFGKEY_SCENARIOS,
+			StratosphereNodeModel.DEFAULT_SCENARIOS);
 
 	/**
 	 * Constructor for the node model.
@@ -111,92 +134,143 @@ public class StratosphereNodeModel extends NodeModel {
 	@Override
 	protected BufferedDataTable[] execute(final PortObject[] inData,
 			final ExecutionContext exec) throws Exception {
-
+		exec.setProgress(0.01, "Initializing...");
+		logger.info(MSG_READING_DATA);		
+		
 		String methodsChoice = m_methods.getStringValue();
 		String jarChoice = m_jar.getStringValue();
+		int numScenarios = m_scenarios.getIntValue();
 		String inputSalesChoice = m_inputSales.getStringValue();
 		String inputOutbreaksChoice = m_inputOutbreaks.getStringValue();
+		String inputCoordinatesChoice = m_inputCoordinates.getStringValue();
 		String stratospherePathChoice = m_stratospherePath.getStringValue();
-
-		logger.debug(methodsChoice);
-		logger.debug(jarChoice);
-		logger.debug(inputSalesChoice);
-
-		StratosphereConnection paroa_connection = new StratosphereConnection(stratospherePathChoice);
+		
+		logger.info(MSG_CONFIG_STRATO);
+		FileHandle paroaJar = new FileHandle(jarChoice);
+		StratosphereConnection paroa_connection = new StratosphereConnection(stratospherePathChoice, paroaJar, exec);
 		FileHandle paroa_inputOutbreaks = new FileHandle(inputOutbreaksChoice);
 		FileHandle paroa_inputSales = new FileHandle(inputSalesChoice);
-		FileHandle paroa_jars = new FileHandle(jarChoice);
-		FileHandle paroa_output = new FileHandle(stratospherePathChoice
-				+ STRAT_RESULTS + paroa_inputSales.hashCode());
+		FileHandle paroa_inputCoordinates;
+		if(methodsChoice.equals(METHODS.SYRJALA))
+			paroa_inputCoordinates = new FileHandle(inputCoordinatesChoice);
+		else
+			paroa_inputCoordinates = new FileHandle(DEFAULT_EMPTYSTRING);
+		FileHandle paroa_output = new FileHandle(stratospherePathChoice);
 
+		int numCases = getNumCases(inputOutbreaksChoice);
+		int numProducts = getNumProducts(inputSalesChoice);
+		
+		logger.info(MSG_STRATO_CON);
 		// here happens the action
 		paroa_connection.runParoa(
-				paroa_jars, 
-				paroa_inputOutbreaks,
 				paroa_inputSales, 
-				paroa_output
+				numProducts, 
+				paroa_inputOutbreaks,
+				numCases,
+				paroa_output,
+				numScenarios,
+				paroa_inputCoordinates
 		);
-
-		DataColumnSpec[] allColSpecs = new DataColumnSpec[3];
-		allColSpecs[0] = new DataColumnSpecCreator("Product", StringCell.TYPE)
-				.createSpec();
-		allColSpecs[1] = new DataColumnSpecCreator("Value", DoubleCell.TYPE)
-				.createSpec();
-		allColSpecs[2] = new DataColumnSpecCreator("Scenario", StringCell.TYPE)
-		.createSpec();
-		DataTableSpec outputSpec = new DataTableSpec(allColSpecs);
+		DataColumnSpec[] lbmColSpecs = new DataColumnSpec[2];
+		lbmColSpecs[0] = new DataColumnSpecCreator("Product", IntCell.TYPE)	.createSpec();
+		lbmColSpecs[1] = new DataColumnSpecCreator("Value", DoubleCell.TYPE)	.createSpec();
+		DataTableSpec lbmSpec = new DataTableSpec(lbmColSpecs);
+		
+		DataColumnSpec[] ranksColSpecs = new DataColumnSpec[2];
+		ranksColSpecs[0] = new DataColumnSpecCreator("Scenario", StringCell.TYPE)	.createSpec();
+		ranksColSpecs[1] = new DataColumnSpecCreator("Rank", IntCell.TYPE)	.createSpec();
+		DataTableSpec ranksSpec = new DataTableSpec(ranksColSpecs);
 
 		// reading results file
-		File resultFile = new File(paroa_output.getPath() + "scores.csv");
-		FileInputStream stream = new FileInputStream(resultFile);
-		InputStreamReader reader = new InputStreamReader(stream);
-		BufferedReader buffered_reader = new BufferedReader(reader);
+		File ranksFile = new File(paroa_output.getPath() + "ranks_" + generateOutputFileName(inputOutbreaksChoice, inputSalesChoice, numScenarios));
+		File lbmFile = new File(paroa_output.getPath() + "lbm_" + generateOutputFileName(inputOutbreaksChoice, inputSalesChoice));
+		
+		FileInputStream ranksStream = new FileInputStream(ranksFile);
+		InputStreamReader ranksReader = new InputStreamReader(ranksStream);
+		BufferedReader ranksBufferedReader = new BufferedReader(ranksReader);
+		
+		FileInputStream lbmStream = new FileInputStream(lbmFile);
+		InputStreamReader lbmReader = new InputStreamReader(lbmStream);
+		BufferedReader lbmBufferedReader = new BufferedReader(lbmReader);
 
-		BufferedDataContainer spcContainer = exec
-				.createDataContainer(outputSpec);
-		BufferedDataContainer lbmContainer = exec
-				.createDataContainer(outputSpec);
+		BufferedDataContainer ranksContainer = exec.createDataContainer(ranksSpec);
+		BufferedDataContainer lbmContainer = exec.createDataContainer(lbmSpec);
 
-		int keyIndex = 0;
-		String currentLine = buffered_reader.readLine();
-		while (currentLine != null) {
-			String[] lineValues = currentLine.split(";");
+		String ranks_currentLine = ranksBufferedReader.readLine();
+		while (ranks_currentLine != null) {
+			String[] lineValues = ranks_currentLine.split(";");
 
-			int method = Integer.parseInt(lineValues[0]);
-			RowKey key = new RowKey("i" + keyIndex);
-			DataCell[] cells = new DataCell[3];
-			cells[0] = new StringCell(lineValues[1]);
-			cells[1] = new DoubleCell(Double.parseDouble(lineValues[2]));
-			cells[2] = new StringCell(lineValues[3]);
-
+			RowKey key = new RowKey(lineValues[0]);
+			DataCell[] cells = new DataCell[2];
+			cells[0] = new StringCell(lineValues[0]);
+			cells[1] = new IntCell(Integer.parseInt(lineValues[1]));
 
 			DataRow row = new DefaultRow(key, cells);
-			if (method == 0)
-				spcContainer.addRowToTable(row);
-			else if (method == 1)
-				lbmContainer.addRowToTable(row);
-			else {
-				logger.debug("unknown method: " + method);
-			}
-			logger.info("ADGASDG");
+			ranksContainer.addRowToTable(row);
 			exec.checkCanceled();
-
-			currentLine = buffered_reader.readLine();
-			keyIndex++;
+			ranks_currentLine = ranksBufferedReader.readLine();
 		}
-
-		spcContainer.close();
+		
+		ranksContainer.close();
+		
+		String lbm_currentLine = lbmBufferedReader.readLine();
+		while (lbm_currentLine != null) {
+			String[] lineValues = lbm_currentLine.split(";");
+			
+			RowKey key = new RowKey(lineValues[0]);
+			DataCell[] cells = new DataCell[2];
+			cells[0] = new IntCell(Integer.parseInt(lineValues[0]));
+			cells[1] = new DoubleCell(Double.parseDouble(lineValues[1]));
+			
+			DataRow row = new DefaultRow(key, cells);
+			lbmContainer.addRowToTable(row);
+			exec.checkCanceled();
+			lbm_currentLine = lbmBufferedReader.readLine();
+		}
+		
 		lbmContainer.close();
-		BufferedDataTable spcTable = spcContainer.getTable();
+		exec.setProgress(0.99);
+		
+		BufferedDataTable ranksTable = ranksContainer.getTable();
 		BufferedDataTable lbmTable = lbmContainer.getTable();
 
 		BufferedDataTable[] output = new BufferedDataTable[2];
-		output[0] = spcTable;
+		output[0] = ranksTable;
 		output[1] = lbmTable;
 
 		return output;
 	}
 
+	private int getNumCases(String inputOutbreaksChoice) throws Exception {
+		// read outbreaks
+		final File outbreaks = new File(inputOutbreaksChoice.replace("file:/", ""));
+		final FileReader out_reader = new FileReader(outbreaks);
+		final BufferedReader b_reader = new BufferedReader(out_reader);
+		int sumCases = 0;
+		String currentLineO;
+		currentLineO = b_reader.readLine();
+		while (currentLineO != null) {
+		    sumCases += Integer.parseInt(currentLineO.split(",")[1]);
+		    currentLineO = b_reader.readLine();
+		}
+		b_reader.close();
+		
+		return sumCases;
+	}
+	
+	private int getNumProducts(String inputSalesChoice) throws Exception {
+		// read sales
+		final File sales = new File(inputSalesChoice.replace("file:/", ""));
+		final FileReader sales_reader = new FileReader(sales);
+		final BufferedReader sales_b_reader = new BufferedReader(sales_reader);
+		int sumProducts;
+		String currentLineSales;
+		currentLineSales = sales_b_reader.readLine();
+		sumProducts = currentLineSales.split("\t").length - 1;
+		sales_b_reader.close();
+		
+		return sumProducts;
+	}
 	/**
 	 * {@inheritDoc}
 	 */
@@ -231,9 +305,11 @@ public class StratosphereNodeModel extends NodeModel {
 
 		m_methods.saveSettingsTo(settings);
 		m_stratospherePath.saveSettingsTo(settings);
-		m_inputOutbreaks.saveSettingsTo(settings);
 		m_jar.saveSettingsTo(settings);
+		m_inputOutbreaks.saveSettingsTo(settings);
 		m_inputSales.saveSettingsTo(settings);
+		m_inputCoordinates.saveSettingsTo(settings);
+		m_scenarios.saveSettingsTo(settings);
 	}
 
 	/**
@@ -248,6 +324,8 @@ public class StratosphereNodeModel extends NodeModel {
 		m_jar.loadSettingsFrom(settings);
 		m_inputSales.loadSettingsFrom(settings);
 		m_inputOutbreaks.loadSettingsFrom(settings);
+		m_inputCoordinates.loadSettingsFrom(settings);
+		m_scenarios.loadSettingsFrom(settings);
 	}
 
 	/**
@@ -259,9 +337,11 @@ public class StratosphereNodeModel extends NodeModel {
 
 		m_methods.validateSettings(settings);
 		m_stratospherePath.validateSettings(settings);
-		m_inputOutbreaks.validateSettings(settings);
 		m_jar.validateSettings(settings);
+		m_inputOutbreaks.validateSettings(settings);
 		m_inputSales.validateSettings(settings);
+		m_inputCoordinates.validateSettings(settings);
+		m_scenarios.validateSettings(settings);
 
 	}
 
@@ -298,5 +378,30 @@ public class StratosphereNodeModel extends NodeModel {
 		// (e.g. data used by the views).
 
 	}
+	
 
+    private static String generateOutputFileName(String outbreaksFile, String salesFile) {
+		final String outputFile = extractFileName(outbreaksFile) + "_ON_" + extractFileName(salesFile) + ".txt";
+		return outputFile;
+    }
+    
+    private static String generateOutputFileName(String outbreaksFile, String salesFile, Integer numScenarios) {
+		final String outputFile = extractFileName(outbreaksFile) + "_ON_" + extractFileName(salesFile) + "_MTS_"
+			+ numScenarios + ".txt";
+		return outputFile;
+    }
+    private static String extractFileName(String path) {
+	int numSubstrings;
+	String file;
+	if(path.contains("\\")) {
+        	numSubstrings = path.split("\\").length;
+        	file = path.split("\\")[numSubstrings - 1];
+	}
+        else{
+    		numSubstrings = path.split("/").length;
+    		file = path.split("/")[numSubstrings - 1];
+        }
+	String fileBlank = file.split("\\.")[0];
+	return fileBlank;
+    }
 }
