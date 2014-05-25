@@ -28,7 +28,7 @@ public class StratosphereConnection {
 	private boolean connected;
 	private boolean verbose;
 	private static final String ENV_CONFIG_DIRECTORY = "/";
-	private static final String CONFIG_DIRECTORY_FALLBACK_1 = "/";
+	private static final String CONFIG_DIRECTORY_FALLBACK_1 = "D:/PROGS_DEV/eclipse_knime_2.9.4/";
 	private static final String CONFIG_DIRECTORY_FALLBACK_2 = "conf";
 	private ExecutionContext exec;
 
@@ -123,7 +123,7 @@ public class StratosphereConnection {
 	private int cliFrontend() {
 		File jarFile = null;
 		String entryPointClass = null;
-		String[] programArgs = null;
+		String[] programArgs = "hdfs://tenemhead2/user/markus.freitag/data/rewe_experiment_data.csv 580 hdfs://tenemhead2/user/markus.freitag/data/outbreak_p13_c30.csv 30 hdfs://tenemhead2/user/markus.freitag/results/ 10 -1".split(" ");
 		String address = null;
 		boolean wait = false;
 
@@ -169,8 +169,7 @@ public class StratosphereConnection {
 
 		JobExecutionResult execResult;
 		try {
-			execResult = client.run(null, wait);
-//			execResult = client.run(program, wait);
+			execResult = client.run(program.getPlanWithJars(), wait);
 		} catch (Exception e) {
 			return handleError(e);
 		} finally {
