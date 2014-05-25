@@ -82,9 +82,10 @@ public class Xsd2XmlNodeModel extends NodeModel {
     	Document doc = docBuilder.newDocument();
     	doc.setXmlStandalone(true);
 
-    	
-    	File xsdDatei = new File(xsdFile.getStringValue());
-    	File xmlDatei = new File(xmlFile.getStringValue());
+    	String xsd = xsdFile.getStringValue();//"C:\\Users\\Armin\\Desktop\\LIMS_43\\Tauschordner_AK_AW\\XML-Projekt_Reporting2013\\XMLschemas\\AMR Isolate Based Data Model.xsd";
+    	String xml = xmlFile.getStringValue();//"C:\\Users\\Armin\\Desktop\\LIMS_43\\Tauschordner_AK_AW\\XML-Projekt_Reporting2013\\XMLschemas\\AMR_Iso.xml";
+    	File xsdDatei = new File(xsd);
+    	File xmlDatei = new File(xml);
         DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder docBuilderXsd = docBuilderFactory.newDocumentBuilder();
         Document document = docBuilderXsd.parse(xsdDatei);
@@ -150,7 +151,7 @@ public class Xsd2XmlNodeModel extends NodeModel {
     	transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount","2");
     	DOMSource source = new DOMSource(doc);
     	 
-    	StreamResult result = new StreamResult(xmlFile.getStringValue()); // new File(theFolder + "Row3.xml")
+    	StreamResult result = new StreamResult(xml); // xmlFile.getStringValue()
     	 
     	// Show output on console during development
     	//StreamResult result = new StreamResult(System.out);
@@ -178,7 +179,7 @@ public class Xsd2XmlNodeModel extends NodeModel {
 
     	    // Parse the file. If errors found, they will be printed.
     		parser.setErrorHandler(new MyErrorHandler(this));
-    		parser.parse(xmlFile.getStringValue());
+    		parser.parse(xml); // xmlFile.getStringValue()
     	    }
     	catch (SAXException e) {
     	    e.printStackTrace();
@@ -187,7 +188,7 @@ public class Xsd2XmlNodeModel extends NodeModel {
     	
     	// Validation method 2
 
-    	Source schemaFile = new StreamSource(new File(xsdFile.getStringValue()));
+    	Source schemaFile = new StreamSource(new File(xsd)); // xsdFile.getStringValue()
         Source xmlDateiSource = new StreamSource(xmlDatei);
         SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         Schema schema = schemaFactory.newSchema(schemaFile);
