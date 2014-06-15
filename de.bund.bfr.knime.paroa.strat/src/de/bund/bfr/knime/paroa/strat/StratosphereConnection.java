@@ -35,8 +35,9 @@ public class StratosphereConnection {
     private static final String PREFIX_FILE_HDFS = "hdfs:";
     private ExecutionContext exec;
 
-    public StratosphereConnection(String stratospherePath, String jarPath, Boolean local, ExecutionContext exec) {
-	setRemoteAdress("tenemhead2" + ":" + "6123");
+    public StratosphereConnection(String stratospherePath, String jarPath, Boolean local, String remoteAddress,
+	    ExecutionContext exec) {
+	setRemoteAdress(remoteAddress);
 	setJarPath(jarPath);
 	setStratospherePath(stratospherePath);
 	setLocal(local);
@@ -102,7 +103,7 @@ public class StratosphereConnection {
 	else
 	    extendedString = PREFIX_FILE_HDFS + paroa_input_outbreaks;
 	return extendedString;
-	    
+
     }
 
     private void runLocally(ArrayList<String> arguments) {
@@ -237,7 +238,6 @@ public class StratosphereConnection {
 	return 0;
     }
 
-
     /**
      * Displays exceptions.
      * 
@@ -308,7 +308,7 @@ public class StratosphereConnection {
 	logger.info("Setting execution environment to local: " + local);
 	this.local = local;
     }
-    
+
     private String getRemoteAdress() {
 	return this.remoteAddress;
     }

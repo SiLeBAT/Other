@@ -49,6 +49,7 @@ public class StratosphereNodeModel extends NodeModel {
 
     static final String CFGKEY_METHODS = "methods";
     static final String CFGKEY_EXEC = "execution environment";
+    static final String CFGKEY_ADDRESS = "remote address";
     static final String CFGKEY_SCENARIOS = "scenarios";
     static final String CFGKEY_JAR = "Stratosphere jar";
     static final String CFGKEY_LOCAL = "local";
@@ -62,14 +63,16 @@ public class StratosphereNodeModel extends NodeModel {
     static final String STRAT_SALES = "/data/sales/";
     static final String STRAT_RESULTS = "data/results/";
 
-    static final String MSG_READING_DATA = "Reading paths and settings.";
+    static final String MSG_VALIDATING_DATA = "Validating paths and settings.";
     static final String MSG_CONFIG_STRATO = "Configuring Stratosphere call.";
     static final String MSG_STRATO_CON = "Establishing Stratosphere connection.";
     static final String MSG_RUN_STRATO = "Executing Stratosphere operations.";
     static final String MSG_STRATO_CALL = "Stratosphere call arguments: ";
     static final String MSG_STRATO_FIN = "Stratosphere execution successful.";
     static final String MSG_STRATO_ERROR = "Stratosphere execution could not be completed sucessfully.";
+    static final String MSG_PROC_COMPL = "Processing complete. Getting results.";
 
+    // order matters!
     enum METHODS {
 	SYRJALA, LBM
     };
@@ -80,7 +83,7 @@ public class StratosphereNodeModel extends NodeModel {
 
     enum INPUTS {
 	SALES, OUTBREAKS
-    }; // order matters!
+    };
 
     static final String DEFAULT_STRAT_PATH = "/opt/stratosphere/";
     static final String DEFAULT_METHOD = METHODS.LBM.name();
@@ -88,6 +91,8 @@ public class StratosphereNodeModel extends NodeModel {
     static final String DEFAULT_EMPTYSTRING = "";
     static final String DEFAULT_NULL = null;
     static final int DEFAULT_SCENARIOS = 1;
+    private String m_methodsChoice;
+    private Boolean m_execChoice;
 
     public static final String[] METHOD_CHIOCES = { METHODS.SYRJALA.name(),
 	    METHODS.LBM.name() };
@@ -100,6 +105,10 @@ public class StratosphereNodeModel extends NodeModel {
     private final SettingsModelBoolean m_exec = new SettingsModelBoolean(
 	    StratosphereNodeModel.CFGKEY_EXEC,
 	    StratosphereNodeModel.DEFAULT_EXEC);
+
+    private final SettingsModelString m_address = new SettingsModelString(
+	    StratosphereNodeModel.CFGKEY_ADDRESS,
+	    StratosphereNodeModel.DEFAULT_EMPTYSTRING);
 
     private final SettingsModelString m_jar = new SettingsModelString(
 	    StratosphereNodeModel.CFGKEY_JAR,
@@ -146,35 +155,39 @@ public class StratosphereNodeModel extends NodeModel {
     protected BufferedDataTable[] execute(final PortObject[] inData,
 	    final ExecutionContext exec) throws Exception {
 	exec.setProgress(0.01, "Initializing...");
-	logger.info(MSG_READING_DATA);
+	this.m_methodsChoice = m_methods.getStringValue();
+	this.m_execChoice = m_exec.getBooleanValue();
+
+	logger.info(MSG_VALIDATING_DATA);
+	validateFileInputs();
 
 	int numScenarios = m_scenarios.getIntValue();
-//	String methodsChoice = m_methods.getStringValue();
-	boolean execChoice = m_exec.getBooleanValue();
 	String jarChoice = m_jar.getStringValue();
 	String inputSalesChoice = m_inputSales.getStringValue();
 	String inputOutbreaksChoice = m_inputOutbreaks.getStringValue();
 	String inputCoordinatesChoice = m_inputCoordinates.getStringValue();
 	String stratospherePathChoice = m_stratospherePath.getStringValue();
+	String remoteAddress = m_address.getStringValue();
 
-	// TODO: more
-	checkPath(m_inputSales);
-	
 	logger.info(MSG_CONFIG_STRATO);
 	StratosphereConnection paroa_connection = new StratosphereConnection(
-		stratospherePathChoice, jarChoice, execChoice, exec);
-//	FileHandle paroa_output = new FileHandle(stratospherePathChoice);
+		stratospherePathChoice, jarChoice, this.m_execChoice, remoteAddress, exec);
 	FileHandle paroa_output = new FileHandle("C:/Users/mfreitag/Dropbox/MasterThesis/data/results/");
 
 	int numCases = getNumCases(inputOutbreaksChoice);
 	int numProducts = getNumProducts(inputSalesChoice);
 
-	logger.info(MSG_STRATO_CON);
+	/* stratosphere part */
 	// here happens the action
-	// TODO EXEC
+	logger.info(MSG_STRATO_CON);
 	paroa_connection.runParoa(EXEC.REMOTE, inputSalesChoice, numProducts,
 		inputOutbreaksChoice, numCases, stratospherePathChoice, numScenarios,
 		inputCoordinatesChoice);
+
+	/* processing results */
+	logger.info(MSG_PROC_COMPL);
+
+	// specs for lbm column
 	DataColumnSpec[] lbmColSpecs = new DataColumnSpec[2];
 	lbmColSpecs[0] = new DataColumnSpecCreator("Product", IntCell.TYPE)
 		.createSpec();
@@ -182,6 +195,7 @@ public class StratosphereNodeModel extends NodeModel {
 		.createSpec();
 	DataTableSpec lbmSpec = new DataTableSpec(lbmColSpecs);
 
+	// specs for mcl ranks column
 	DataColumnSpec[] ranksColSpecs = new DataColumnSpec[2];
 	ranksColSpecs[0] = new DataColumnSpecCreator("Scenario",
 		StringCell.TYPE).createSpec();
@@ -189,11 +203,11 @@ public class StratosphereNodeModel extends NodeModel {
 		.createSpec();
 	DataTableSpec ranksSpec = new DataTableSpec(ranksColSpecs);
 
-	// reading results file
+	// reading results files
 	File ranksFile = new File(paroa_output.getPath()
 		+ "ranks_"
 		+ generateOutputFileName(inputOutbreaksChoice,
-			inputSalesChoice, numScenarios, false)	);
+			inputSalesChoice, numScenarios, false));
 	File lbmFile = new File(
 		paroa_output.getPath()
 			+ "lbm_"
@@ -247,6 +261,7 @@ public class StratosphereNodeModel extends NodeModel {
 	lbmContainer.close();
 	exec.setProgress(0.99);
 
+	// configuring output table
 	BufferedDataTable ranksTable = ranksContainer.getTable();
 	BufferedDataTable lbmTable = lbmContainer.getTable();
 
@@ -255,6 +270,24 @@ public class StratosphereNodeModel extends NodeModel {
 	output[1] = lbmTable;
 
 	return output;
+    }
+
+    private void validateFileInputs() throws InvalidSettingsException {
+	// validate files
+	checkPath(m_inputSales);
+	checkPath(m_inputOutbreaks);
+
+	// validate other paths
+	checkPath(m_jar);
+
+	// validate variable options' paths
+	if (this.m_methodsChoice.equals(METHODS.SYRJALA.name()))
+	    checkPath(m_inputCoordinates);
+	if (this.m_execChoice) {
+	    checkPath(m_stratospherePath);
+	}
+	else
+	    checkPath(m_stratosphereConfiguration);
     }
 
     private int getNumCases(String inputOutbreaksChoice) throws Exception {
@@ -330,6 +363,7 @@ public class StratosphereNodeModel extends NodeModel {
 	m_inputSales.saveSettingsTo(settings);
 	m_inputCoordinates.saveSettingsTo(settings);
 	m_scenarios.saveSettingsTo(settings);
+	m_address.saveSettingsTo(settings);
     }
 
     /**
@@ -348,6 +382,7 @@ public class StratosphereNodeModel extends NodeModel {
 	m_inputOutbreaks.loadSettingsFrom(settings);
 	m_inputCoordinates.loadSettingsFrom(settings);
 	m_scenarios.loadSettingsFrom(settings);
+	m_address.loadSettingsFrom(settings);
     }
 
     /**
@@ -366,18 +401,19 @@ public class StratosphereNodeModel extends NodeModel {
 	m_inputSales.validateSettings(settings);
 	m_inputCoordinates.validateSettings(settings);
 	m_scenarios.validateSettings(settings);
+	m_address.validateSettings(settings);
 
     }
 
-    private void checkPath(SettingsModelString filePath) throws InvalidSettingsException {
-	String path = filePath.getStringValue();
+    private void checkPath(SettingsModelString settings) throws InvalidSettingsException {
+	String path = settings.getStringValue();
 
 	if (path == null) {
-	    throw new InvalidSettingsException("no file given");
+	    throw new InvalidSettingsException("path is null: " + settings.getKey());
 	}
 	File testFile = new File(path);
 	if (!testFile.exists())
-	    throw new InvalidSettingsException(CFGKEY_INPUT_SALES);
+	    throw new InvalidSettingsException("path leads to no file: " + settings.getKey());
     }
 
     /**
@@ -427,7 +463,6 @@ public class StratosphereNodeModel extends NodeModel {
 		+ numScenarios + gs + ".txt";
 	return outputFile;
     }
-
 
     private static String extractFileName(String path) {
 	int numSubstrings;

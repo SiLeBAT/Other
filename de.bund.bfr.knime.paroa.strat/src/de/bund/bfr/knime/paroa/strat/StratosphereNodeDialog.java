@@ -8,6 +8,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.File;
 
 import javax.swing.BorderFactory;
@@ -18,6 +20,7 @@ import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
+import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -104,6 +107,10 @@ public class StratosphereNodeDialog extends NodeDialogPane {
     private JComboBox<String> m_input_outbreaks_selectBox;
     private JComboBox<String> m_input_coordinates_selectBox;
 
+    private JTextField m_stratRemoteAddressField;
+
+    protected String m_stratRemoteAddress;
+
     protected StratosphereNodeDialog() {
 	super();
 	JPanel dataSettingsTab = new JPanel();
@@ -153,6 +160,7 @@ public class StratosphereNodeDialog extends NodeDialogPane {
 		    .getString(StratosphereNodeModel.CFGKEY_JAR);
 	    m_method = settings.getString(StratosphereNodeModel.CFGKEY_METHODS);
 	    m_exec = settings.getBoolean(StratosphereNodeModel.CFGKEY_EXEC);
+	    m_stratRemoteAddress = settings.getString(StratosphereNodeModel.CFGKEY_ADDRESS);
 	    m_num_scenarios = settings
 		    .getInt(StratosphereNodeModel.CFGKEY_SCENARIOS);
 	} catch (InvalidSettingsException e) {
@@ -218,6 +226,9 @@ public class StratosphereNodeDialog extends NodeDialogPane {
 	else
 	    m_stratExecChoiceBox.setSelectedItem(EXEC.REMOTE.name());
 
+	if (m_stratRemoteAddress != null && !m_stratRemoteAddress.equals(StratosphereNodeModel.DEFAULT_EMPTYSTRING))
+	    m_stratRemoteAddressField.setText(m_stratRemoteAddress);
+
 	if (m_num_scenarios != null)
 	    m_scenariosChoiceField.setValue(m_num_scenarios);
     }
@@ -252,6 +263,8 @@ public class StratosphereNodeDialog extends NodeDialogPane {
 
 	settings.addString(StratosphereNodeModel.CFGKEY_METHODS, m_method);
 	settings.addBoolean(StratosphereNodeModel.CFGKEY_EXEC, m_exec);
+	settings.addString(StratosphereNodeModel.CFGKEY_ADDRESS, m_stratRemoteAddress);
+
 	settings.addString(StratosphereNodeModel.CFGKEY_STRAT_PATH,
 		m_strat_location);
 
@@ -627,6 +640,8 @@ public class StratosphereNodeDialog extends NodeDialogPane {
 
     private JPanel createStratExecPanel() {
 	JPanel execPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+	final JPanel addressPanel = new JPanel();
+
 	execPanel.setBorder(BorderFactory.createTitledBorder("Environment"));
 	m_stratExecChoiceBox = new JComboBox<String>();
 	m_stratExecChoiceBox.setPreferredSize(buttonDimension);
@@ -642,17 +657,41 @@ public class StratosphereNodeDialog extends NodeDialogPane {
 		    m_exec = true;
 		    switchPanel(m_stratosphereLocationPanel, true);
 		    switchPanel(m_stratosphereConfigurationPanel, false);
+		    switchPanel(addressPanel, false);
 		    updatePanelValues();
 		}
 		else {
 		    m_exec = false;
 		    switchPanel(m_stratosphereLocationPanel, false);
 		    switchPanel(m_stratosphereConfigurationPanel, true);
+		    switchPanel(addressPanel, true);
 		    updatePanelValues();
 		}
 	    }
 	});
+
+	m_stratRemoteAddressField = new JTextField("address:port");
+	m_stratRemoteAddressField.setPreferredSize(pathBoxDimensionDimension);
+	m_stratRemoteAddressField.addKeyListener(new KeyListener() {
+
+	    @Override
+	    public void keyTyped(KeyEvent arg0) {
+		m_stratRemoteAddress = m_stratRemoteAddressField.getText();
+	    }
+
+	    @Override
+	    public void keyReleased(KeyEvent arg0) {
+	    }
+
+	    @Override
+	    public void keyPressed(KeyEvent arg0) {
+	    }
+	});
+
+	addressPanel.add(m_stratRemoteAddressField);
 	execPanel.add(m_stratExecChoiceBox);
+	execPanel.add(Box.createHorizontalStrut(SPACE_HORIZ));
+	execPanel.add(addressPanel);
 	return execPanel;
     }
 
