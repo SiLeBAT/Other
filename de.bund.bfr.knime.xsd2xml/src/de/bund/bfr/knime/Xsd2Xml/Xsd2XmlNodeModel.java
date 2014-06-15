@@ -1,7 +1,13 @@
 package de.bund.bfr.knime.Xsd2Xml;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -28,6 +34,8 @@ import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.node.workflow.NodeContainer;
+import org.knime.core.node.workflow.WorkflowManager;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -158,6 +166,9 @@ public class Xsd2XmlNodeModel extends NodeModel {
     	 
     	transformer.transform(source, result);
     	System.out.println("Xml File saved!");
+    	
+    	saveWF(exec, xml);
+    	System.out.println("Workflow saved!");
     	 
 
     	// Validation method 1
@@ -206,6 +217,62 @@ public class Xsd2XmlNodeModel extends NodeModel {
         
 		return null;
     }
+	private Integer saveWF(final ExecutionContext exec, String xmlFile) throws Exception {
+		Integer result = null;
+		for (NodeContainer nc : WorkflowManager.ROOT.getNodeContainers()) {
+			if (nc instanceof WorkflowManager) {
+				WorkflowManager wfm = (WorkflowManager) nc;
+				for (Xsd2XmlNodeModel m : wfm.findNodes(Xsd2XmlNodeModel.class, true).values()) {
+					if (m == this) {
+						File wfdir = wfm.getWorkingDir().getFile();
+						wfm.save(wfdir, exec, true);
+						String zipfile = xmlFile + ".wf_" + System.currentTimeMillis() + ".zip";
+						zipDirectory(wfdir, zipfile);
+					}
+				}
+			}
+		}
+		return result;
+	}
+	private void zipDirectory(File dir, String zipDirName) {
+		try {
+			List<String> filesListInDir = populateFilesList(null, dir);
+			//now zip files one by one
+			//create ZipOutputStream to write to the zip file
+			FileOutputStream fos = new FileOutputStream(zipDirName);
+			ZipOutputStream zos = new ZipOutputStream(fos);
+			for (String filePath : filesListInDir) {
+				//for ZipEntry we need to keep only relative file path, so we used substring on absolute path
+				ZipEntry ze = new ZipEntry(filePath.substring(dir.getParentFile().getAbsolutePath().length() + 1, filePath.length()));
+				zos.putNextEntry(ze);
+				//read the file and write to ZipOutputStream
+				FileInputStream fis = new FileInputStream(filePath);
+				byte[] buffer = new byte[1024];
+				int len;
+				while ((len = fis.read(buffer)) > 0) {
+					zos.write(buffer, 0, len);
+				}
+				zos.closeEntry();
+				fis.close();
+			}
+			zos.close();
+			fos.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	private List<String> populateFilesList(List<String> filesListInDir, File dir) throws IOException {
+		if (filesListInDir == null) filesListInDir = new ArrayList<String>();
+		File[] files = dir.listFiles();
+		for (File file : files) {
+			if (file.isFile()) {
+				if (!file.getName().equals(".knimeLock")) filesListInDir.add(file.getAbsolutePath());
+			} else {
+				filesListInDir = populateFilesList(filesListInDir, file);
+			}
+		}
+		return filesListInDir;
+	}
 
     /**
      * {@inheritDoc}
