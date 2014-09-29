@@ -6,5 +6,10 @@
 	<classpathentry kind="lib" path="war/WEB-INF/lib/smartgwt-skins.jar"/>
 	<classpathentry kind="lib" path="war/WEB-INF/lib/smartgwt.jar"/>
 	<classpathentry kind="con" path="com.google.appengine.eclipse.core.GAE_CONTAINER"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/gwt-links-network.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/gwt-visualization.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/gwt-d3-api-1.0.1.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/gwt-d3-js-3.3.10.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/ProtovisGWT-0.4.1.jar"/>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>
