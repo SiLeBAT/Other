@@ -23,6 +23,7 @@
   <inherits name='com.chap.links.Network'/>
   <inherits name='com.github.gwtd3.D3' />
   <inherits name='org.thechiselgroup.choosel.protovis.ProtovisGWT'/>
+  <inherits name='org.gwtopenmaps.openlayers.OpenLayers'/>
   
   <!-- Specify the app entry point class.                         -->
   <entry-point class='de.bund.bfr.gwt.krise.client.De_bund_bfr_gwt_krise'/>

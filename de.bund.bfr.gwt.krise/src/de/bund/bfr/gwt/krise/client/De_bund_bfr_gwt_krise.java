@@ -1,5 +1,6 @@
 package de.bund.bfr.gwt.krise.client;
 
+import com.github.gwtd3.api.D3;
 import com.google.gwt.core.client.EntryPoint;  
 import com.google.gwt.core.client.JsArray;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -7,6 +8,8 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import de.bund.bfr.gwt.krise.shared.MyTracingData;
 
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.visualization.client.DataTable;
 import com.google.gwt.visualization.client.Selection;
@@ -19,6 +22,10 @@ import com.chap.links.client.Network;
  */
 public class De_bund_bfr_gwt_krise implements EntryPoint {
 
+	public void onModuleLoad() {
+		RootLayoutPanel.get().add(new MyTracingMap());
+	}
+	
 	public void onModuleLoad2() {
 		VLayout vLayout = new VLayout();
 		vLayout.setShowEdges(true);  
@@ -50,10 +57,10 @@ public class De_bund_bfr_gwt_krise implements EntryPoint {
         vLayout.draw();  
     }  
 	
-    public void onModuleLoad() {
+    public void onModuleLoad4() {
     	RootPanel.get().add(new ForceDirectedLayout());
-    	//final Label versionLabel = new Label("d3.js current version: " + D3.version());
-  	  	//RootPanel.get().add(versionLabel);
+    	final Label versionLabel = new Label("d3.js current version: " + D3.version());
+  	  	RootPanel.get().add(versionLabel);
     }
 
     Network network = null;
