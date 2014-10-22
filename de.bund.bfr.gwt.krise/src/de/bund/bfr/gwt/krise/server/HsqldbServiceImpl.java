@@ -12,8 +12,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 import de.bund.bfr.gwt.krise.client.HsqldbService;
+import de.bund.bfr.gwt.krise.shared.Delivery;
 import de.bund.bfr.gwt.krise.shared.MyField;
 import de.bund.bfr.gwt.krise.shared.MyTracingData;
+import de.bund.bfr.gwt.krise.shared.MyTracingGISData;
+import de.bund.bfr.gwt.krise.shared.Station;
 
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
@@ -23,6 +26,46 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 @SuppressWarnings("serial")
 public class HsqldbServiceImpl extends RemoteServiceServlet implements HsqldbService {
 
+	public MyTracingGISData getGISData(String searchString) throws IllegalArgumentException {
+		MyTracingGISData mtd = new MyTracingGISData();
+		try {
+			LinkedHashMap<Integer, Station> stations = new LinkedHashMap<Integer, Station>(); 
+			ResultSet rs = getResultSet("SELECT \"ID\",\"Name\" FROM \"Station\"" + (searchString.trim().isEmpty() ? "" : " WHERE LCASE(\"Name\") LIKE '%" + searchString.toLowerCase() + "%'"));
+			if (rs != null && rs.first()) {
+				do {
+					stations.put(rs.getInt("ID"), new Station(rs.getInt("ID"), rs.getString("Name"), 13 + 50*Math.random(), 52 + 50*Math.random()));
+				} while (rs.next());
+				mtd.setStations(stations);
+			}
+				
+			rs = getResultSet("SELECT * FROM " + delimitL("Lieferungen") + " LEFT JOIN " + delimitL("Chargen") + " ON " + delimitL("Lieferungen")
+					+ "." + delimitL("Charge") + "=" + delimitL("Chargen") + "." + delimitL("ID") + " LEFT JOIN " + delimitL("Produktkatalog")
+					+ " ON " + delimitL("Chargen") + "." + delimitL("Artikel") + "=" + delimitL("Produktkatalog") + "." + delimitL("ID")
+					+ " ORDER BY " + delimitL("Produktkatalog") + "." + delimitL("ID"));
+			if (rs != null && rs.first()) {
+				HashSet<Delivery> deliveries = new HashSet<Delivery>(); 
+				do {
+					int lieferID = rs.getInt("Lieferungen.ID");
+					int from = rs.getInt("Produktkatalog.Station");
+					int to = rs.getInt("Lieferungen.Empfänger");
+					if (stations.containsKey(from) || stations.containsKey(to)) {
+						deliveries.add(new Delivery(lieferID, from, to));
+						if (!stations.containsKey(from)) {
+							ResultSet rs2 = getResultSet("SELECT \"Name\" FROM \"Station\" WHERE \"ID\" = " + from);
+							stations.put(from, new Station(from, rs2.getString("Name"), 13 + 50*Math.random(), 52 + 50*Math.random()));
+						}
+						if (!stations.containsKey(to)) {
+							ResultSet rs2 = getResultSet("SELECT \"Name\" FROM \"Station\" WHERE \"ID\" = " + to);
+							stations.put(from, new Station(to, rs2.getString("Name"), 13 + 50*Math.random(), 52 + 50*Math.random()));
+						}
+					}
+				} while (rs.next());
+				mtd.setDeliveries(deliveries);
+			}
+		}
+		catch (Exception e) {e.printStackTrace();}
+		return mtd;
+	}
 	public MyTracingData getData(int table, String id) throws IllegalArgumentException {
 		MyTracingData mtd = new MyTracingData();
 		ResultSet rs = null;
@@ -160,4 +203,8 @@ public class HsqldbServiceImpl extends RemoteServiceServlet implements HsqldbSer
 		catch (Exception e) {e.printStackTrace();}
 		return ergebnis;
 	}	
+	public String delimitL(final String name) {
+		String newName = name.replace("\"", "\"\"");
+		return "\"" + newName + "\"";
+	}
 }

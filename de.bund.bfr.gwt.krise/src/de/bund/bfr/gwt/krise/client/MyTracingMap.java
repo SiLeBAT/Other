@@ -1,6 +1,8 @@
 package de.bund.bfr.gwt.krise.client;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.gwtopenmaps.openlayers.client.LonLat;
@@ -10,7 +12,6 @@ import org.gwtopenmaps.openlayers.client.MapWidget;
 import org.gwtopenmaps.openlayers.client.Projection;
 import org.gwtopenmaps.openlayers.client.Style;
 import org.gwtopenmaps.openlayers.client.control.SelectFeature;
-import org.gwtopenmaps.openlayers.client.event.MapZoomListener;
 import org.gwtopenmaps.openlayers.client.event.VectorFeatureSelectedListener;
 import org.gwtopenmaps.openlayers.client.feature.VectorFeature;
 import org.gwtopenmaps.openlayers.client.geometry.LineString;
@@ -18,16 +19,63 @@ import org.gwtopenmaps.openlayers.client.geometry.Point;
 import org.gwtopenmaps.openlayers.client.layer.OSM;
 import org.gwtopenmaps.openlayers.client.layer.Vector;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Window;
+import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
+import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
+import com.smartgwt.client.widgets.form.fields.events.KeyUpEvent;
+import com.smartgwt.client.widgets.form.fields.events.KeyUpHandler;
+
+import de.bund.bfr.gwt.krise.shared.Delivery;
+import de.bund.bfr.gwt.krise.shared.MyTracingGISData;
+import de.bund.bfr.gwt.krise.shared.Station;
 
 public class MyTracingMap extends MapWidget {
 
 	private static final Projection DEFAULT_PROJECTION = new Projection("EPSG:4326"); //transform lonlat (provided in EPSG:4326) to OSM coordinate system (the map projection)
+	private static Projection MAP_PROJ = null;
 	static MapOptions defaultMapOptions = new MapOptions();
 
+	private final HsqldbServiceAsync hsqldbService;
+
+	private Vector stationLayer = null, deliveryLayer = null;
+	private SelectFeature selectFeature = null;
+	
+	private LinkedHashMap<Integer, Station> stations = null;
+
 	public MyTracingMap() {
+		this((HsqldbServiceAsync) GWT.create(HsqldbService.class));
+	}
+
+	public MyTracingMap(HsqldbServiceAsync hsqldbService) {
 		super("100%", "100%", defaultMapOptions);
+		this.hsqldbService = hsqldbService;
 		buildPanel();
+		fetchMyData("");
+	}
+
+	public void fillMap(MyTracingGISData result) {
+		if (result != null) {
+			stationLayer.removeAllFeatures();
+			stations = result.getStations();
+			Window.alert(stations.size()+"");
+			for (Station station : stations.values()) {
+				addStation(station);
+			}
+			deliveryLayer.removeAllFeatures();
+			HashSet<Delivery> deliveries = result.getDeliveries();
+			for (Delivery delivery : deliveries) {
+				//addDelivery(delivery.getId(), delivery.getFrom(), delivery.getTo());
+			}
+		}
+	}
+
+	private void fetchMyData(String station) {
+		MyCallbackGIS myCallback = new MyCallbackGIS(this);
+		hsqldbService.getGISData(station, myCallback);
 	}
 
 	private void buildPanel() {
@@ -37,63 +85,128 @@ public class MyTracingMap extends MapWidget {
 		osmMapnik.setIsBaseLayer(true);
 		//osmCycle.setIsBaseLayer(true);
 
-		final Map theMap = this.getMap();
+		Map theMap = this.getMap();
 		theMap.addLayer(osmMapnik);
 		//theMap.addLayer(osmCycle);
-		LonLat lonLat = new LonLat(13.36438, 52.40967);
-		lonLat.transform(DEFAULT_PROJECTION.getProjectionCode(), theMap.getProjection()); //transform lonlat to OSM coordinate system
-		theMap.setCenter(lonLat, 7);
-		final Projection mapProj = new Projection(theMap.getProjection());
+		MAP_PROJ = new Projection(theMap.getProjection());
 
-		// Add Stations
-		int numStations = 10;
-		final Vector stationLayer = new Vector("stations");
+		// Add Layers
+		stationLayer = new Vector("stations");
+		deliveryLayer = new Vector("deliveries");
+		theMap.addLayer(stationLayer);
+		theMap.addLayer(deliveryLayer);
+
 		// Add select feature for the point
-		final SelectFeature selectFeature = new SelectFeature(stationLayer);
+		selectFeature = new SelectFeature(stationLayer);
 		selectFeature.setAutoActivate(true);
 		//selectFeature.setMultiple(true);
 		theMap.addControl(selectFeature);
-
-		for (int i = 0; i < numStations; i++) {
-			Point point = new Point(13.36438 + i, 52.40967);
-			point.transform(DEFAULT_PROJECTION, mapProj);
-			final VectorFeature vf = new VectorFeature(point, createStationStyle("BfR"+i));
-			vf.setFeatureId("" + i);
-			stationLayer.addFeature(vf);
-			/*
-			theMap.addMapZoomListener(new MapZoomListener() {
-				public void onMapZoom(MapZoomEvent eventObject) {
-					//vf.getGeometry().transform(DEFAULT_PROJECTION, mapProj);
-					vf.redrawParent();
-				}
-			});
-			*/
-			stationLayer.addVectorFeatureSelectedListener(new VectorFeatureSelectedListener() {
-				public void onFeatureSelected(FeatureSelectedEvent eventObject) {
-					VectorFeature[] svf = stationLayer.getSelectedFeatures();
-					if (svf != null) {
-						for (int i = 0; i < svf.length; i++) {
-							Window.alert("The vector is now selected.\nIt will get de-selected when closing this popup.\n" + svf[i].getFeatureId());
-							selectFeature.unSelect(svf[i]);
-						}
+		stationLayer.addVectorFeatureSelectedListener(new VectorFeatureSelectedListener() {
+			public void onFeatureSelected(FeatureSelectedEvent eventObject) {
+				VectorFeature[] svf = stationLayer.getSelectedFeatures();
+				if (svf != null) {
+					for (int i = 0; i < svf.length; i++) {
+						Window.alert("The vector is now selected.\nIt will get de-selected when closing this popup.\n" + svf[i].getFeatureId());
+						selectFeature.unSelect(svf[i]);
 					}
 				}
-			});
+			}
+		});
+
+		stations = new LinkedHashMap<Integer, Station>();
+		// Add Stations
+		for (int i = 0; i < 10; i++) {
+			Station s = new Station(i, "BfR" + i, 13.36438 + i, 52.40967);
+			stations.put(-i, s);
+			addStation(s);
 		}
-		theMap.addLayer(stationLayer);
 
 		// Add Deliveries
-		Vector deliveryLayer = new Vector("deliveries");
-		List<Point> pointList = getLink(new Point(17.36438, 52.40967), new Point(13.36438, 52.40967), mapProj);
-		LineString geometry = new LineString(pointList.toArray(new Point[pointList.size()]));
-		Style style = new Style();
-		style.setStrokeColor("#0033ff");
-		style.setStrokeWidth(5);
-		deliveryLayer.addFeature(new VectorFeature(geometry, style));
-		theMap.addLayer(deliveryLayer);
+		addDelivery(1, -2, -5);
+
+		// Center the Map
+		LonLat lonLat = new LonLat(13.36438, 52.40967);
+		lonLat.transform(DEFAULT_PROJECTION.getProjectionCode(), theMap.getProjection()); //transform lonlat to OSM coordinate system
+		theMap.setCenter(lonLat, 7);
+
+		addSearchBox();
 	}
 
-	private List<Point> getLink(Point pointA, Point pointB, Projection mapProj) {
+	private void addSearchBox() {
+		final com.smartgwt.client.widgets.Window searchBox = new com.smartgwt.client.widgets.Window();
+		searchBox.setWidth(250);
+		searchBox.setHeight(40);
+		searchBox.setShowMinimizeButton(false);
+		searchBox.setShowCloseButton(false);
+		searchBox.setIsModal(false);
+		searchBox.setTop(10);
+		searchBox.setLeft(45);
+		searchBox.setOpacity(80);
+		searchBox.setShowHeader(false);
+		searchBox.setShowStatusBar(false);
+
+		TextItem textItem = new TextItem();
+		textItem.setHeight("100%");
+		textItem.setWidth("100%");
+		textItem.setShowTitle(false);
+		textItem.setMask(null);
+		
+		textItem.addKeyUpHandler(new KeyUpHandler() {
+			@Override
+			public void onKeyUp(KeyUpEvent event) {
+				if (event.getKeyName().equals("Enter")) {
+					//Window.alert(event.getItem().getValue()+"");
+					fetchMyData(event.getItem().getValue() == null ? "" : event.getItem().getValue() + "");
+				}
+			}
+		});
+		/*
+		textItem.addKeyPressHandler(new KeyPressHandler() {
+			@Override
+			public void onKeyPress(KeyPressEvent event) {
+				if (event.getCharacterValue() == 13) { // event.getKeyName().equals("Enter")
+					//Window.alert(event.getItem().getValue() + " ->" + event.getCharacterValue());
+					fetchMyData(event.getItem().getValue() + "");
+				}
+			}
+		});
+		*/
+
+		DynamicForm form = new DynamicForm();
+		form.setWidth100();
+		form.setHeight100();
+		form.setNumCols(1);
+		form.setItems(textItem);
+		form.setOverflow(Overflow.HIDDEN);
+
+		searchBox.addItem(form);
+		searchBox.show();
+	}
+
+	private void addDelivery(int id, int from, int to) {
+		if (stations != null) {
+			//List<Point> pointList = getLink(new Point(17.36438, 52.40967), new Point(13.36438, 52.40967));
+			List<Point> pointList = getLink(stations.get(from).getPoint(), stations.get(to).getPoint());
+			LineString arrow = new LineString(pointList.toArray(new Point[pointList.size()]));
+			deliveryLayer.addFeature(new VectorFeature(arrow, createDeliveryStyle()));
+		}
+	}
+
+	private void addStation(Station s) {
+		Point point = s.getPoint();
+		point.transform(DEFAULT_PROJECTION, MAP_PROJ);
+		final VectorFeature vf = new VectorFeature(point, createStationStyle(s.getName()));
+		vf.setFeatureId("" + s.getId());
+		stationLayer.addFeature(vf);
+		/*
+		 * theMap.addMapZoomListener(new MapZoomListener() { public void
+		 * onMapZoom(MapZoomEvent eventObject) {
+		 * //vf.getGeometry().transform(DEFAULT_PROJECTION, MAP_PROJ);
+		 * vf.redrawParent(); } });
+		 */
+	}
+
+	private List<Point> getLink(Point pointA, Point pointB) {
 		double angle = Math.PI / 180 * 30; // Bogenwinkel
 		double r = Math.sqrt((pointB.getX() - pointA.getX()) * (pointB.getX() - pointA.getX()) + (pointB.getY() - pointA.getY()) * (pointB.getY() - pointA.getY())) / 2
 				/ Math.sin(angle);
@@ -124,7 +237,7 @@ public class MyTracingMap extends MapWidget {
 			lastPoint = newPoint;
 		}
 		for (Point p : pointList) {
-			p.transform(DEFAULT_PROJECTION, mapProj);
+			p.transform(DEFAULT_PROJECTION, MAP_PROJ);
 		}
 		return pointList;
 	}
@@ -170,7 +283,7 @@ public class MyTracingMap extends MapWidget {
 			resultX1 = x1 + Math.sqrt(x1 * x1 - q1);
 			resultX2 = x1 - Math.sqrt(x1 * x1 - q1);
 		} else if ((x2 == x1) && (y2 == y1)) {//centers identical
-			Window.alert("Centers identical... ");
+			//Window.alert("Centers identical... ");
 		} else { //default case
 			// ok let's calculate the constants
 			c1 = (Math.pow(x2, 2.0) - Math.pow(x1, 2.0) - Math.pow(y1, 2.0) + Math.pow(y2, 2.0)) / (2.0 * x2 - 2.0 * x1);
@@ -201,5 +314,12 @@ public class MyTracingMap extends MapWidget {
 		stationStyle.setLabel(text);
 		stationStyle.setFillOpacity(1.0);
 		return stationStyle;
+	}
+
+	private Style createDeliveryStyle() {
+		Style deliveryStyle = new Style();
+		deliveryStyle.setStrokeColor("#0033ff");
+		deliveryStyle.setStrokeWidth(5);
+		return deliveryStyle;
 	}
 }
