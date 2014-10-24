@@ -24,8 +24,6 @@ import com.google.gwt.user.client.Window;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
-import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
 import com.smartgwt.client.widgets.form.fields.events.KeyUpEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyUpHandler;
 
@@ -42,7 +40,8 @@ public class MyTracingMap extends MapWidget {
 	private final HsqldbServiceAsync hsqldbService;
 
 	private Vector stationLayer = null, deliveryLayer = null;
-	private SelectFeature selectFeature = null;
+	private SelectFeature selectStationFeature = null;
+	private SelectFeature selectDeliveryFeature = null;
 	
 	private LinkedHashMap<Integer, Station> stations = null;
 
@@ -58,18 +57,25 @@ public class MyTracingMap extends MapWidget {
 	}
 
 	public void fillMap(MyTracingGISData result) {
+		Style ds = createDeliveryStyle();
 		if (result != null) {
 			stationLayer.removeAllFeatures();
 			stations = result.getStations();
-			Window.alert(stations.size()+"");
 			for (Station station : stations.values()) {
 				addStation(station);
 			}
+			
 			deliveryLayer.removeAllFeatures();
 			HashSet<Delivery> deliveries = result.getDeliveries();
+			//HashSet<String> hs = new HashSet<String>();
+			//Window.alert(deliveries.size()+"");
 			for (Delivery delivery : deliveries) {
-				//addDelivery(delivery.getId(), delivery.getFrom(), delivery.getTo());
+				//if (!hs.contains(delivery.getFrom() + "_" + delivery.getTo())) {
+					addDelivery(delivery.getId(), delivery.getFrom(), delivery.getTo(), ds); // if (deliveries.size() < 10) 	
+					//hs.add(delivery.getFrom() + "_" + delivery.getTo());
+				//}
 			}
+			
 		}
 	}
 
@@ -96,23 +102,44 @@ public class MyTracingMap extends MapWidget {
 		theMap.addLayer(stationLayer);
 		theMap.addLayer(deliveryLayer);
 
-		// Add select feature for the point
-		selectFeature = new SelectFeature(stationLayer);
-		selectFeature.setAutoActivate(true);
+		
+		// Add select feature for stations
+		selectStationFeature = new SelectFeature(stationLayer);
+		selectStationFeature.setAutoActivate(true);
 		//selectFeature.setMultiple(true);
-		theMap.addControl(selectFeature);
+		theMap.addControl(selectStationFeature);
 		stationLayer.addVectorFeatureSelectedListener(new VectorFeatureSelectedListener() {
 			public void onFeatureSelected(FeatureSelectedEvent eventObject) {
 				VectorFeature[] svf = stationLayer.getSelectedFeatures();
 				if (svf != null) {
 					for (int i = 0; i < svf.length; i++) {
-						Window.alert("The vector is now selected.\nIt will get de-selected when closing this popup.\n" + svf[i].getFeatureId());
-						selectFeature.unSelect(svf[i]);
+						fetchMyData(svf[i].getFeatureId());
+						//Window.alert("The vector is now selected.\nIt will get de-selected when closing this popup.\n" + svf[i].getFeatureId());
+						selectStationFeature.unSelect(svf[i]);
 					}
 				}
 			}
 		});
-
+		
+		/*
+		// Add select feature for deliveries
+		selectDeliveryFeature = new SelectFeature(deliveryLayer);
+		selectDeliveryFeature.setAutoActivate(true);
+		//selectFeature.setMultiple(true);
+		theMap.addControl(selectDeliveryFeature);
+		deliveryLayer.addVectorFeatureSelectedListener(new VectorFeatureSelectedListener() {
+			public void onFeatureSelected(FeatureSelectedEvent eventObject) {
+				VectorFeature[] svf = deliveryLayer.getSelectedFeatures();
+				if (svf != null) {
+					for (int i = 0; i < svf.length; i++) {
+						Window.alert("The vector is now selected.\nIt will get de-selected when closing this popup.\n" + svf[i].getFeatureId());
+						selectDeliveryFeature.unSelect(svf[i]);
+					}
+				}
+			}
+		});
+		*/
+		/*
 		stations = new LinkedHashMap<Integer, Station>();
 		// Add Stations
 		for (int i = 0; i < 10; i++) {
@@ -123,7 +150,8 @@ public class MyTracingMap extends MapWidget {
 
 		// Add Deliveries
 		addDelivery(1, -2, -5);
-
+		 */
+		
 		// Center the Map
 		LonLat lonLat = new LonLat(13.36438, 52.40967);
 		lonLat.transform(DEFAULT_PROJECTION.getProjectionCode(), theMap.getProjection()); //transform lonlat to OSM coordinate system
@@ -183,19 +211,23 @@ public class MyTracingMap extends MapWidget {
 		searchBox.show();
 	}
 
-	private void addDelivery(int id, int from, int to) {
-		if (stations != null) {
+	private void addDelivery(int id, int from, int to, Style ds) {
+		if (stations != null && stations.get(from) != null && stations.get(to) != null) {
 			//List<Point> pointList = getLink(new Point(17.36438, 52.40967), new Point(13.36438, 52.40967));
-			List<Point> pointList = getLink(stations.get(from).getPoint(), stations.get(to).getPoint());
-			LineString arrow = new LineString(pointList.toArray(new Point[pointList.size()]));
-			deliveryLayer.addFeature(new VectorFeature(arrow, createDeliveryStyle()));
+			List<Point> pointList = getLink(stations.get(from).getPoint(), stations.get(to).getPoint(), 30);
+			if (pointList != null) {
+				LineString arrow = new LineString(pointList.toArray(new Point[pointList.size()]));
+				VectorFeature vf = new VectorFeature(arrow, ds);
+				vf.setFeatureId("" + id);
+				deliveryLayer.addFeature(vf);
+			}
 		}
 	}
 
 	private void addStation(Station s) {
 		Point point = s.getPoint();
 		point.transform(DEFAULT_PROJECTION, MAP_PROJ);
-		final VectorFeature vf = new VectorFeature(point, createStationStyle(s.getName()));
+		final VectorFeature vf = new VectorFeature(point, createStationStyle(s.getName())); // s.getName()
 		vf.setFeatureId("" + s.getId());
 		stationLayer.addFeature(vf);
 		/*
@@ -206,43 +238,24 @@ public class MyTracingMap extends MapWidget {
 		 */
 	}
 
-	private List<Point> getLink(Point pointA, Point pointB) {
-		double angle = Math.PI / 180 * 30; // Bogenwinkel
-		double r = Math.sqrt((pointB.getX() - pointA.getX()) * (pointB.getX() - pointA.getX()) + (pointB.getY() - pointA.getY()) * (pointB.getY() - pointA.getY())) / 2
-				/ Math.sin(angle);
-		Point pointM = getCircleCentre(pointA, pointB, r);
-		double angleA, angleB;
-		if (pointA.getX() == pointB.getX()) {
-			angleA = Math.acos((pointA.getY() - pointM.getY()) / r);
-			angleB = Math.acos((pointB.getY() - pointM.getY()) / r);
-		} else {
-			angleA = Math.asin((pointA.getX() - pointM.getX()) / r);
-			angleB = Math.asin((pointB.getX() - pointM.getX()) / r);
-		}
-
-		Point lastPoint = null;
-		List<Point> pointList = new ArrayList<Point>();
-		double numSteps = 20;
-		for (int i = 0; i <= numSteps; i++) {
-			double t = angleA + (angleB - angleA) * i / numSteps;
-			double x = r * Math.sin(t) + pointM.getX();
-			double y = r * Math.cos(t) + pointM.getY();
-
-			Point newPoint = new Point(x, y);
-			pointList.add(newPoint);
-
-			if (lastPoint != null && i == numSteps / 2) {
-				pointList.addAll(getArrowPoints(lastPoint, newPoint));
-			}
-			lastPoint = newPoint;
-		}
-		for (Point p : pointList) {
-			p.transform(DEFAULT_PROJECTION, MAP_PROJ);
-		}
-		return pointList;
+	private List<Point> getLink(Point pointA, Point pointB, double bogenwinkel) {
+		if (pointA == null || pointB == null) return null;
+		double angle = Math.PI / 180 * bogenwinkel; // Bogenwinkel
+		double distAB = Math.sqrt((pointB.getX() - pointA.getX()) * (pointB.getX() - pointA.getX()) + (pointB.getY() - pointA.getY()) * (pointB.getY() - pointA.getY()));
+		double r = distAB / 2 / Math.sin(angle);
+		Point[] pointMs = getCircleCentres(pointA, pointB, r);
+		Point pointM = null;
+		pointM = pointMs[0];
+		double angleA = Math.atan2(pointA.getY() - pointM.getY(), pointA.getX() - pointM.getX());
+		double angleB = Math.atan2(pointB.getY() - pointM.getY(), pointB.getX() - pointM.getX());
+		//Window.alert(pointA + " / " + pointB + " / " + pointM + " / " + (angleA/Math.PI*180) + " / " + (angleB/Math.PI*180) + " / " + ((angleB+2*Math.PI)/Math.PI*180));
+		if (Math.abs(angleB-angleA) < Math.PI) return getArc(pointM, r, angleA, angleB, 20, true);
+		else if (Math.abs(angleB+2*Math.PI-angleA) < Math.PI) return getArc(pointM, r, angleA, angleB+2*Math.PI, 20, true);
+		else if (Math.abs(angleB-angleA-2*Math.PI) < Math.PI) return getArc(pointM, r, angleA+2*Math.PI, angleB, 20, true);
+		return getArc(pointM, r, angleA, angleB, 10, true);
 	}
 
-	private List<Point> getArrowPoints(Point pointA, Point pointB) {
+	private List<Point> getArrow(Point pointA, Point pointB) {
 		List<Point> pointList = new ArrayList<Point>();
 		double angle = Math.PI / 180 * 20;
 		double x = pointA.getX() - pointB.getX();
@@ -258,7 +271,7 @@ public class MyTracingMap extends MapWidget {
 		return pointList;
 	}
 
-	private Point getCircleCentre(Point pointA, Point pointB, double r) {
+	private Point[] getCircleCentres(Point pointA, Point pointB, double r) {
 		double x1 = pointA.getX();
 		double y1 = pointA.getY();
 
@@ -304,13 +317,13 @@ public class MyTracingMap extends MapWidget {
 		 * + "\nresultX2: " + resultX2 + ", resultY2: " + resultY2 + "\n r: " +
 		 * r + ", distAB: " + distAB);
 		 */
-		return new Point(resultX2, resultY2);
+		return new Point[]{new Point(resultX1, resultY1), new Point(resultX2, resultY2)};
 	}
 
-	private Style createStationStyle(String text) {
+	private Style createStationStyle(String text) { // String text
 		Style stationStyle = new Style();
 		stationStyle.setFillColor("red");
-		stationStyle.setPointRadius(15);
+		stationStyle.setPointRadius(10);
 		stationStyle.setLabel(text);
 		stationStyle.setFillOpacity(1.0);
 		return stationStyle;
@@ -319,7 +332,56 @@ public class MyTracingMap extends MapWidget {
 	private Style createDeliveryStyle() {
 		Style deliveryStyle = new Style();
 		deliveryStyle.setStrokeColor("#0033ff");
-		deliveryStyle.setStrokeWidth(5);
+		deliveryStyle.setStrokeWidth(3);
 		return deliveryStyle;
 	}
+	
+	/**
+	Both cases are simply the calculation of points on a circle. The only difference is that for the animation the points are not used to draw the arc. 
+
+	Calculation of points on a circle
+	(by centerpoint, radius and angle)
+
+	var x = center.x + radius * Math.cos(angle * Math.PI/180);
+	var y = center.y + radius * Math.sin(angle * Math.PI/180);
+	Function to create an arc feature
+	(by centerpoint, radius and angle)
+
+	 * Function: objArc
+	 * creates an arc (a linestring with n segments)
+	 *
+	 * Parameters:
+	 * center   - center point
+	 * radius   - radius of the arc
+	 * alpha    - starting angle (in Grad)
+	 * omega    - ending angle   (in Grad)
+	 * segments - number of segments for drawing the arc
+	 *
+	 * Returns: an array with four features, if flag=true
+	 *          arc feature     (from Linestring)
+	 *          the startpoint  (from Point)
+	 *          the endpoint    (from Point)
+	 *          the chord       (from LineString)
+	 */
+	private List<Point> getArc(Point center, double radius, double alpha, double omega, int segments, boolean clockwise) {
+		List<Point> pointList = new ArrayList<Point>();
+		Point lastPoint = null;
+	    for(int i=0;i<=segments;i++) {
+	        double Angle = alpha + (clockwise ? (omega-alpha)*i/segments : (alpha-omega)*i/segments);
+	        double x = center.getX() + radius*Math.cos(Angle);
+	        double y = center.getY() + radius*Math.sin(Angle);
+
+	        Point newPoint = new Point(x, y);
+	        pointList.add(newPoint);
+			if (lastPoint != null && i == Math.floor(3 * segments / 4)) {
+				pointList.addAll(getArrow(lastPoint, newPoint));
+			}
+			lastPoint = newPoint;
+	    }
+		for (Point p : pointList) {
+			p.transform(DEFAULT_PROJECTION, MAP_PROJ);
+		}
+	    return pointList;
+	}
+
 }

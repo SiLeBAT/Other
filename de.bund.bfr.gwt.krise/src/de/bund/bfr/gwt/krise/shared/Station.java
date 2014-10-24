@@ -12,8 +12,8 @@ public class Station implements Serializable {
 	private static final long serialVersionUID = 6253886759343797874L;
 	private int id;
 	private String name;
-	private double lat;
-	private double lon;
+	private Double lat;
+	private Double lon;
 
 	public Station() {
 		
@@ -50,6 +50,7 @@ public class Station implements Serializable {
 		this.lon = lon;
 	}
 	public Point getPoint() {
-		return new Point(lon, lat);
+		if (lat != null && lon != null) return new Point(lon, lat);
+		else return null;
 	}
 }
