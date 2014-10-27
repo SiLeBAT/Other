@@ -7,3 +7,4 @@ war/WEB-INF/deploy
 war/WEB-INF/lib/*
 war/db
 !war/WEB-INF/lib/hsqldb.jar
+!war/WEB-INF/lib/gwt-openlayers-client-1.1-SNAPSHOT.jar
