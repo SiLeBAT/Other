@@ -2,6 +2,7 @@ package de.bund.bfr.gwt.krise.shared;
 
 import java.io.Serializable;
 
+import org.gwtopenmaps.openlayers.client.feature.VectorFeature;
 import org.gwtopenmaps.openlayers.client.geometry.Point;
 
 public class Station implements Serializable {

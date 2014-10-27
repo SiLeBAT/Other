@@ -86,6 +86,32 @@ public class HsqldbServiceImpl extends RemoteServiceServlet implements HsqldbSer
 				} while (rs.next());
 				mtd.setStations(stations);
 			}
+			rs = getResultSet("SELECT " + delimitL("Lieferungen") + "." + delimitL("ID") + "," + delimitL("Produktkatalog") + "." + delimitL("Station") + "," + delimitL("Lieferungen") + "." + delimitL("Empfänger") +
+					" FROM " + delimitL("Lieferungen") + " LEFT JOIN " + delimitL("Station") + " AS " + delimitL("S1") + " ON " + delimitL("Lieferungen")
+					+ "." + delimitL("Empfänger") + "=" + delimitL("S1") + "." + delimitL("ID") + " LEFT JOIN " + delimitL("Chargen") + " ON " + delimitL("Lieferungen")
+					+ "." + delimitL("Charge") + "=" + delimitL("Chargen") + "." + delimitL("ID") + " LEFT JOIN " + delimitL("Produktkatalog")
+					+ " ON " + delimitL("Chargen") + "." + delimitL("Artikel") + "=" + delimitL("Produktkatalog") + "." + delimitL("ID") +
+					" LEFT JOIN " + delimitL("Station") + " AS " + delimitL("S2") + " ON " + delimitL("Produktkatalog") + "." + delimitL("Station") + "=" + delimitL("S2") + "." + delimitL("ID")
+					+ (searchString.trim().isEmpty() ? "" : " WHERE LCASE(" + delimitL("S1") + "." + delimitL("Name") + ") LIKE '%" + searchString.toLowerCase() + "%'" + " OR LCASE(" + delimitL("S2") + "." + delimitL("Name") + ") LIKE '%" + searchString.toLowerCase() + "%'")
+					+ " ORDER BY " + delimitL("Produktkatalog") + "." + delimitL("ID"));
+			if (rs != null && rs.first()) {
+				HashSet<Delivery> deliveries = new HashSet<Delivery>(); 
+				do {
+					int lieferID = rs.getInt("Lieferungen.ID");
+					int from = rs.getInt("Produktkatalog.Station");
+					int to = rs.getInt("Lieferungen.Empfänger");
+						deliveries.add(new Delivery(lieferID, from, to));
+						if (!stations.containsKey(from)) {
+							ResultSet rs2 = getResultSet("SELECT \"Name\",\"Longitude\",\"Latitude\" FROM \"Station\" WHERE \"ID\" = " + from);
+							stations.put(from, new Station(from, rs2.getString("Name"), rs2.getDouble("Longitude"), rs2.getDouble("Latitude")));
+						}
+						if (!stations.containsKey(to)) {
+							ResultSet rs2 = getResultSet("SELECT \"Name\",\"Longitude\",\"Latitude\" FROM \"Station\" WHERE \"ID\" = " + to);
+							stations.put(to, new Station(to, rs2.getString("Name"), rs2.getDouble("Longitude"), rs2.getDouble("Latitude")));
+						}
+				} while (rs.next());
+				mtd.setDeliveries(deliveries);
+			}
 		}
 		catch (Exception e) {e.printStackTrace();}
 		return mtd;
