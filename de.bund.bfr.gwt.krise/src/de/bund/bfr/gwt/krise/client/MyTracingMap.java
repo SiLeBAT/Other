@@ -56,7 +56,7 @@ public class MyTracingMap extends MapWidget {
 	private final HsqldbServiceAsync hsqldbService;
 
 	ClusterStrategy clusterStrategy = null; // AnimatedClusterStrategy
-	private Vector stationLayer = null, deliveryLayer = null;
+	private Vector stationLayer = null, deliveryLayer = null, labelLayer = null;
 
 	private LinkedHashMap<Integer, Station> stations = null;
 	private LinkedHashMap<Integer, HashSet<VectorFeature>> deliveries = null;
@@ -90,7 +90,6 @@ public class MyTracingMap extends MapWidget {
 			stationLayer.addFeatures(features);
 			clusterStrategy.setFeatures(features);
 
-			deliveryLayer.removeAllFeatures();
 			deliveries = new LinkedHashMap<Integer, HashSet<VectorFeature>>();
 			//Style ds = createDeliveryStyle();
 			HashSet<Delivery> hs = result.getDeliveries();
@@ -204,7 +203,7 @@ public class MyTracingMap extends MapWidget {
 	private void addDeliveries() {
 		if (System.currentTimeMillis() - lastDeliveryRefresh > 2000) {
 			lastDeliveryRefresh = System.currentTimeMillis();
-			theMap.removeLayer(deliveryLayer);
+			//theMap.removeLayer(deliveryLayer);
 			deliveryLayer.removeAllFeatures();
 			if (stationLayer != null && stationLayer.getFeatures() != null) {
 				VectorFeature[] vfs = stationLayer.getFeatures();
@@ -227,7 +226,7 @@ public class MyTracingMap extends MapWidget {
 					}
 				}
 			}	
-			theMap.addLayer(deliveryLayer);
+			//theMap.addLayer(deliveryLayer);
 		}
 	}
 
@@ -252,9 +251,18 @@ public class MyTracingMap extends MapWidget {
 		Style dss = createDeliverySelectedStyle();
 		deliveryLayer.setStyleMap(new StyleMap(createDeliveryStyle(), dss, dss));
 		stationLayer = new Vector("stations");
+		labelLayer = new Vector("labels");
 		addClusterStrategy();
 		theMap.addLayer(stationLayer);
 		theMap.addLayer(deliveryLayer);
+		theMap.addLayer(labelLayer);
+
+		theMap.addMapMoveEndListener(new MapMoveEndListener() {
+			@Override
+			public void onMapMoveEnd(MapMoveEndEvent eventObject) {
+				addDeliveries();
+			}
+		});
 
 		final SelectFeature selectFeature = new SelectFeature(new Vector[] {stationLayer, deliveryLayer});
 		selectFeature.setAutoActivate(true);
@@ -267,13 +275,6 @@ public class MyTracingMap extends MapWidget {
 				theMap.addPopup(vf.getPopup());
 			}
 		});
-		theMap.addMapMoveEndListener(new MapMoveEndListener() {
-			@Override
-			public void onMapMoveEnd(MapMoveEndEvent eventObject) {
-				addDeliveries();
-			}
-		});
-
 		// Add select feature for deliveries 
 		deliveryLayer.addVectorFeatureSelectedListener(new VectorFeatureSelectedListener() {
 			public void onFeatureSelected(FeatureSelectedEvent eventObject) {
