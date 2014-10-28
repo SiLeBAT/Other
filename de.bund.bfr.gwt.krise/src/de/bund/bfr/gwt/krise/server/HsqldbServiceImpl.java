@@ -235,7 +235,7 @@ public class HsqldbServiceImpl extends RemoteServiceServlet implements HsqldbSer
 		if (theConn == null) {
 		    try {
 			    Class.forName("org.hsqldb.jdbc.JDBCDriver").newInstance();
-			    String serverPath = "localhost/tracing";//"192.168.212.54/silebat";
+			    String serverPath = "localhost/tracingnrw";//"192.168.212.54/silebat";
 			    String connStr = "jdbc:hsqldb:hsql://" + serverPath;
 			    theConn = DriverManager.getConnection(connStr, "SA", "");  
 		    }

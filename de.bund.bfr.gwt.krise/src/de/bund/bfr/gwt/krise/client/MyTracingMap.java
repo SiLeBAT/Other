@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+import org.gwtopenmaps.openlayers.client.Bounds;
 import org.gwtopenmaps.openlayers.client.LonLat;
 import org.gwtopenmaps.openlayers.client.Map;
 import org.gwtopenmaps.openlayers.client.MapOptions;
@@ -16,8 +17,7 @@ import org.gwtopenmaps.openlayers.client.control.LayerSwitcher;
 import org.gwtopenmaps.openlayers.client.control.OverviewMap;
 import org.gwtopenmaps.openlayers.client.control.ScaleLine;
 import org.gwtopenmaps.openlayers.client.control.SelectFeature;
-import org.gwtopenmaps.openlayers.client.event.VectorAfterFeatureModifiedListener;
-import org.gwtopenmaps.openlayers.client.event.VectorFeatureAddedListener;
+import org.gwtopenmaps.openlayers.client.event.MapMoveEndListener;
 import org.gwtopenmaps.openlayers.client.event.VectorFeatureSelectedListener;
 import org.gwtopenmaps.openlayers.client.feature.VectorFeature;
 import org.gwtopenmaps.openlayers.client.filter.ComparisonFilter;
@@ -31,12 +31,12 @@ import org.gwtopenmaps.openlayers.client.popup.FramedCloud;
 import org.gwtopenmaps.openlayers.client.popup.Popup;
 import org.gwtopenmaps.openlayers.client.strategy.AnimatedClusterStrategy;
 import org.gwtopenmaps.openlayers.client.strategy.AnimatedClusterStrategyOptions;
+import org.gwtopenmaps.openlayers.client.strategy.ClusterStrategy;
 import org.gwtopenmaps.openlayers.client.strategy.Strategy;
 import org.gwtopenmaps.openlayers.client.style.Rule;
 import org.gwtopenmaps.openlayers.client.style.SymbolizerPoint;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.Window;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.TextItem;
@@ -55,13 +55,15 @@ public class MyTracingMap extends MapWidget {
 
 	private final HsqldbServiceAsync hsqldbService;
 
-	AnimatedClusterStrategy clusterStrategy = null; // AnimatedClusterStrategy
+	ClusterStrategy clusterStrategy = null; // AnimatedClusterStrategy
 	private Vector stationLayer = null, deliveryLayer = null;
 
 	private LinkedHashMap<Integer, Station> stations = null;
 	private LinkedHashMap<Integer, HashSet<VectorFeature>> deliveries = null;
 
 	private Map theMap = null;
+	
+	private long lastDeliveryRefresh = 0;
 
 	public MyTracingMap() {
 		this((HsqldbServiceAsync) GWT.create(HsqldbService.class));
@@ -90,10 +92,10 @@ public class MyTracingMap extends MapWidget {
 
 			deliveryLayer.removeAllFeatures();
 			deliveries = new LinkedHashMap<Integer, HashSet<VectorFeature>>();
-			Style ds = createDeliveryStyle();
+			//Style ds = createDeliveryStyle();
 			HashSet<Delivery> hs = result.getDeliveries();
 			for (Delivery d : hs) {
-				VectorFeature vf = addDelivery2Feature(d.getId(), d.getFrom(), d.getTo(), ds);
+				VectorFeature vf = addDelivery2Feature(d.getId(), d.getFrom(), d.getTo()); // , ds
 				if (!deliveries.containsKey(d.getFrom())) deliveries.put(d.getFrom(), new HashSet<VectorFeature>());
 				HashSet<VectorFeature> hd = deliveries.get(d.getFrom());
 				hd.add(vf);
@@ -101,20 +103,10 @@ public class MyTracingMap extends MapWidget {
 				hd = deliveries.get(d.getTo());
 				hd.add(vf);
 			}
-			/*
-			 * HashSet<Delivery> deliveries = result.getDeliveries();
-			 * //HashSet<String> hs = new HashSet<String>();
-			 * //Window.alert(deliveries.size()+""); //features = new
-			 * VectorFeature[deliveries.size()]; //i=0; for (Delivery delivery :
-			 * deliveries) { //if (!hs.contains(delivery.getFrom() + "_" +
-			 * delivery.getTo())) { VectorFeature vf =
-			 * addDelivery(delivery.getId(), delivery.getFrom(),
-			 * delivery.getTo(), ds); // if (deliveries.size() < 10) /* if (vf
-			 * != null) { features[i] = vf; i++; }
-			 */
-			//hs.add(delivery.getFrom() + "_" + delivery.getTo());
-			//}
-			//}
+			
+			addDeliveries();
+			
+			centerTheMap(6);
 		}
 	}
 
@@ -183,29 +175,60 @@ public class MyTracingMap extends MapWidget {
 		styleMap.addRules(rules, "default");
 
 		// Add Layers
-		clusterStrategy = new AnimatedClusterStrategy(new AnimatedClusterStrategyOptions());
-		//clusterStrategy = new ClusterStrategy();
-		clusterStrategy.setDistance(25);
+		//clusterStrategy = new AnimatedClusterStrategy(new AnimatedClusterStrategyOptions());
+		clusterStrategy = new ClusterStrategy();
+		clusterStrategy.setDistance(20);
 		clusterStrategy.setThreshold(2);
 
 		VectorOptions vectorOptions = new VectorOptions();
-		vectorOptions.setStrategies(new Strategy[] { clusterStrategy });
-		vectorOptions.setRenderers(new String[] { "SVG" }); // "Canvas", bug, see: https://github.com/Leaflet/Leaflet/pull/2486
+		vectorOptions.setStrategies(new Strategy[] {clusterStrategy});
+		vectorOptions.setRenderers(new String[] {"SVG"}); // "Canvas", bug, see: https://github.com/Leaflet/Leaflet/pull/2486
 		stationLayer = new Vector("stations", vectorOptions);
+		clusterStrategy.activate();
 		stationLayer.setStyleMap(styleMap);
 	}
 
 	private void setPopup(VectorFeature vf) {
 		Popup popup;
+		Bounds b = theMap.getExtent();
 		if (vf.getCluster() == null) {
-			popup = new FramedCloud("id1", vf.getCenterLonLat(), null, vf.getFeatureId() + " -- " + vf.getFeatureId().length(), null, true);
+			popup = new FramedCloud("id1", vf.getCenterLonLat(), null, vf.getFeatureId() + " -- " + b.containsLonLat(vf.getCenterLonLat(), true), null, true);
 		} else {
 			int count = vf.getAttributes().getAttributeAsInt("count");
-			popup = new FramedCloud("id1", vf.getCenterLonLat(), null, "<h1>Hello</H1>Here are " + count + " features.", null, true);
+			popup = new FramedCloud("id1", vf.getCenterLonLat(), null, "<h1>Hello</H1>Here are " + count + " features." + b.containsLonLat(vf.getCenterLonLat(), true), null, true);
 		}
 		popup.setPanMapIfOutOfView(true); // this set the popup in a strategic way, and pans the map if needed.
 		popup.setAutoSize(true);
 		vf.setPopup(popup);
+	}
+	private void addDeliveries() {
+		if (System.currentTimeMillis() - lastDeliveryRefresh > 2000) {
+			lastDeliveryRefresh = System.currentTimeMillis();
+			theMap.removeLayer(deliveryLayer);
+			deliveryLayer.removeAllFeatures();
+			if (stationLayer != null && stationLayer.getFeatures() != null) {
+				VectorFeature[] vfs = stationLayer.getFeatures();
+				for (VectorFeature vf : vfs) {
+					if (vf != null && vf.getFeatureId() != null) {
+						Bounds b = theMap.getExtent();
+						if (vf.getCluster() == null && b.containsLonLat(vf.getCenterLonLat(), true)) {
+							int stationId = -1;
+							try{stationId = Integer.parseInt(vf.getFeatureId());}
+							catch (Exception e) {}
+							if (stationId >= 0) {
+								if (deliveries != null && deliveries.containsKey(stationId)) {
+									HashSet<VectorFeature> hs = deliveries.get(stationId);
+									for (VectorFeature vff : hs) {
+										deliveryLayer.addFeature(vff);									
+									}
+								}
+							}
+						}
+					}
+				}
+			}	
+			theMap.addLayer(deliveryLayer);
+		}
 	}
 
 	private void buildPanel() {
@@ -225,13 +248,15 @@ public class MyTracingMap extends MapWidget {
 		theMap.addControl(new OverviewMap()); //+ sign in the lowerright to display the overviewmap
 		theMap.addControl(new ScaleLine()); //Display the scaleline
 
-		stationLayer = new Vector("stations");
 		deliveryLayer = new Vector("deliveries");
+		Style dss = createDeliverySelectedStyle();
+		deliveryLayer.setStyleMap(new StyleMap(createDeliveryStyle(), dss, dss));
+		stationLayer = new Vector("stations");
 		addClusterStrategy();
 		theMap.addLayer(stationLayer);
 		theMap.addLayer(deliveryLayer);
 
-		final SelectFeature selectFeature = new SelectFeature(new Vector[] { stationLayer, deliveryLayer });
+		final SelectFeature selectFeature = new SelectFeature(new Vector[] {stationLayer, deliveryLayer});
 		selectFeature.setAutoActivate(true);
 		theMap.addControl(selectFeature);
 
@@ -242,29 +267,10 @@ public class MyTracingMap extends MapWidget {
 				theMap.addPopup(vf.getPopup());
 			}
 		});
-
-		stationLayer.addVectorFeatureAddedListener(new VectorFeatureAddedListener() {
+		theMap.addMapMoveEndListener(new MapMoveEndListener() {
 			@Override
-			public void onFeatureAdded(FeatureAddedEvent eventObject) {
-				VectorFeature vf = eventObject.getVectorFeature();
-				if (vf != null && vf.getCluster() == null && vf.getFeatureId() != null) {
-					int stationId = -1;
-					try{stationId = Integer.parseInt(vf.getFeatureId());}
-					catch (Exception e) {}
-					if (stationId >= 0) {
-						if (deliveries != null && deliveries.containsKey(stationId)) {
-							HashSet<VectorFeature> hs = deliveries.get(stationId);
-							for (VectorFeature vfs : hs) {
-								if (vf.getCluster() == null) {
-									deliveryLayer.addFeature(vfs);
-								} else {
-									// if other end of delivery is not singleton!
-									deliveryLayer.removeFeature(vfs);
-								}
-							}
-						}
-					}
-				}
+			public void onMapMoveEnd(MapMoveEndEvent eventObject) {
+				addDeliveries();
 			}
 		});
 
@@ -274,19 +280,30 @@ public class MyTracingMap extends MapWidget {
 				VectorFeature[] svf = deliveryLayer.getSelectedFeatures();
 				if (svf != null) {
 					for (int i = 0; i < svf.length; i++) {
-						Window.alert("The vector is now selected.\nIt will get de-selected when closing this popup.\n" + svf[i].getFeatureId());
-						selectFeature.unSelect(svf[i]);
+						//Window.alert("The vector is now selected.\n" + svf[i].getFeatureId());
+						//selectFeature.unSelect(svf[i]);
 					}
 				}
 			}
 		});
 
-		// Center the Map
-		LonLat lonLat = new LonLat(13.36438, 52.40967);
-		lonLat.transform(DEFAULT_PROJECTION.getProjectionCode(), theMap.getProjection()); //transform lonlat to OSM coordinate system
-		theMap.setCenter(lonLat, 7);
-
 		addSearchBox();
+	}
+	private void centerTheMap(int zoomLevel) {
+		// Center the Map		
+		if (stationLayer != null && stationLayer.getFeatures() != null && stationLayer.getFeatures().length > 0) {
+			if (zoomLevel < 0) {
+				theMap.zoomToExtent(stationLayer.getDataExtent());
+			}
+			else {
+				theMap.setCenter(stationLayer.getDataExtent().getCenterLonLat(), zoomLevel);							
+			}
+		}
+		else {
+			LonLat lonLat = new LonLat(13.36438, 52.40967); // BfR
+			lonLat.transform(DEFAULT_PROJECTION.getProjectionCode(), theMap.getProjection()); //transform lonlat to OSM coordinate system
+			theMap.setCenter(lonLat, zoomLevel);			
+		}
 	}
 
 	private void addSearchBox() {
@@ -339,14 +356,13 @@ public class MyTracingMap extends MapWidget {
 		searchBox.show();
 	}
 
-	private VectorFeature addDelivery2Feature(int id, int from, int to, Style ds) {
+	private VectorFeature addDelivery2Feature(int id, int from, int to) {
 		VectorFeature vf = null;
 		if (stations != null && stations.get(from) != null && stations.get(to) != null) {
-			//List<Point> pointList = getLink(new Point(17.36438, 52.40967), new Point(13.36438, 52.40967));
 			List<Point> pointList = getLink(stations.get(from).getPoint(), stations.get(to).getPoint(), 30);
 			if (pointList != null) {
 				LineString arrow = new LineString(pointList.toArray(new Point[pointList.size()]));
-				vf = new VectorFeature(arrow); // , ds
+				vf = new VectorFeature(arrow);
 				vf.setFeatureId("" + id);
 				//deliveryLayer.addFeature(vf);
 			}
@@ -382,7 +398,7 @@ public class MyTracingMap extends MapWidget {
 		if (Math.abs(angleB - angleA) < Math.PI) return getArc(pointM, r, angleA, angleB, 20, true);
 		else if (Math.abs(angleB + 2 * Math.PI - angleA) < Math.PI) return getArc(pointM, r, angleA, angleB + 2 * Math.PI, 20, true);
 		else if (Math.abs(angleB - angleA - 2 * Math.PI) < Math.PI) return getArc(pointM, r, angleA + 2 * Math.PI, angleB, 20, true);
-		return getArc(pointM, r, angleA, angleB, 10, true);
+		return getArc(pointM, r, angleA, angleB, 4, true);
 	}
 
 	private List<Point> getArrow(Point pointA, Point pointB) {
@@ -461,7 +477,13 @@ public class MyTracingMap extends MapWidget {
 
 	private Style createDeliveryStyle() {
 		Style deliveryStyle = new Style();
-		deliveryStyle.setStrokeColor("#0033ff");
+		deliveryStyle.setStrokeColor("#888888");
+		deliveryStyle.setStrokeWidth(3);
+		return deliveryStyle;
+	}
+	private Style createDeliverySelectedStyle() {
+		Style deliveryStyle = new Style();
+		deliveryStyle.setStrokeColor("#0000ff");
 		deliveryStyle.setStrokeWidth(3);
 		return deliveryStyle;
 	}
