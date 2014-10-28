@@ -201,33 +201,37 @@ public class MyTracingMap extends MapWidget {
 		vf.setPopup(popup);
 	}
 	private void addDeliveries() {
-		if (System.currentTimeMillis() - lastDeliveryRefresh > 2000) {
-			lastDeliveryRefresh = System.currentTimeMillis();
-			//theMap.removeLayer(deliveryLayer);
-			deliveryLayer.removeAllFeatures();
-			if (stationLayer != null && stationLayer.getFeatures() != null) {
-				VectorFeature[] vfs = stationLayer.getFeatures();
-				for (VectorFeature vf : vfs) {
-					if (vf != null && vf.getFeatureId() != null) {
-						Bounds b = theMap.getExtent();
-						if (vf.getCluster() == null && b.containsLonLat(vf.getCenterLonLat(), true)) {
-							int stationId = -1;
-							try{stationId = Integer.parseInt(vf.getFeatureId());}
-							catch (Exception e) {}
-							if (stationId >= 0) {
-								if (deliveries != null && deliveries.containsKey(stationId)) {
-									HashSet<VectorFeature> hs = deliveries.get(stationId);
-									for (VectorFeature vff : hs) {
-										deliveryLayer.addFeature(vff);									
-									}
+		deliveryLayer.removeAllFeatures();
+		labelLayer.removeAllFeatures();
+		if (stationLayer != null && stationLayer.getFeatures() != null) {
+			VectorFeature[] vfs = stationLayer.getFeatures();
+			for (VectorFeature vf : vfs) {
+				if (vf != null && vf.getFeatureId() != null) {
+					Bounds b = theMap.getExtent();
+					if (vf.getCluster() == null && b.containsLonLat(vf.getCenterLonLat(), true)) {
+						int stationId = -1;
+						try{stationId = Integer.parseInt(vf.getFeatureId());}
+						catch (Exception e) {}
+						if (stationId >= 0) {
+							if (deliveries != null && deliveries.containsKey(stationId)) {
+								HashSet<VectorFeature> hs = deliveries.get(stationId);
+								for (VectorFeature vff : hs) {
+									deliveryLayer.addFeature(vff);									
 								}
 							}
+							addLabel(stations.get(stationId));
 						}
 					}
 				}
-			}	
-			//theMap.addLayer(deliveryLayer);
-		}
+			}
+		}	
+		//theMap.setLayerZIndex(labelLayer, 500);
+	}
+	private void addLabel(Station s) {
+		Point point = s.getPoint();
+		point.transform(DEFAULT_PROJECTION, MAP_PROJ);
+		VectorFeature vf = new VectorFeature(point, createLabelStyle(s.getName()));
+		labelLayer.addFeature(vf);
 	}
 
 	private void buildPanel() {
@@ -253,8 +257,8 @@ public class MyTracingMap extends MapWidget {
 		stationLayer = new Vector("stations");
 		labelLayer = new Vector("labels");
 		addClusterStrategy();
-		theMap.addLayer(stationLayer);
 		theMap.addLayer(deliveryLayer);
+		theMap.addLayer(stationLayer);
 		theMap.addLayer(labelLayer);
 
 		theMap.addMapMoveEndListener(new MapMoveEndListener() {
@@ -264,7 +268,7 @@ public class MyTracingMap extends MapWidget {
 			}
 		});
 
-		final SelectFeature selectFeature = new SelectFeature(new Vector[] {stationLayer, deliveryLayer});
+		final SelectFeature selectFeature = new SelectFeature(new Vector[] {stationLayer, deliveryLayer, labelLayer});
 		selectFeature.setAutoActivate(true);
 		theMap.addControl(selectFeature);
 
@@ -374,15 +378,9 @@ public class MyTracingMap extends MapWidget {
 	private VectorFeature addStation2Feature(Station s) {
 		Point point = s.getPoint();
 		point.transform(DEFAULT_PROJECTION, MAP_PROJ);
-		VectorFeature vf = new VectorFeature(point, createStationStyle(s.getName()));//, createStationStyle(s.getName())); // s.getName()
+		VectorFeature vf = new VectorFeature(point, createStationStyle());
 		vf.setFeatureId("" + s.getId());
 		return vf;
-		/*
-		 * theMap.addMapZoomListener(new MapZoomListener() { public void
-		 * onMapZoom(MapZoomEvent eventObject) {
-		 * //vf.getGeometry().transform(DEFAULT_PROJECTION, MAP_PROJ);
-		 * vf.redrawParent(); } });
-		 */
 	}
 
 	private List<Point> getLink(Point pointA, Point pointB, double bogenwinkel) {
@@ -467,18 +465,24 @@ public class MyTracingMap extends MapWidget {
 		return new Point[] { new Point(resultX1, resultY1), new Point(resultX2, resultY2) };
 	}
 
-	private Style createStationStyle(String text) { // String text
+	private Style createStationStyle() {
 		Style stationStyle = new Style();
 		stationStyle.setFillColor("blue");
 		stationStyle.setPointRadius(12);
-		stationStyle.setLabel(text);
 		stationStyle.setFillOpacity(1.0);
 		return stationStyle;
+	}
+	private Style createLabelStyle(String text) {
+		Style labelStyle = new Style();
+		labelStyle.setPointRadius(0);
+		labelStyle.setLabel(text);
+		labelStyle.setFontColor("#ff0000");
+		return labelStyle;
 	}
 
 	private Style createDeliveryStyle() {
 		Style deliveryStyle = new Style();
-		deliveryStyle.setStrokeColor("#888888");
+		deliveryStyle.setStrokeColor("#666666");
 		deliveryStyle.setStrokeWidth(3);
 		return deliveryStyle;
 	}
