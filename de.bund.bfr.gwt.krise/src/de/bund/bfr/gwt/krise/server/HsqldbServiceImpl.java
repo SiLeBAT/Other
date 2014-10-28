@@ -26,6 +26,17 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 @SuppressWarnings("serial")
 public class HsqldbServiceImpl extends RemoteServiceServlet implements HsqldbService {
 
+	public Station getStationInfo(int stationId) throws IllegalArgumentException {
+		Station result = null;
+		try {
+			ResultSet rs = getResultSet("SELECT \"ID\",\"Name\",\"Longitude\",\"Latitude\" FROM \"Station\" WHERE \"ID\"="+stationId);
+			if (rs != null && rs.first()) {
+				result = new Station(rs.getInt("ID"), rs.getString("Name"), rs.getDouble("Longitude"), rs.getDouble("Latitude"));
+			}
+		}
+		catch (Exception e) {e.printStackTrace();}
+		return result;
+	}
 	public MyTracingGISData getGISData(int stationId) throws IllegalArgumentException {
 		MyTracingGISData mtd = new MyTracingGISData();
 		try {
@@ -235,7 +246,7 @@ public class HsqldbServiceImpl extends RemoteServiceServlet implements HsqldbSer
 		if (theConn == null) {
 		    try {
 			    Class.forName("org.hsqldb.jdbc.JDBCDriver").newInstance();
-			    String serverPath = "localhost/tracing";//"192.168.212.54/silebat"; nrw
+			    String serverPath = "localhost/tracingnrw";//"192.168.212.54/silebat"; nrw
 			    String connStr = "jdbc:hsqldb:hsql://" + serverPath;
 			    theConn = DriverManager.getConnection(connStr, "SA", "");  
 		    }

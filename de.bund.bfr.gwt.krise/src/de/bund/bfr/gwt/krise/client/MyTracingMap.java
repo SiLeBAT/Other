@@ -62,8 +62,6 @@ public class MyTracingMap extends MapWidget {
 	private LinkedHashMap<Integer, HashSet<VectorFeature>> deliveries = null;
 
 	private Map theMap = null;
-	
-	private long lastDeliveryRefresh = 0;
 
 	public MyTracingMap() {
 		this((HsqldbServiceAsync) GWT.create(HsqldbService.class));
@@ -112,6 +110,10 @@ public class MyTracingMap extends MapWidget {
 	private void fetchMyData(String station) {
 		MyCallbackGIS myCallback = new MyCallbackGIS(this);
 		hsqldbService.getGISData(station, myCallback);
+	}
+	private void fetchMyStation(int stationId) {
+		MyCallbackStation myCallback = new MyCallbackStation(this);
+		hsqldbService.getStationInfo(stationId, myCallback);
 	}
 
 	private void addClusterStrategy() {
@@ -187,14 +189,31 @@ public class MyTracingMap extends MapWidget {
 		stationLayer.setStyleMap(styleMap);
 	}
 
+	private Station getStation(String id) {
+		Station result = null;
+		int stationId = -1;
+		try{stationId = Integer.parseInt(id);}
+		catch (Exception e) {}	
+		if (stationId >= 0) result = stations.get(stationId);
+		return result;
+	}
 	private void setPopup(VectorFeature vf) {
 		Popup popup;
-		Bounds b = theMap.getExtent();
 		if (vf.getCluster() == null) {
-			popup = new FramedCloud("id1", vf.getCenterLonLat(), null, vf.getFeatureId() + " -- " + b.containsLonLat(vf.getCenterLonLat(), true), null, true);
+			Station station = getStation(vf.getFeatureId());
+			String name = "unknown";
+			if (station != null) name = station.getName();
+			popup = new FramedCloud("id1", vf.getCenterLonLat(), null, "<h1>" + name + "</h1>", null, true);
 		} else {
 			int count = vf.getAttributes().getAttributeAsInt("count");
-			popup = new FramedCloud("id1", vf.getCenterLonLat(), null, "<h1>Hello</H1>Here are " + count + " features." + b.containsLonLat(vf.getCenterLonLat(), true), null, true);
+			String stationen = "";
+			for (VectorFeature vfs : vf.getCluster()) {
+				Station station = getStation(vfs.getFeatureId());
+				String name = "unknown";
+				if (station != null) name = station.getName();
+				stationen += "<br>" + name;
+			}
+			popup = new FramedCloud("id1", vf.getCenterLonLat(), null, "<h1>" + count + " Stationen</h1>" + stationen, null, true);
 		}
 		popup.setPanMapIfOutOfView(true); // this set the popup in a strategic way, and pans the map if needed.
 		popup.setAutoSize(true);
@@ -209,17 +228,15 @@ public class MyTracingMap extends MapWidget {
 				if (vf != null && vf.getFeatureId() != null) {
 					Bounds b = theMap.getExtent();
 					if (vf.getCluster() == null && b.containsLonLat(vf.getCenterLonLat(), true)) {
-						int stationId = -1;
-						try{stationId = Integer.parseInt(vf.getFeatureId());}
-						catch (Exception e) {}
-						if (stationId >= 0) {
-							if (deliveries != null && deliveries.containsKey(stationId)) {
-								HashSet<VectorFeature> hs = deliveries.get(stationId);
+						Station station = getStation(vf.getFeatureId());
+						if (station != null) {
+							if (deliveries != null && deliveries.containsKey(station.getId())) {
+								HashSet<VectorFeature> hs = deliveries.get(station.getId());
 								for (VectorFeature vff : hs) {
 									deliveryLayer.addFeature(vff);									
 								}
 							}
-							addLabel(stations.get(stationId));
+							addLabel(station);
 						}
 					}
 				}
