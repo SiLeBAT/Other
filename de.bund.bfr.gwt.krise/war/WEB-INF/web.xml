@@ -16,7 +16,17 @@
     <url-pattern>/de_bund_bfr_gwt_krise/tracingDB</url-pattern>
   </servlet-mapping>
   
-  <!-- Default page to serve -->
+  <servlet>
+    <servlet-name>uploadServlet</servlet-name>
+    <servlet-class>de.bund.bfr.gwt.krise.server.UploadFileServlet</servlet-class>
+  </servlet>
+  
+  <servlet-mapping>
+    <servlet-name>uploadServlet</servlet-name>
+    <url-pattern>/de_bund_bfr_gwt_krise/UploadService</url-pattern>
+  </servlet-mapping>
+  
+    <!-- Default page to serve -->
   <welcome-file-list>
     <welcome-file>De_bund_bfr_gwt_krise.html</welcome-file>
   </welcome-file-list>
