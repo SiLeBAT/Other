@@ -1,1 +1,1 @@
-java -cp WEB-INF/lib/hsqldb.jar org.hsqldb.Server -database.0 file:db/DB -dbname.0 tracing -database.1 file:C:/Users/Armin/Desktop/AllKrisen/Sprossen_NRW/DB/DB -dbname.1 tracingNRW
+java -cp WEB-INF/lib/hsqldb.jar org.hsqldb.Server -database.0 file:db/DB -dbname.0 tracing -database.1 file:db/nrw/DB -dbname.1 tracingNRW

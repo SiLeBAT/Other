@@ -1,6 +1,7 @@
 package de.bund.bfr.gwt.krise.client;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -38,26 +39,21 @@ import org.gwtopenmaps.openlayers.client.style.Rule;
 import org.gwtopenmaps.openlayers.client.style.SymbolizerPoint;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.AttachEvent;
-import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
-import com.google.gwt.user.client.ui.ListBox;
-import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.Hidden;
+import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.events.ResizedEvent;
-import com.smartgwt.client.widgets.events.ResizedHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.KeyUpEvent;
@@ -79,6 +75,7 @@ public class MyTracingMap extends MapWidget {
 	private Vector stationLayer = null, deliveryLayer = null, labelLayer = null;
 
 	private LinkedHashMap<Integer, Station> stations = null;
+	private LinkedHashMap<Integer, Delivery> allDeliveries = null;
 	private LinkedHashMap<Integer, HashSet<VectorFeature>> deliveries = null;
 
 	private Map theMap = null;
@@ -109,10 +106,14 @@ public class MyTracingMap extends MapWidget {
 			clusterStrategy.setFeatures(features);
 
 			deliveries = new LinkedHashMap<Integer, HashSet<VectorFeature>>();
-			//Style ds = createDeliveryStyle();
-			HashSet<Delivery> hs = result.getDeliveries();
-			for (Delivery d : hs) {
-				VectorFeature vf = addDelivery2Feature(d.getId(), d.getFrom(), d.getTo()); // , ds
+			allDeliveries = result.getDeliveries();
+			HashMap<String, Double> bw = new HashMap<String, Double>(); 
+			for (Delivery d : allDeliveries.values()) {
+				boolean fromLarger = (d.getFrom() > d.getTo());
+				String key = fromLarger ? d.getTo() + "_" + d.getFrom() : d.getFrom() + "_" + d.getTo();
+				if (bw.containsKey(key)) bw.put(key, bw.get(key) + 5);
+				else bw.put(key, 30.0);
+				VectorFeature vf = addDelivery2Feature(d.getId(), d.getFrom(), d.getTo(), bw.get(key));
 				if (!deliveries.containsKey(d.getFrom())) deliveries.put(d.getFrom(), new HashSet<VectorFeature>());
 				HashSet<VectorFeature> hd = deliveries.get(d.getFrom());
 				hd.add(vf);
@@ -120,9 +121,9 @@ public class MyTracingMap extends MapWidget {
 				hd = deliveries.get(d.getTo());
 				hd.add(vf);
 			}
-			
+
 			addDeliveries();
-			
+
 			centerTheMap(6);
 		}
 	}
@@ -131,6 +132,7 @@ public class MyTracingMap extends MapWidget {
 		MyCallbackGIS myCallback = new MyCallbackGIS(this);
 		hsqldbService.getGISData(station, myCallback);
 	}
+
 	private void fetchMyStation(int stationId) {
 		MyCallbackStation myCallback = new MyCallbackStation(this);
 		hsqldbService.getStationInfo(stationId, myCallback);
@@ -202,8 +204,8 @@ public class MyTracingMap extends MapWidget {
 		clusterStrategy.setThreshold(2);
 
 		VectorOptions vectorOptions = new VectorOptions();
-		vectorOptions.setStrategies(new Strategy[] {clusterStrategy});
-		vectorOptions.setRenderers(new String[] {"SVG"}); // "Canvas", bug, see: https://github.com/Leaflet/Leaflet/pull/2486
+		vectorOptions.setStrategies(new Strategy[] { clusterStrategy });
+		vectorOptions.setRenderers(new String[] { "SVG" }); // "Canvas", bug, see: https://github.com/Leaflet/Leaflet/pull/2486
 		stationLayer = new Vector("stations", vectorOptions);
 		clusterStrategy.activate();
 		stationLayer.setStyleMap(styleMap);
@@ -212,18 +214,31 @@ public class MyTracingMap extends MapWidget {
 	private Station getStation(String id) {
 		Station result = null;
 		int stationId = -1;
-		try{stationId = Integer.parseInt(id);}
-		catch (Exception e) {}	
+		try {
+			stationId = Integer.parseInt(id);
+		} catch (Exception e) {
+		}
 		if (stationId >= 0) result = stations.get(stationId);
 		return result;
 	}
+	private Delivery getDelivery(String id) {
+		Delivery result = null;
+		int deliveryId = -1;
+		try {
+			deliveryId = Integer.parseInt(id);
+		} catch (Exception e) {
+		}
+		if (deliveryId >= 0) result = allDeliveries.get(deliveryId);
+		return result;
+	}
+
 	private void setPopup(VectorFeature vf) {
 		Popup popup;
 		if (vf.getCluster() == null) {
 			Station station = getStation(vf.getFeatureId());
 			String name = "unknown";
 			if (station != null) name = station.getName();
-			popup = new FramedCloud("sid"+vf.getFeatureId(), vf.getCenterLonLat(), null, "<h1>" + name + "</h1>", null, true);
+			popup = new FramedCloud("sid" + vf.getFeatureId(), vf.getCenterLonLat(), null, "<h1>" + name + "</h1>", null, true);
 		} else {
 			int count = vf.getAttributes().getAttributeAsInt("count");
 			String stationen = "";
@@ -233,12 +248,13 @@ public class MyTracingMap extends MapWidget {
 				if (station != null) name = station.getName();
 				stationen += "<br>" + name;
 			}
-			popup = new FramedCloud("sidc"+count, vf.getCenterLonLat(), null, "<h1>" + count + " Stationen</h1>" + stationen, null, true);
+			popup = new FramedCloud("sidc" + count, vf.getCenterLonLat(), null, "<h1>" + count + " Stationen</h1>" + stationen, null, true);
 		}
 		popup.setPanMapIfOutOfView(true); // this set the popup in a strategic way, and pans the map if needed.
 		popup.setAutoSize(true);
 		vf.setPopup(popup);
 	}
+
 	private void addDeliveries() {
 		deliveryLayer.removeAllFeatures();
 		labelLayer.removeAllFeatures();
@@ -253,7 +269,7 @@ public class MyTracingMap extends MapWidget {
 							if (deliveries != null && deliveries.containsKey(station.getId())) {
 								HashSet<VectorFeature> hs = deliveries.get(station.getId());
 								for (VectorFeature vff : hs) {
-									deliveryLayer.addFeature(vff);									
+									deliveryLayer.addFeature(vff);
 								}
 							}
 							addLabel(station);
@@ -261,9 +277,10 @@ public class MyTracingMap extends MapWidget {
 					}
 				}
 			}
-		}	
+		}
 		//theMap.setLayerZIndex(labelLayer, 500);
 	}
+
 	private void addLabel(Station s) {
 		Point point = s.getPoint();
 		point.transform(DEFAULT_PROJECTION, MAP_PROJ);
@@ -305,7 +322,7 @@ public class MyTracingMap extends MapWidget {
 			}
 		});
 
-		final SelectFeature selectFeature = new SelectFeature(new Vector[] {stationLayer, deliveryLayer, labelLayer});
+		final SelectFeature selectFeature = new SelectFeature(new Vector[] { stationLayer, deliveryLayer, labelLayer });
 		selectFeature.setAutoActivate(true);
 		theMap.addControl(selectFeature);
 
@@ -323,14 +340,17 @@ public class MyTracingMap extends MapWidget {
 				if (svf != null) {
 					for (int i = 0; i < svf.length; i++) {
 						/*
-						Popup popup;
-						popup = new FramedCloud("did"+svf[i].getFeatureId(), svf[i].getCenterLonLat(), null, "Bitte Lieferliste (Trace) uploaden", null, true);
-						popup.setPanMapIfOutOfView(true); // this set the popup in a strategic way, and pans the map if needed.
-						popup.setAutoSize(true);
-						svf[i].setPopup(popup);
-						theMap.addPopup(svf[i].getPopup());
-						*/
-						addFileUploadForm(svf[i].getFeatureId());
+						 * Popup popup;
+						 * popup = new FramedCloud("did"+svf[i].getFeatureId(), svf[i].getCenterLonLat(), null, "Bitte Lieferliste (Trace) uploaden", null, true);
+						 * popup.setPanMapIfOutOfView(true); // this set the popup in a strategic way, and pans the map if needed.
+						 * popup.setAutoSize(true);
+						 * svf[i].setPopup(popup);
+						 * theMap.addPopup(svf[i].getPopup());
+						 */
+						if (allDeliveries != null) {
+							Delivery d = getDelivery(svf[i].getFeatureId());
+							if (d != null) addFileUploadForm(d);
+						}
 					}
 					//FormPanel form = getFileUploadForm();
 					//form.setVisible(true);
@@ -340,20 +360,19 @@ public class MyTracingMap extends MapWidget {
 
 		addSearchBox();
 	}
+
 	private void centerTheMap(int zoomLevel) {
 		// Center the Map		
 		if (stationLayer != null && stationLayer.getFeatures() != null && stationLayer.getFeatures().length > 0) {
 			if (zoomLevel < 0) {
 				theMap.zoomToExtent(stationLayer.getDataExtent());
+			} else {
+				theMap.setCenter(stationLayer.getDataExtent().getCenterLonLat(), zoomLevel);
 			}
-			else {
-				theMap.setCenter(stationLayer.getDataExtent().getCenterLonLat(), zoomLevel);							
-			}
-		}
-		else {
+		} else {
 			LonLat lonLat = new LonLat(13.36438, 52.40967); // BfR
 			lonLat.transform(DEFAULT_PROJECTION.getProjectionCode(), theMap.getProjection()); //transform lonlat to OSM coordinate system
-			theMap.setCenter(lonLat, zoomLevel);			
+			theMap.setCenter(lonLat, zoomLevel);
 		}
 	}
 
@@ -407,10 +426,10 @@ public class MyTracingMap extends MapWidget {
 		searchBox.show();
 	}
 
-	private VectorFeature addDelivery2Feature(int id, int from, int to) {
+	private VectorFeature addDelivery2Feature(int id, int from, int to, double bogenwinkel) {
 		VectorFeature vf = null;
 		if (stations != null && stations.get(from) != null && stations.get(to) != null) {
-			List<Point> pointList = getLink(stations.get(from).getPoint(), stations.get(to).getPoint(), 30);
+			List<Point> pointList = getLink(stations.get(from).getPoint(), stations.get(to).getPoint(), bogenwinkel);
 			if (pointList != null) {
 				LineString arrow = new LineString(pointList.toArray(new Point[pointList.size()]));
 				vf = new VectorFeature(arrow);
@@ -518,6 +537,7 @@ public class MyTracingMap extends MapWidget {
 		stationStyle.setFillOpacity(1.0);
 		return stationStyle;
 	}
+
 	private Style createLabelStyle(String text) {
 		Style labelStyle = new Style();
 		labelStyle.setPointRadius(0);
@@ -532,6 +552,7 @@ public class MyTracingMap extends MapWidget {
 		deliveryStyle.setStrokeWidth(3);
 		return deliveryStyle;
 	}
+
 	private Style createDeliverySelectedStyle() {
 		Style deliveryStyle = new Style();
 		deliveryStyle.setStrokeColor("#0000ff");
@@ -580,77 +601,136 @@ public class MyTracingMap extends MapWidget {
 		}
 		return pointList;
 	}
-	private void addFileUploadForm(String deliveryId) {
-	    final com.smartgwt.client.widgets.Window formBox = new com.smartgwt.client.widgets.Window();
-	    formBox.setWidth(300);
-	    formBox.setHeight(130);
-	    formBox.setShowMinimizeButton(false);
-	    formBox.setShowCloseButton(true);
-	    formBox.setIsModal(true);
+
+	private void addFileUploadForm(Delivery delivery) {
+		final com.smartgwt.client.widgets.Window formBox = new com.smartgwt.client.widgets.Window();
+		formBox.setWidth(300);
+		formBox.setHeight(190);
+		formBox.setShowMinimizeButton(false);
+		formBox.setShowCloseButton(true);
+		formBox.setIsModal(true);
 		formBox.setOpacity(90);
 		formBox.setShowHeader(true);
 		formBox.setHeaderStyle("{background-color: red;}");
 		formBox.setShowStatusBar(false);
-		formBox.setTitle("Upload Lieferliste fuer Lieferung " + deliveryId);
+		formBox.setTitle("Lieferliste fuer die Lieferung " + delivery.getId());
 		formBox.setAlign(Alignment.CENTER);
-		formBox.centerInPage();//.setLeft(700); formBox.setTop(600);
+		formBox.centerInPage();
+
+		// Create a FormPanel and point it at a service.
+		final FormPanel form = new FormPanel();
+		form.setAction(GWT.getModuleBaseURL() + "UploadService");
+
+		// Because we're going to add a FileUpload widget, we'll need to set the
+		// form to use the POST method, and multipart MIME encoding.
+		form.setEncoding(FormPanel.ENCODING_MULTIPART);
+		form.setMethod(FormPanel.METHOD_POST);
+
+		// Create a panel to hold all of the form widgets.
+		VerticalPanel panel = new VerticalPanel();
+		form.setWidget(panel);
+
+		final Button button = new Button("Download"); // Upload
+
+		// Create a FileUpload widget.
+		final FileUpload upload = new FileUpload();
+		String mimeList = "application/vnd.ms-excel,application/msexcel,application/xls"; // application/x-msexcel,application/x-ms-excel,application/x-excel,application/x-dos_ms_excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+		upload.getElement().setAttribute("accept", mimeList);
 		
-	    // Create a FormPanel and point it at a service.
-	    final FormPanel form = new FormPanel();
-	    form.setAction(GWT.getModuleBaseURL() + "UploadService");
+		upload.addChangeHandler(new ChangeHandler() {
+			@Override
+			public void onChange(ChangeEvent event) {
+				if (upload.getFilename() != null && !upload.getFilename().isEmpty()) {
+					button.setText("Upload");
+				}
+				else {
+					button.setText("Download");
+				}
+			}
+		});
+		upload.setName("uploadFormElement");
+		panel.add(upload);
 
-	    // Because we're going to add a FileUpload widget, we'll need to set the
-	    // form to use the POST method, and multipart MIME encoding.
-	    form.setEncoding(FormPanel.ENCODING_MULTIPART);
-	    form.setMethod(FormPanel.METHOD_POST);
+		final Hidden did = new Hidden();
+		did.setName("deliveryId");
+		did.setValue(""+delivery.getId());
+		panel.add(did);
 
-	    // Create a panel to hold all of the form widgets.
-	    VerticalPanel panel = new VerticalPanel();
-	    form.setWidget(panel);
+		final RadioButton fw = new RadioButton("forward", "forward");
+		final RadioButton bw = new RadioButton("backward", "backward");
+		bw.setValue(true);
+		fw.addClickHandler(new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				bw.setValue(!fw.getValue());
+			}
+		});
+		bw.addClickHandler(new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				fw.setValue(!bw.getValue());
+			}
+		});
 
-	    // Create a FileUpload widget.
-	    final FileUpload upload = new FileUpload();
-	    upload.setName("uploadFormElement");
-	    panel.add(upload);
+		panel.setSpacing(10);
+		panel.add(fw);
+		panel.add(bw);
 
-	    // Create a ListBox, giving it a name and some values to be associated with
-	    // its options.
-	    ListBox lb = new ListBox();
-	    lb.setName("listBoxFormElement");
-	    lb.addItem("forward", "forward");
-	    lb.addItem("backward", "backward");
-	    panel.add(lb);
-	    
-	    // Add a 'submit' button.
-	    panel.add(new Button("Submit", new ClickHandler() {
-	      public void onClick(ClickEvent event) {
-	        form.submit();
-	      }
-	    }));
+		if (stations.get(delivery.getFrom()) != null) {
+			final Hidden from = new Hidden();
+			from.setName("fromId");
+			from.setValue(stations.get(delivery.getFrom()).getId()+"");
+			panel.add(from);
+		}
+		
+/*
+		final ListBox lb = new ListBox();
+		lb.setName("actiontype");
+		lb.addItem("forward", "forward");
+		lb.addItem("backward", "backward");
+		lb.addItem("download", "download");
+		panel.add(lb);
+*/
+		// Add a 'submit' button.
+		button.addClickHandler(new ClickHandler() {
+			public void onClick(ClickEvent event) {
+				form.submit();
+			}
+		});
+		panel.add(button);
 
-	    // Add an event handler to the form.
-	    form.addSubmitHandler(new FormPanel.SubmitHandler() {
-	      public void onSubmit(SubmitEvent event) {
-	        // This event is fired just before the form is submitted. We can take
-	        // this opportunity to perform validation.
-	        if (upload.getFilename().length() == 0) {
-	          Window.alert("File must be defined!");
-	          event.cancel();
-	        }
-	      }
-	    });
-	    form.addSubmitCompleteHandler(new FormPanel.SubmitCompleteHandler() {
-	      public void onSubmitComplete(SubmitCompleteEvent event) {
-	        // When the form submission is successfully completed, this event is
-	        // fired. Assuming the service returned a response of type text/html,
-	        // we can get the result text here (see the FormPanel documentation for
-	        // further explanation).
-	        Window.alert(event.getResults());
-	        formBox.destroy();
-	      }
-	    });
+		if (stations.get(delivery.getTo()) != null) {
+			final Hidden to = new Hidden();
+			to.setName("toId");
+			to.setValue(stations.get(delivery.getTo()).getId()+"");
+			panel.add(to);
+		}
 
-	    formBox.addItem(form);
+		// Add an event handler to the form.
+		form.addSubmitHandler(new FormPanel.SubmitHandler() {
+			public void onSubmit(SubmitEvent event) {
+				// This event is fired just before the form is submitted. We can take
+				// this opportunity to perform validation.
+				/*
+				if (up.getValue() && upload.getFilename().length() == 0) {
+					Window.alert("Upload file must be defined!");
+					event.cancel();
+				}
+				*/
+			}
+		});
+		form.addSubmitCompleteHandler(new FormPanel.SubmitCompleteHandler() {
+			public void onSubmitComplete(SubmitCompleteEvent event) {
+				// When the form submission is successfully completed, this event is
+				// fired. Assuming the service returned a response of type text/html,
+				// we can get the result text here (see the FormPanel documentation for
+				// further explanation).
+				Window.alert(event.getResults());
+				formBox.destroy();
+			}
+		});
+
+		formBox.addItem(form);
 		formBox.show();
 	}
 }

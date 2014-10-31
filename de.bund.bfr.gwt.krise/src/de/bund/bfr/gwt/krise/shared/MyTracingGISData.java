@@ -11,12 +11,12 @@ public class MyTracingGISData implements Serializable {
 	 */
 	private static final long serialVersionUID = 2094870544300208335L;
 	private LinkedHashMap<Integer, Station> stations;
-	private HashSet<Delivery> deliveries;
+	private LinkedHashMap<Integer, Delivery>  deliveries;
 
-	public HashSet<Delivery> getDeliveries() {
+	public LinkedHashMap<Integer, Delivery>  getDeliveries() {
 		return deliveries;
 	}
-	public void setDeliveries(HashSet<Delivery> deliveries) {
+	public void setDeliveries(LinkedHashMap<Integer, Delivery>  deliveries) {
 		this.deliveries = deliveries;
 	}
 	public LinkedHashMap<Integer, Station> getStations() {
