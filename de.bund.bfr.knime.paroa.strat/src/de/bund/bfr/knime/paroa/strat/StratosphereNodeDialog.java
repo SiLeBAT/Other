@@ -615,7 +615,7 @@ public class StratosphereNodeDialog extends NodeDialogPane {
 	m_methodChoiceBox = new JComboBox<String>();
 	m_methodChoiceBox.setPreferredSize(buttonDimension);
 	m_methodChoiceBox.addItem(METHODS.LBM.name());
-	m_methodChoiceBox.addItem(METHODS.SYRJALA.name());
+	m_methodChoiceBox.addItem(METHODS.SYR.name());
 
 	m_methodChoiceBox.addActionListener(new ActionListener() {
 
@@ -623,7 +623,7 @@ public class StratosphereNodeDialog extends NodeDialogPane {
 	    public void actionPerformed(ActionEvent arg0) {
 		String choice = (String) m_methodChoiceBox.getSelectedItem();
 		m_method = choice;
-		if (m_method.equals(METHODS.SYRJALA.name())) {
+		if (m_method.equals(METHODS.SYR.name())) {
 		    switchPanel(m_inputCoordinatesPanel, true);
 		    switchPanel(m_scenariosPanel, false);
 		    updatePanelValues();
@@ -681,10 +681,12 @@ public class StratosphereNodeDialog extends NodeDialogPane {
 
 	    @Override
 	    public void keyReleased(KeyEvent arg0) {
+		m_stratRemoteAddress = m_stratRemoteAddressField.getText();
 	    }
 
 	    @Override
 	    public void keyPressed(KeyEvent arg0) {
+		m_stratRemoteAddress = m_stratRemoteAddressField.getText();
 	    }
 	});
 
@@ -715,6 +717,7 @@ public class StratosphereNodeDialog extends NodeDialogPane {
 	    }
 	});
 	m_spinner.setModel(m_scenariosChoiceField);
+	m_spinner.setPreferredSize(buttonDimension);
 	m_scenariosPanel.add(m_spinner);
 	return m_scenariosPanel;
     }

@@ -29,24 +29,30 @@ public class StratosphereConnection {
     private boolean local;
     private String remoteAddress;
     private static final String ENV_CONFIG_DIRECTORY = "/";
-    private static final String CONFIG_DIRECTORY_FALLBACK_1 = "C:/Users/mfreitag/Dropbox/MasterThesis/repo/Other/de.bund.bfr.knime.paroa.strat/src/de/bund/bfr/knime/paroa/strat/";
-    private static final String CONFIG_DIRECTORY_FALLBACK_2 = "conf";
+    private static final String CONFIG_DIRECTORY_FALLBACK_1 = "conf";
+    private String CONFIG_DIRECTORY_FALLBACK_2;
     private static final String PREFIX_FILE_FILE = "file:";
     private static final String PREFIX_FILE_HDFS = "hdfs:";
+    private static final String REMOTE_USER_PATH = "hdfs://tenemhead2/user/markus.freitag/";
+    private static final String REMOTE_DATA_PATH = "data/";
+    private static final String REMOTE_RESULTS_PATH = "results/";
+
     private ExecutionContext exec;
 
-    public StratosphereConnection(String stratospherePath, String jarPath, Boolean local, String remoteAddress,
-	    ExecutionContext exec) {
+    public StratosphereConnection(String stratospherePath, String configurationPath, String jarPath, Boolean local,
+	    String remoteAddress,
+	    ExecutionContext knimeContext) {
+	setStratospherePath(stratospherePath);
+	setStratosphereConfigurationPath(configurationPath);
 	setRemoteAdress(remoteAddress);
 	setJarPath(jarPath);
-	setStratospherePath(stratospherePath);
 	setLocal(local);
-	this.exec = exec;
+	this.exec = knimeContext;
     }
 
     public void runParoa(EXEC mode, String paroa_input_sales, int numProducts,
 	    String paroa_input_outbreaks, int numCases,
-	    String paroa_output, int numScenarios,
+	    String paroa_output, int numScenarios, String scoringMethod,
 	    String paroa_input_coordinates) {
 
 	//		final String process_location = getPath() + "\\bin\\stratosphere.bat";
@@ -63,37 +69,62 @@ public class StratosphereConnection {
 	final String arg_numCases = String.valueOf(numCases);
 	final String arg_numScenarios = String.valueOf(numScenarios);
 	final String arg_output = addPrefix(paroa_output);
-	final String arg_paral = "-1";
+	final String arg_method = scoringMethod;
+	final String arg_paral = "8";
 	final String arg_debug = "-w";
 
+
+
 	ArrayList<String> arguments = new ArrayList<String>();
-	arguments.add(process_location);
-	arguments.add(process_cmd);
-	arguments.add(arg_jar_arg);
-	arguments.add(arg_jar);
-	arguments.add(arg_arg);
-	arguments.add(arg_input_sales);
-	arguments.add(arg_numProducts);
-	arguments.add(arg_input_outbreaks);
-	arguments.add(arg_numCases);
-	arguments.add(arg_output);
-	arguments.add(arg_numScenarios);
-	arguments.add(arg_paral);
-	arguments.add(arg_input_coordinates);
-	arguments.add(arg_debug);
 
-	logger.info("Arguments:");
-	for (String argument : arguments) {
-	    logger.info("\t" + argument);
-	}
-
-	if (mode.equals(EXEC.LOCAL))
+	if (mode.equals(EXEC.LOCAL)) {
+	    arguments.add(process_location);
+	    arguments.add(process_cmd);
+	    arguments.add(arg_jar_arg);
+	    arguments.add(arg_jar);
+	    arguments.add(arg_arg);
+	    arguments.add(arg_input_sales);
+	    arguments.add(arg_numProducts);
+	    arguments.add(arg_input_outbreaks);
+	    arguments.add(arg_numCases);
+	    arguments.add(arg_output);
+	    arguments.add(arg_numScenarios);
+	    arguments.add(arg_method);
+	    arguments.add(arg_paral);
+	    if (arg_method == StratosphereNodeModel.METHODS.SYR.name())
+		arguments.add(arg_input_coordinates);
+	    arguments.add(arg_debug);
 	    runLocally(arguments);
-	else if (mode.equals(EXEC.REMOTE))
-	    cliFrontend();
+	}
+	else if (mode.equals(EXEC.REMOTE)) {
+	    arguments.add(convertDataPath(arg_input_sales));
+	    arguments.add(arg_numProducts);
+	    arguments.add(convertDataPath(arg_input_outbreaks));
+	    arguments.add(arg_numCases);
+	    arguments.add(REMOTE_USER_PATH + REMOTE_RESULTS_PATH);
+	    arguments.add(arg_numScenarios);
+	    arguments.add(arg_method);
+	    arguments.add(arg_paral);
+	    
+	    // change this if GS changes
+            // arguments.add(REMOTE_USER_PATH + REMOTE_DATA_PATH + "expData_refac_201043_IRI_GS.tsv");
+            // arguments.add("1384");
+	    
+	    if (arg_method.equals(StratosphereNodeModel.METHODS.SYR.name()))
+		arguments.add(arg_input_coordinates);
+	    else if (arg_method.equals(StratosphereNodeModel.METHODS.LBM.name()))
+		arguments.remove(arg_method);
+	    cliFrontend(arguments);
+	}
 	else
 	    logger.error("unknown execution mode (should be " + EXEC.LOCAL + " or " + EXEC.REMOTE + ")");
 
+    }
+
+    private String convertDataPath(String arg_input_sales) {
+	String fileName = arg_input_sales.split("/")[arg_input_sales.split("/").length - 1];
+	String newPath = REMOTE_USER_PATH + REMOTE_DATA_PATH + fileName;
+	return newPath;
     }
 
     private String addPrefix(String paroa_input_outbreaks) {
@@ -107,6 +138,11 @@ public class StratosphereConnection {
     }
 
     private void runLocally(ArrayList<String> arguments) {
+	logger.info("Arguments:");
+	for (String argument : arguments) {
+	    logger.info("\t" + argument);
+	}
+	
 	ProcessBuilder process_b = new ProcessBuilder(arguments);
 	process_b.inheritIO();
 	Process p;
@@ -134,11 +170,18 @@ public class StratosphereConnection {
     }
 
     @SuppressWarnings("unused")
-    private int cliFrontend() {
+    private int cliFrontend(ArrayList<String> programArgs) {
+	logger.info("Arguments:");
+	for (String argument : programArgs) {
+	    logger.info("\t" + argument);
+	}
+	String[] args = new String[programArgs.size()];
+	args = programArgs.toArray(args);
+	
 	File jarFile = null;
 	String entryPointClass = null;
-	String[] programArgs = "hdfs://tenemhead2/user/markus.freitag/data/rewe_experiment_data.csv 580 hdfs://tenemhead2/user/markus.freitag/data/outbreak_p20_c20.csv 20 hdfs://tenemhead2/user/markus.freitag/results/ 1 -1"
-		.split(" ");
+//	programArgs = "hdfs://tenemhead2/user/markus.freitag/data/rewe_experiment_data.csv 580 hdfs://tenemhead2/user/markus.freitag/data/outbreak_p20_c20.csv 20 hdfs://tenemhead2/user/markus.freitag/results/ 1 -1"
+//		.split(" ");
 	String address = null;
 	boolean wait = false;
 
@@ -164,24 +207,31 @@ public class StratosphereConnection {
 	PackagedProgram program;
 	try {
 	    if (entryPointClass == null) {
-		program = new PackagedProgram(jarFile, programArgs);
+		program = new PackagedProgram(jarFile, args);
 	    } else {
 		program = new PackagedProgram(jarFile, entryPointClass,
-			programArgs);
+			args);
 	    }
 	} catch (Exception e) {
 	    return handleError(e);
 	}
 
 	Configuration configuration = getConfiguration();
-	Client client;
+	Client client = null;
 
 	InetSocketAddress socket = null;
-	if (address != null && !address.isEmpty()) {
-	    socket = RemoteExecutor.getInetFromHostport(address);
-	    client = new Client(socket, configuration);
-	} else {
-	    client = new Client(configuration);
+	try {
+	    if (address != null && !address.isEmpty()) {
+		socket = RemoteExecutor.getInetFromHostport(address);
+		client = new Client(socket, configuration);
+
+	    } else {
+		client = new Client(configuration);
+	    }
+	} catch (Exception e) {
+	    logger.error("Connection could not be established.");
+	    exec.getProgressMonitor().setExecuteCanceled();
+	    return handleError(e);
 	}
 	client.setPrintStatusDuringExecution(true);
 
@@ -280,6 +330,10 @@ public class StratosphereConnection {
 	Configuration config = GlobalConfiguration.getConfiguration();
 
 	return config;
+    }
+
+    private void setStratosphereConfigurationPath(String configurationPath) {
+	CONFIG_DIRECTORY_FALLBACK_2 = configurationPath;
     }
 
     private String getStratospherePath() {
