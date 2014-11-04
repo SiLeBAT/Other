@@ -24,6 +24,10 @@
     <!-- be added before this line.                -->
     <!--                                           -->
     <script type="text/javascript" language="javascript" src="de_bund_bfr_gwt_krise/de_bund_bfr_gwt_krise.nocache.js"></script>
+    
+    <script src="http://www.openlayers.org/api/OpenLayers.js"></script>
+    <script src="http://www.openstreetmap.org/openlayers/OpenStreetMap.js"></script>    
+    <script src="AnimatedCluster.js"></script>
   </head>
 
   <!--                                           -->
@@ -32,6 +36,8 @@
   <!-- to create a completely dynamic UI.        -->
   <!--                                           -->
   <body>
+
+    <div id="mynetwork"></div>
 
     <!-- OPTIONAL: include this if you want history support -->
     <iframe src="javascript:''" id="__gwt_historyFrame" tabIndex='-1' style="position:absolute;width:0;height:0;border:0"></iframe>
