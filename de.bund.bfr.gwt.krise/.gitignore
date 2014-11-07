@@ -11,3 +11,5 @@ war/db
 !war/WEB-INF/lib/commons-fileupload-1.3.1.jar
 !war/WEB-INF/lib/commons-io-2.4.jar
 !war/WEB-INF/lib/poi-3.10.1-20140818.jar
+!war/WEB-INF/lib/smartgwt.jar
+!war/WEB-INF/lib/smartgwt-skins.jar
