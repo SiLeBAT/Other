@@ -62,6 +62,7 @@ public class StratosphereNodeModel extends NodeModel {
     static final String STRAT_OUTBREAKS = "/data/outbreaks/";
     static final String STRAT_SALES = "/data/sales/";
     static final String STRAT_RESULTS = "data/results/";
+    private static final String CONF_FILE = "stratosphere-conf.yaml";
 
     static final String MSG_VALIDATING_DATA = "Validating paths and settings.";
     static final String MSG_CONFIG_STRATO = "Configuring Stratosphere call.";
@@ -74,7 +75,7 @@ public class StratosphereNodeModel extends NodeModel {
 
     // order matters!
     enum METHODS {
-	SYRJALA, LBM
+	SYR, LBM
     };
 
     enum EXEC {
@@ -94,7 +95,7 @@ public class StratosphereNodeModel extends NodeModel {
     private String m_methodsChoice;
     private Boolean m_execChoice;
 
-    public static final String[] METHOD_CHIOCES = { METHODS.SYRJALA.name(),
+    public static final String[] METHOD_CHIOCES = { METHODS.SYR.name(),
 	    METHODS.LBM.name() };
     public static final String[] LOCAL = { "LOCAL", "CLUSTER" };
 
@@ -153,8 +154,8 @@ public class StratosphereNodeModel extends NodeModel {
      */
     @Override
     protected BufferedDataTable[] execute(final PortObject[] inData,
-	    final ExecutionContext exec) throws Exception {
-	exec.setProgress(0.01, "Initializing...");
+	    final ExecutionContext knimeContext) throws Exception {
+	knimeContext.setProgress(0.01, "Initializing...");
 	this.m_methodsChoice = m_methods.getStringValue();
 	this.m_execChoice = m_exec.getBooleanValue();
 
@@ -167,12 +168,13 @@ public class StratosphereNodeModel extends NodeModel {
 	String inputOutbreaksChoice = m_inputOutbreaks.getStringValue();
 	String inputCoordinatesChoice = m_inputCoordinates.getStringValue();
 	String stratospherePathChoice = m_stratospherePath.getStringValue();
+	String stratosphereConfigurationPathChoice = m_stratosphereConfiguration.getStringValue();
 	String remoteAddress = m_address.getStringValue();
 
 	logger.info(MSG_CONFIG_STRATO);
 	StratosphereConnection paroa_connection = new StratosphereConnection(
-		stratospherePathChoice, jarChoice, this.m_execChoice, remoteAddress, exec);
-	FileHandle paroa_output = new FileHandle("C:/Users/mfreitag/Dropbox/MasterThesis/data/results/");
+		stratospherePathChoice, stratosphereConfigurationPathChoice, jarChoice, this.m_execChoice,
+		remoteAddress, knimeContext);
 
 	int numCases = getNumCases(inputOutbreaksChoice);
 	int numProducts = getNumProducts(inputSalesChoice);
@@ -181,7 +183,7 @@ public class StratosphereNodeModel extends NodeModel {
 	// here happens the action
 	logger.info(MSG_STRATO_CON);
 	paroa_connection.runParoa(EXEC.REMOTE, inputSalesChoice, numProducts,
-		inputOutbreaksChoice, numCases, stratospherePathChoice, numScenarios,
+		inputOutbreaksChoice, numCases, stratospherePathChoice, numScenarios, m_methodsChoice,
 		inputCoordinatesChoice);
 
 	/* processing results */
@@ -202,9 +204,11 @@ public class StratosphereNodeModel extends NodeModel {
 	ranksColSpecs[1] = new DataColumnSpecCreator("Rank", IntCell.TYPE)
 		.createSpec();
 	DataTableSpec ranksSpec = new DataTableSpec(ranksColSpecs);
-
+	
+	// TODO: Workaround
+	FileHandle paroa_output = new FileHandle("H:/Master-Thesis/data/results/");
 	// reading results files
-	File ranksFile = new File(paroa_output.getPath()
+	/*File ranksFile = new File(paroa_output.getPath()
 		+ "ranks_"
 		+ generateOutputFileName(inputOutbreaksChoice,
 			inputSalesChoice, numScenarios, false));
@@ -213,6 +217,12 @@ public class StratosphereNodeModel extends NodeModel {
 			+ "lbm_"
 			+ generateOutputFileName(inputOutbreaksChoice,
 				inputSalesChoice, false));
+	*/
+	// TODO: Workaround
+	File ranksFile = new File(paroa_output.getPath()
+		+ "ranks_exp_c10_ON_expData_refac_201043PL5_GS_100_3_MTS_3.txt");
+	File lbmFile = new File(
+		paroa_output.getPath() + "lbm_exp_c10_PL2_ON_expData_refac_201043PL2_GS_100_3_ohneGS_.txt");
 
 	FileInputStream ranksStream = new FileInputStream(ranksFile);
 	InputStreamReader ranksReader = new InputStreamReader(ranksStream);
@@ -222,9 +232,9 @@ public class StratosphereNodeModel extends NodeModel {
 	InputStreamReader lbmReader = new InputStreamReader(lbmStream);
 	BufferedReader lbmBufferedReader = new BufferedReader(lbmReader);
 
-	BufferedDataContainer ranksContainer = exec
+	BufferedDataContainer ranksContainer = knimeContext
 		.createDataContainer(ranksSpec);
-	BufferedDataContainer lbmContainer = exec.createDataContainer(lbmSpec);
+	BufferedDataContainer lbmContainer = knimeContext.createDataContainer(lbmSpec);
 
 	String ranks_currentLine = ranksBufferedReader.readLine();
 	while (ranks_currentLine != null) {
@@ -237,7 +247,7 @@ public class StratosphereNodeModel extends NodeModel {
 
 	    DataRow row = new DefaultRow(key, cells);
 	    ranksContainer.addRowToTable(row);
-	    exec.checkCanceled();
+	    knimeContext.checkCanceled();
 	    ranks_currentLine = ranksBufferedReader.readLine();
 	}
 
@@ -254,12 +264,12 @@ public class StratosphereNodeModel extends NodeModel {
 
 	    DataRow row = new DefaultRow(key, cells);
 	    lbmContainer.addRowToTable(row);
-	    exec.checkCanceled();
+	    knimeContext.checkCanceled();
 	    lbm_currentLine = lbmBufferedReader.readLine();
 	}
 
 	lbmContainer.close();
-	exec.setProgress(0.99);
+	knimeContext.setProgress(0.99);
 
 	// configuring output table
 	BufferedDataTable ranksTable = ranksContainer.getTable();
@@ -281,7 +291,7 @@ public class StratosphereNodeModel extends NodeModel {
 	checkPath(m_jar);
 
 	// validate variable options' paths
-	if (this.m_methodsChoice.equals(METHODS.SYRJALA.name()))
+	if (this.m_methodsChoice.equals(METHODS.SYR.name()))
 	    checkPath(m_inputCoordinates);
 	if (this.m_execChoice) {
 	    checkPath(m_stratospherePath);
@@ -406,12 +416,20 @@ public class StratosphereNodeModel extends NodeModel {
     }
 
     private void checkPath(SettingsModelString settings) throws InvalidSettingsException {
+	checkPath(settings, null);
+    }
+
+    private void checkPath(SettingsModelString settings, String fileName) throws InvalidSettingsException {
 	String path = settings.getStringValue();
+	File testFile;
+	if (fileName != null)
+	    testFile = new File(path + fileName);
+	else
+	    testFile = new File(path);
 
 	if (path == null) {
 	    throw new InvalidSettingsException("path is null: " + settings.getKey());
 	}
-	File testFile = new File(path);
 	if (!testFile.exists())
 	    throw new InvalidSettingsException("path leads to no file: " + settings.getKey());
     }

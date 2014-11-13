@@ -287,7 +287,12 @@ public final class MathOps {
 				return false;
 			}
 		}
-		return MathOps.approxEqual(MathOps.sum(probabilities), 1d);
+		double sum;
+		if(MathOps.sum(probabilities) > 0.9999999999d)
+			sum = 1d;
+		else
+			sum = MathOps.sum(probabilities);
+		return MathOps.approxEqual(sum, 1d);
 	}
 
 	/**

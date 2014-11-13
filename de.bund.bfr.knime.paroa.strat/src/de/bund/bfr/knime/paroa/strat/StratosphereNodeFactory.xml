@@ -7,7 +7,7 @@
     </shortDescription>
     
     <fullDescription>
-        <intro>For information about the nodes progress, please set the KNIMG GUI log level to 'INFO' (File > Preferences -> KNIME -> KNIME GUI)</intro>
+        <intro>For information about the nodes progress, please set the KNIMG GUI log level to 'INFO' (File > Preferences -> KNIME -> KNIME GUI). The "Use variable" are merely markers. They shall encourage to use variables with this node, e.g. in form of Quickform-nodes. A chosen flow variable in the "Flow Variable"-Tab will always override your manually set value.</intro>
         
         
         <option name="short name of first option (like in the dialog)">description of first option</option>
@@ -25,8 +25,8 @@
     </fullDescription>
     
     <ports>
-        <inPort index="0" name="Sales Data">Sales Data</inPort>
-        <inPort index="1" name="Outbreak Data">Outbreak Data</inPort>
+        <inPort index="0" name="Outbreak Data">Outbreak Data</inPort>
+        <inPort index="1" name="Sales Data">Sales Data</inPort>
         <outPort index="0" name="MCL Ranks">MCL Ranks</outPort>
         <outPort index="1" name="LBM Values">LBM Values</outPort>
     </ports>    
