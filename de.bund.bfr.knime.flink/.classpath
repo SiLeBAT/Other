@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-logging-1.1.3.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/hadoop-common-2.2.0.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
+	<classpathentry kind="lib" path="lib/flink-core-0.7.0-incubating.jar"/>
+	<classpathentry kind="lib" path="lib/flink-scala-0.7.0-incubating.jar"/>
+	<classpathentry kind="lib" path="lib/hadoop-hdfs-2.5.1.jar"/>
+	<classpathentry kind="lib" path="lib/flink-clients-0.7.0-incubating.jar" sourcepath="C:/Users/heisea/Programme/flink-0.7.0-incubating/src"/>
+	<classpathentry kind="lib" path="lib/flink-compiler-0.7.0-incubating.jar"/>
+	<classpathentry kind="lib" path="lib/flink-runtime-0.7.0-incubating.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
