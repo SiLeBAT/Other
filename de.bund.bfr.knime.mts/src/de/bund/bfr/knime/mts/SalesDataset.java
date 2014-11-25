@@ -42,6 +42,8 @@ public class SalesDataset {
 			foodDistributions[row_index] = currentRowValues[guiltyColumn];
 			row_index++;
 		}
+		
+		row_it.close();
 	}
 	
 	private Double[] convertCellsToDoubleArray(Iterator<DataCell> cell_iterator) {
