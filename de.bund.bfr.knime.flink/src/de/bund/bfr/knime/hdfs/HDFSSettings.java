@@ -14,18 +14,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package de.bund.bfr.knime.flink;
+package de.bund.bfr.knime.hdfs;
 
 import java.io.Serializable;
 import java.net.InetSocketAddress;
 
-import org.apache.flink.configuration.Configuration;
-import org.apache.flink.configuration.GlobalConfiguration;
+import org.apache.hadoop.conf.Configuration;
 
 /**
- * 
+ * Represents a connection to the HDFS. Currently, the connection is only virtual: With every file operator, we send a
+ * completely independent request. However, this special port allows users to keep their HDFS
+ * configuration at one place.
  */
-public class FlinkJobManagerSettings implements Serializable {
+public class HDFSSettings implements Serializable {
 	/**
 	 * 
 	 */
@@ -33,7 +34,7 @@ public class FlinkJobManagerSettings implements Serializable {
 
 	private InetSocketAddress address = new InetSocketAddress(0);
 
-	private Configuration configuration = GlobalConfiguration.getConfiguration();
+	private Configuration configuration = new Configuration();
 
 	/*
 	 * (non-Javadoc)
@@ -47,7 +48,7 @@ public class FlinkJobManagerSettings implements Serializable {
 			return false;
 		if (this.getClass() != obj.getClass())
 			return false;
-		FlinkJobManagerSettings other = (FlinkJobManagerSettings) obj;
+		HDFSSettings other = (HDFSSettings) obj;
 		return this.address.equals(other.address) && this.configuration.equals(other.configuration);
 	}
 

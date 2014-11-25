@@ -25,9 +25,9 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 
-import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.NotConfigurableException;
 
 /**
  * 
@@ -43,13 +43,14 @@ public class SerializationHelper {
 		}
 	}
 
-	public static <T extends Serializable> T readObject(NodeSettingsRO settings, String key)
-			throws InvalidSettingsException {
+	public static <T extends Serializable> T readObject(NodeSettingsRO settings, String key) throws NotConfigurableException {
+		if(!settings.containsKey(key))
+			return null;
 		try {
 			ByteArrayInputStream bis = new ByteArrayInputStream(settings.getByteArray(key));
 			return readObject(bis);
-		} catch (IOException e) {
-			throw new InvalidSettingsException("Cannot read object", e);
+		} catch (Exception e) {
+			throw new NotConfigurableException("Cannot read object", e);
 		}
 	}
 

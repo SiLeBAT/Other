@@ -37,8 +37,6 @@ public class FlinkJobManagerConnectionNodeDialog extends DefaultNodeSettingsPane
 	 * components.
 	 */
 	protected FlinkJobManagerConnectionNodeDialog() {
-		super();
-
 		this.addDialogComponent(new DialogComponentString(FlinkJobManagerConnectionNodeModel.createAddressModel(),
 			"Address:", true, /* componentwidth */5));
 		this.addDialogComponent(new DialogComponentNumber(FlinkJobManagerConnectionNodeModel.createPortModel(),

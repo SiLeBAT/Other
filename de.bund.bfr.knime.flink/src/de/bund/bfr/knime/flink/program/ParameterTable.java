@@ -14,11 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package de.bund.bfr.knime.flink.scala;
+package de.bund.bfr.knime.flink.program;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.DefaultCellEditor;
@@ -32,7 +33,7 @@ import org.knime.core.node.workflow.FlowVariable;
 import org.knime.core.node.workflow.FlowVariable.Type;
 
 import de.bund.bfr.knime.flink.Parameter;
-import de.bund.bfr.knime.flink.scala.ParameterTableModel.Column;
+import de.bund.bfr.knime.flink.program.ParameterTableModel.Column;
 
 /**
  * The model for the parameter table. Performs validation of the given data. <br/>
@@ -50,7 +51,7 @@ public class ParameterTable extends ConfigTablePanel {
 	 */
 	private static final long serialVersionUID = -601022685311139615L;
 
-	private ParameterTableModel m_model;
+	private ParameterTableModel model;
 
 	/**
 	 * Create a new component.
@@ -59,19 +60,19 @@ public class ParameterTable extends ConfigTablePanel {
 		super(new ParameterTableModel());
 		final JTable table = this.getTable();
 
-		this.m_model = (ParameterTableModel) this.getModel();
+		this.model = (ParameterTableModel) this.getModel();
 
 		DefaultCellEditor textEditor = new DefaultCellEditor(new JTextField());
 		textEditor.setClickCountToStart(1);
 		table.setDefaultEditor(String.class, textEditor);
 
-		TableColumn nameColumn = table.getColumnModel().getColumn(this.m_model.getIndex(Column.NAME));
+		TableColumn nameColumn = table.getColumnModel().getColumn(this.model.getIndex(Column.NAME));
 		nameColumn.setCellEditor(textEditor);
-		TableColumn typeColumn = table.getColumnModel().getColumn(this.m_model.getIndex(Column.TYPE));
+		TableColumn typeColumn = table.getColumnModel().getColumn(this.model.getIndex(Column.TYPE));
 		typeColumn.setCellEditor(new DefaultCellEditor(new JComboBox<Type>(Type.values())));
 		// TableColumn requiredColumn = table.getColumnModel().getColumn(this.m_model.getIndex(Column.REQUIRED));
 		// requiredColumn.setCellEditor(new DefaultCellEditor(new JCheckBox()));
-		TableColumn defaultColumn = table.getColumnModel().getColumn(this.m_model.getIndex(Column.DEFAULT_VALUE));
+		TableColumn defaultColumn = table.getColumnModel().getColumn(this.model.getIndex(Column.DEFAULT_VALUE));
 		defaultColumn.setCellEditor(textEditor);
 
 		// commit editor on focus lost
@@ -79,7 +80,7 @@ public class ParameterTable extends ConfigTablePanel {
 	}
 
 	public void addParameter(final Parameter outVar) {
-		this.m_model.addRow(new Object[] { outVar.getName(), outVar.getType(), Boolean.TRUE, "" });
+		this.model.addRow(new Object[] { outVar.getName(), outVar.getType(), Boolean.TRUE, "" });
 	}
 
 	/**
@@ -108,19 +109,26 @@ public class ParameterTable extends ConfigTablePanel {
 
 	public List<Parameter> getParameters() {
 		List<Parameter> parameters = new ArrayList<>();
-		for (int r = 0; r < this.m_model.getRowCount(); r++) {
-			if (!this.m_model.validateValues(r))
+		for (int r = 0; r < this.model.getRowCount(); r++) {
+			if (!this.model.validateValues(r))
 				// there are errors in this row
 				continue;
 			parameters.add(new Parameter(
-				(String) this.m_model.getValueAt(r, Column.NAME),
-				(Type) this.m_model.getValueAt(r, Column.TYPE),
-				Boolean.TRUE.equals(this.m_model.getValueAt(r, Column.REQUIRED)) ? null :
-					(String) this.m_model.getValueAt(r, Column.DEFAULT_VALUE)));
+				(String) this.model.getValueAt(r, Column.NAME),
+				(Type) this.model.getValueAt(r, Column.TYPE),
+				Boolean.TRUE.equals(this.model.getValueAt(r, Column.REQUIRED)) ? null :
+					(String) this.model.getValueAt(r, Column.DEFAULT_VALUE)));
 		}
 		return parameters;
 	}
 
+	public void setParameters(List<Parameter> parameters) {
+		model.clear();
+		for (Parameter parameter : parameters) {
+			addParameter(parameter);
+		}
+	}
+	
 	/**
 	 * {@inheritDoc}
 	 */
@@ -129,7 +137,7 @@ public class ParameterTable extends ConfigTablePanel {
 		return new ActionListener() {
 			@Override
 			public void actionPerformed(final ActionEvent e) {
-				ParameterTable.this.addRow("param" + (ParameterTable.this.m_model.getRowCount() + 1), Type.STRING);
+				ParameterTable.this.addRow("param" + (ParameterTable.this.model.getRowCount() + 1), Type.STRING);
 			}
 		};
 	}
@@ -145,7 +153,7 @@ public class ParameterTable extends ConfigTablePanel {
 	 *        the flow variables
 	 */
 	void updateData(final List<Parameter> vars) {
-		this.m_model.clear();
+		this.model.clear();
 		for (int r = 0; r < vars.size(); r++)
 			this.addParameter(vars.get(r));
 	}

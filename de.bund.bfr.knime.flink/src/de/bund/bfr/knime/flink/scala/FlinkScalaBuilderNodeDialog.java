@@ -47,6 +47,8 @@ import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.util.ViewUtils;
 
+import de.bund.bfr.knime.flink.program.ParameterTable;
+import de.bund.bfr.knime.flink.program.ParameterTableModel;
 import de.bund.bfr.knime.flink.scala.ScalaSnippetDocument.Section;
 
 /**
@@ -65,7 +67,7 @@ public class FlinkScalaBuilderNodeDialog extends NodeDialogPane {
 	/** The settings. */
 	protected ScalaSnippetSettings settings;
 
-	private ParameterTable inFieldsTable;
+	private ParameterTable parameterTable;
 
 	private boolean isEnabled;
 
@@ -182,6 +184,7 @@ public class FlinkScalaBuilderNodeDialog extends NodeDialogPane {
 
 		this.snippet.setSettings(this.settings);
 		this.jarPanel.setJarFiles(this.settings.getJarFiles());
+		this.parameterTable.setParameters(this.settings.getParameters());
 
 		// collapse all folds
 		int mainOffset = this.snippet.getDocument().getGuardedSection(Section.MainStart).getStart().getOffset();
@@ -205,8 +208,7 @@ public class FlinkScalaBuilderNodeDialog extends NodeDialogPane {
 	 * {@inheritDoc}
 	 */
 	@Override
-	protected void saveSettingsTo(final NodeSettingsWO settings)
-			throws InvalidSettingsException {
+	protected void saveSettingsTo(final NodeSettingsWO settings) throws InvalidSettingsException {
 		ViewUtils.invokeAndWaitInEDT(new Runnable() {
 
 			@Override
@@ -214,8 +216,8 @@ public class FlinkScalaBuilderNodeDialog extends NodeDialogPane {
 				// Commit editing - This is a workaround for a bug in the Dialog
 				// since the tables do not loose focus when OK or Apply is
 				// pressed.
-				if (null != FlinkScalaBuilderNodeDialog.this.inFieldsTable.getTable().getCellEditor())
-					FlinkScalaBuilderNodeDialog.this.inFieldsTable.getTable().getCellEditor().
+				if (null != FlinkScalaBuilderNodeDialog.this.parameterTable.getTable().getCellEditor())
+					FlinkScalaBuilderNodeDialog.this.parameterTable.getTable().getCellEditor().
 						stopCellEditing();
 			}
 		});
@@ -223,11 +225,9 @@ public class FlinkScalaBuilderNodeDialog extends NodeDialogPane {
 
 		// if settings have less fields than defined in the table it means
 		// that the tables contain errors
-		ParameterTableModel inFieldsModel =
-			(ParameterTableModel) this.inFieldsTable.getTable().getModel();
-		if (!inFieldsModel.validateValues())
-			throw new IllegalArgumentException(
-				"The input fields table has errors.");
+		ParameterTableModel parameterModel = (ParameterTableModel) this.parameterTable.getTable().getModel();
+		if (!parameterModel.validateValues())
+			throw new InvalidSettingsException("The parameter table has errors.");
 
 		s.saveSettings(settings);
 	}
@@ -243,7 +243,7 @@ public class FlinkScalaBuilderNodeDialog extends NodeDialogPane {
 	 */
 	protected void setEnabled(final boolean enabled) {
 		if (this.isEnabled != enabled) {
-			this.inFieldsTable.setEnabled(enabled);
+			this.parameterTable.setEnabled(enabled);
 			this.jarPanel.setEnabled(enabled);
 			this.snippetTextArea.setEnabled(enabled);
 		}
@@ -286,26 +286,26 @@ public class FlinkScalaBuilderNodeDialog extends NodeDialogPane {
 		JComponent snippet = this.createSnippetPanel();
 
 		JPanel centerPanel = new JPanel(new GridLayout(0, 1));
-		this.inFieldsTable = new ParameterTable();
+		this.parameterTable = new ParameterTable();
 
 		// use split pane for fields
-		this.inFieldsTable.setBorder(BorderFactory.createTitledBorder("Input"));
+		this.parameterTable.setBorder(BorderFactory.createTitledBorder("Input"));
 
 		JSplitPane mainSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-		mainSplitPane.setTopComponent(this.inFieldsTable);
+		mainSplitPane.setTopComponent(this.parameterTable);
 		// minimize size of tables at the bottom
-		this.inFieldsTable.setPreferredSize(this.inFieldsTable.getMinimumSize());
+		this.parameterTable.setPreferredSize(this.parameterTable.getMinimumSize());
 		mainSplitPane.setBottomComponent(snippet);
 		mainSplitPane.setOneTouchExpandable(true);
 		mainSplitPane.setResizeWeight(0.3); // snippet gets more space, table with in/out gets less extra space
 
 		centerPanel.add(mainSplitPane);
 
-		this.inFieldsTable.getTable().getModel().addTableModelListener(
+		this.parameterTable.getTable().getModel().addTableModelListener(
 			new TableModelListener() {
 				@Override
 				public void tableChanged(final TableModelEvent e) {
-					FlinkScalaBuilderNodeDialog.this.snippet.setParameters(FlinkScalaBuilderNodeDialog.this.inFieldsTable.getParameters());
+					FlinkScalaBuilderNodeDialog.this.snippet.setParameters(FlinkScalaBuilderNodeDialog.this.parameterTable.getParameters());
 				}
 			});
 

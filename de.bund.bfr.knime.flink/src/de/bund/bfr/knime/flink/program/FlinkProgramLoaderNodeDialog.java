@@ -16,7 +16,29 @@
  ******************************************************************************/
 package de.bund.bfr.knime.flink.program;
 
-import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import javax.swing.JComponent;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SpringLayout;
+import javax.swing.SwingConstants;
+
+import layout.SpringUtilities;
+
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeDialogPane;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.NotConfigurableException;
+import org.knime.core.node.port.PortObjectSpec;
+
+import de.bund.bfr.knime.flink.FlinkProgramWithUsage;
+import de.bund.bfr.knime.flink.SerializationHelper;
+import de.bund.bfr.knime.ui.FilePanel;
 
 /**
  * <code>NodeDialog</code> for the "FlinkProgramLoader" Node.
@@ -27,7 +49,11 @@ import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
  * 
  * @author Arvid Heise
  */
-public class FlinkProgramLoaderNodeDialog extends DefaultNodeSettingsPane {
+public class FlinkProgramLoaderNodeDialog extends NodeDialogPane {
+
+	private FilePanel filePanel;
+
+	private ParameterTable parameterTable;
 
 	/**
 	 * New pane for configuring FlinkProgramLoader node dialog.
@@ -35,7 +61,60 @@ public class FlinkProgramLoaderNodeDialog extends DefaultNodeSettingsPane {
 	 * components.
 	 */
 	protected FlinkProgramLoaderNodeDialog() {
-		super();
+		JPanel mainPanel = new JPanel(new SpringLayout());
+		String[] labels = { "Jar path: ", "Parameters: " };
+		this.filePanel = new FilePanel("Choose jar", FilePanel.OPEN_DIALOG);
+		this.parameterTable = new ParameterTable();
+		JComponent[] components = { this.filePanel, this.parameterTable };
+		int numPairs = labels.length;
 
+		// Create and populate the panel.
+		for (int i = 0; i < numPairs; i++) {
+			JLabel l = new JLabel(labels[i], SwingConstants.TRAILING);
+			mainPanel.add(l);
+			JComponent component = components[i];
+			l.setLabelFor(component);
+			mainPanel.add(component);
+		}
+
+		// Lay out the panel.
+		SpringUtilities.makeCompactGrid(mainPanel,
+			labels.length, 2, // rows, cols
+			6, 6, // initX, initY
+			6, 6); // xPad, yPad
+
+		addTab("Program settings", mainPanel);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.knime.core.node.NodeDialogPane#loadSettingsFrom(org.knime.core.node.NodeSettingsRO,
+	 * org.knime.core.node.port.PortObjectSpec[])
+	 */
+	@Override
+	protected void loadSettingsFrom(NodeSettingsRO settings, PortObjectSpec[] specs) throws NotConfigurableException {
+		FlinkProgramWithUsage program = SerializationHelper.readObject(settings, "program");
+		this.filePanel.setFileName(program.getJarPath().toString());
+		this.parameterTable.setParameters(program.getParameters());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.knime.core.node.NodeDialogPane#saveSettingsTo(org.knime.core.node.NodeSettingsWO)
+	 */
+	@Override
+	protected void saveSettingsTo(NodeSettingsWO settings) throws InvalidSettingsException {
+		ParameterTableModel parameterModel = (ParameterTableModel) this.parameterTable.getTable().getModel();
+		if (!parameterModel.validateValues())
+			throw new InvalidSettingsException("The parameter table has errors.");
+
+		Path path = FileSystems.getDefault().getPath(this.filePanel.getFileName());
+		if (!Files.exists(path))
+			throw new InvalidSettingsException("The jar does not exist.");
+		
+		FlinkProgramWithUsage program = new FlinkProgramWithUsage();
+		program.setParameters(this.parameterTable.getParameters());
+		program.setJarPath(path);
+		SerializationHelper.writeObject(settings, "program", program);
 	}
 }

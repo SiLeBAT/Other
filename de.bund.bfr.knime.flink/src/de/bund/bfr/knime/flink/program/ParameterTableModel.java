@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package de.bund.bfr.knime.flink.scala;
+package de.bund.bfr.knime.flink.program;
 
 import org.knime.core.node.util.DefaultConfigTableModel;
 import org.knime.core.node.workflow.FlowVariable;
@@ -276,12 +276,10 @@ public class ParameterTableModel extends DefaultConfigTableModel {
 	 * The columns of the output table.
 	 */
 	public enum Column {
-		DEFAULT_VALUE,
-		/** The index of the input column / flow variable column. */
 		NAME,
+		TYPE,
 		REQUIRED,
-		/** The index of the java type column. */
-		TYPE
+		DEFAULT_VALUE,
 	}
 
 }
