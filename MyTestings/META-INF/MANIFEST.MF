@@ -9,7 +9,8 @@ Bundle-Vendor: aaw
 Require-Bundle: org.eclipse.core.runtime,
  org.knime.workbench.core,
  org.knime.workbench.repository,
- org.knime.base
+ org.knime.base,
+ org.apache.poi;bundle-version="3.6.0"
 Bundle-ActivationPolicy: lazy
 Export-Package: de.bund.bfr.knime.aaw
 Import-Package: org.knime.distmatrix.type
