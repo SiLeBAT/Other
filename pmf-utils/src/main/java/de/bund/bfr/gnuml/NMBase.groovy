@@ -17,6 +17,7 @@
 package de.bund.bfr.gnuml
 
 import java.lang.reflect.Modifier;
+import java.util.List;
 
 /**
  * 
@@ -30,47 +31,71 @@ class NMBase {
 	
 	Node originalNode
 	
-	NUMLDocument document
+	NuMLDocument document
 	
 	/**
-	 * Sets the originalNode to the specified value.
+	 * Sets the originalNode to the specified value and parses the relevant attributes and elements.
 	 *
 	 * @param originalNode the originalNode to set
 	 */
-	public void setOriginalNode(Node originalNode) {
+	void setOriginalNode(Node originalNode) {
 		if (originalNode == null)
-			throw new NullPointerException("originalNode must not be null");
+			throw new NullPointerException("originalNode must not be null")
 
-		this.originalNode = originalNode;
+		this.originalNode = originalNode
 		this.metaId = originalNode.'@metaid'
 		this.notes = originalNode.notes*.first()
 		this.annotations = originalNode.annotations*.first()
 	}
 	
-	public List<String> getInvalidSettings() {
-		def errors = [:]
-		Class clazz = this.class
-		while (clazz != NMBase.class) { 
-			clazz.properties.each { property ->
-				property.accessible = true
-				if(property.annotations.find { it instanceof Required } && property.get(this) == null)
-					errors << "Value $property.name not set in $this"
-			}
-			clazz = clazz.superclass
-		} 
+	/**
+	 * Sets the metaId to the specified value.
+	 *
+	 * @param metaId the metaId to set
+	 */
+	void setMetaId(String metaId) {
+		checkParamNMId(metaId, 'metaId')
+
+		this.metaId = metaId
 	}
 	
-	protected Map<String, Object> collectPropertyValues() {
-		def values = new LinkedHashMap()
-		['metaId', 'notes', 'annotations'].each { attr ->
-			values[attr] = this."$attr"
+	void checkParamNMId(String id, String name) {
+		if(id == null)
+			throw new NullPointerException("$name must not be null")
+		if(!isValidNMId(id))
+			throw new IllegalArgumentException("$name $id is not a valid NMId")
+	}
+	
+	boolean isValidNMId(String id) {
+		id =~ /[\p{Alpha}_][\p{Alnum}_]*/
+	}
+	
+	List<String> getInvalidSettings(String prefix) {
+		def ignoredProperties = ['document']
+		def properties = this.metaClass.properties.grep { !(it.name in ignoredProperties)  && it.setter }
+		
+		def requiredProps = properties.grep { it.field?.field?.getAnnotation(Required) }
+		def invalidSettings = requiredProps.grep { it.getProperty(this) == null }.collect { 
+			"$prefix Required value $it.name not set for $this"
 		}
-		values
+		
+		if(metaId && !isValidNMId(metaId))
+			invalidSettings << "$prefix metaId $metaId is not a valid NMId"
+		
+		def subTypes = properties.collect { it.getProperty(this) }.flatten().grep { it instanceof NMBase }
+		def subInvalidSettings = subTypes.collect { it.getInvalidSettings("$prefix/${it.class.simpleName}") } 
+		invalidSettings + subInvalidSettings.flatten()
 	}
 	
-	public String toString() {		
-		def properties = collectPropertyValues()
-		def reversedNonNull = properties.collect { it }.grep { it.value }.reverse()
-		"${this.class.simpleName} ${reversedNonNull}"
+	String getName() {
+		this.class.simpleName
+	}
+	
+	String toString() {		
+		def ignoredProperties = ['document', 'originalNode']
+		def properties = this.metaClass.properties.grep { !(it.name in ignoredProperties) && it.setter}
+		def propertyValues = properties.collectEntries { [(it.name): it.getProperty(this)] }
+		def reversedNonNull = propertyValues.grep { it.value }
+		"$name ${reversedNonNull}"
 	}
 }

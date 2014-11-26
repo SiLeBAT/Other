@@ -16,42 +16,64 @@
  ******************************************************************************/
 package de.bund.bfr.gnuml;
 
+import java.util.List;
+
 import javax.xml.xpath.XPathFactory
 
 abstract class Descriptor extends NMBase {	
-	OntologyTerm ontologyTerm
+	String ontologyTermRef
+	
 	String id
+	
+	protected parseErrors = []
 	
 	abstract Object parse(Node node)
 	
-	static NodeMapping = [
+	final static NodeMapping = [
 		compositeDescription: CompositeDescriptor,
 		tupleDescription: TupleDescriptor,
 		atomicDescription: AtomicDescriptor
 	]
 	
-	static Descriptor fromDescription(NUMLDocument document, Node description) {
-		//TODO: assert namespace
+	static Descriptor fromDescription(NuMLDocument document, Node description) {
+		// We assume the correct namespace here, because the document is validated with the schema separately
 		Class descriptorClass = NodeMapping[description.name().localPart]
 		descriptorClass.newInstance([document: document, originalNode: description])
 	}
 	
-	@Override
-	public void setOriginalNode(Node originalNode) {
-		super.setOriginalNode(originalNode);
+	@Override	
+	List<String> getInvalidSettings(String prefix) {
+		def invalidSettings = []
 		
-		def ontologyRef = originalNode.'@ontologyTerm'
-		ontologyTerm = document.ontologyTerms.find { it.id == ontologyRef }
-		id = originalNode.'@id'
+		if(id && !isValidNMId(id))
+			invalidSettings << "$prefix id $id is not a valid NMId"
+			
+		if(ontologyTerm && document && !(ontologyTerm in document.ontologyTerms))
+			invalidSettings << "$prefix Ontology term not registered in document; available: ${document.ontologyTerms*.id}" 
+			
+		if(ontologyTermRef && !ontologyTerm)
+			invalidSettings << "$prefix Unknown ontology ID ${ontologyTermRef}; available: ${document.ontologyTerms*.id}"
+			
+		invalidSettings + super.getInvalidSettings(prefix)
 	}
 	
-	protected Map<String, Object> collectPropertyValues() {
-		def values = super.collectPropertyValues()
-		['ontologyTerm', 'id'].each { attr ->
-			values[attr] = this."$attr"
-		}
-		values
-	}	
+	OntologyTerm getOntologyTerm() {
+		ontologyTermRef ? document.ontologyTerms.find { it.id == ontologyTermRef } : null
+	}
+	
+	void setOntologyTerm(OntologyTerm ontologyTerm) {
+		this.ontologyTermRef = ontologyTerm?.id
+		if(ontologyTerm && !(ontologyTerm in document.ontologyTerms))
+			document.ontologyTerms << ontologyTerm
+	}
+	
+	@Override
+	public void setOriginalNode(Node originalNode) {		
+		super.setOriginalNode(originalNode)
+		
+		this.ontologyTermRef = originalNode.'@ontologyTerm'
+		this.id = originalNode.'@id'
+	}
 }
 
 enum DataType {
@@ -81,7 +103,10 @@ enum DataType {
 	}
 	
 	static DataType byNUMLName(String numlName) {
-		values().find { it.numlName == numlName }
+		def type = values().find { it.numlName == numlName }
+		if(type == null)
+			throw new NuMLException("Unknown data type $numlName")
+		type
 	}
 }
 
@@ -93,24 +118,20 @@ class AtomicDescriptor extends Descriptor {
 	
 	@Override
 	public Object parse(Node node) {
-		indexType.parse(node.text())
+		try {
+			return indexType.parse(node.text())
+		} catch(e) {
+			parseErrors << "Unable to parse ${node.text()} of expected type $indexType in $name"
+		}
 	}
 	
 	@Override
-	public void setOriginalNode(Node originalNode) {
-		super.setOriginalNode(originalNode);
+	public void setOriginalNode(Node originalNode) {		
+		super.setOriginalNode(originalNode)
 		
 		indexType = DataType.byNUMLName(originalNode.'@valueType')
 		name = originalNode.'@name'
 	}
-	
-	protected Map<String, Object> collectPropertyValues() {
-		def values = super.collectPropertyValues()
-		['name', 'indexType'].each { attr ->
-			values[attr] = this."$attr"
-		}
-		values
-	}	
 }
 
 class CompositeDescriptor extends Descriptor {
@@ -124,26 +145,22 @@ class CompositeDescriptor extends Descriptor {
 	public Object parse(Node node) {
 		def values = [:]
 		node.each { child ->
-			values[indexType.parse(child.'@indexValue')] = descriptor.parse(child)
+			try {
+				values[indexType.parse(child.'@indexValue')] = descriptor.parse(child)
+			} catch(e) {
+				parseErrors << "Unable to parse index value ${child.'@indexValue'?.text()} of expected type $indexType in $name"
+			}
 		}
 		values
 	}
 	
 	@Override
-	public void setOriginalNode(Node originalNode) {
-		super.setOriginalNode(originalNode);
+	public void setOriginalNode(Node originalNode) {		
+		super.setOriginalNode(originalNode)
 		
 		name = originalNode.'@name'
 		indexType = DataType.byNUMLName(originalNode.'@indexType')
-		descriptor = Descriptor.fromDescription(document, originalNode.children().first())
-	}
-	
-	protected Map<String, Object> collectPropertyValues() {
-		def values = super.collectPropertyValues()
-		['name', 'indexType', 'descriptor'].each { attr ->
-			values[attr] = this."$attr"
-		}
-		values
+		descriptor = Descriptor.fromDescription(document, originalNode.children().first())	
 	}
 }
 
@@ -152,32 +169,25 @@ class TupleDescriptor extends Descriptor {
 	
 	List<Descriptor> descriptors = []
 	
-	/* (non-Javadoc)
-	 * @see de.bund.bfr.gnuml.Descriptor#parse(groovy.util.Node)
-	 */
 	@Override
 	public Object parse(Node node) {
+		def children = node.children()
+		if(descriptors.size() != children.size())
+			parseErrors << "Expected ${descriptors.size()} children, but encountered ${children.size()}"
+			
 		def values = []
-		node.eachWithIndex { child, index ->
-			values << descriptors[index].parse(child)
-		}
+		children.eachWithIndex { child, index ->
+			values << descriptors[index]?.parse(child)
+		}		
 		values
 	}
 	
 	@Override
-	public void setOriginalNode(Node originalNode) {
-		super.setOriginalNode(originalNode);
+	public void setOriginalNode(Node originalNode) {		
+		super.setOriginalNode(originalNode)
 		
 		name = originalNode.'@name'
 		descriptors = originalNode.collect { Descriptor.fromDescription(document, it) }
-	}
-	
-	protected Map<String, Object> collectPropertyValues() {
-		def values = super.collectPropertyValues()
-		['name', 'descriptors'].each { attr ->
-			values[attr] = this."$attr"
-		}
-		values
 	}
 }
 

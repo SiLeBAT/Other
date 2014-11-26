@@ -16,24 +16,33 @@
  ******************************************************************************/
 package de.bund.bfr.gnuml;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.*
 
-import java.net.URISyntaxException;
+import org.junit.Test
 
-import org.junit.Test;
-
-public class TimeConcentrationReaderTest {
-
+public class NuMLReaderTest {
+	
 	@Test
-	public void shouldParseFile() throws URISyntaxException {
+	public void shouldParseValidTimeConcentration() throws URISyntaxException {
 		String resourceFile =
-			TimeConcentrationReaderTest.class.getResource("/TimeConcentration.xml").toURI().toString();
-		NUMLDocument doc = new NUMLReader().parse(resourceFile);
+			NuMLReaderTest.class.getResource("/TimeConcentration.xml").toURI().toString();
+		NuMLDocument doc = new NuMLReader().parse(resourceFile);
 		assertNotNull(doc);
 		assertEquals(doc.resultComponents.size(), 1)
-		assertEquals(doc.resultComponents[0].dimensions.size(), 2)
-		assertNotNull(doc.resultComponents[0].dimensions[0d])
-		assertEquals(doc.resultComponents[0].dimensions[0d].size(), 3)
+		assertEquals(doc.resultComponents[0].dimension.size(), 2)
+		assertNotNull(doc.resultComponents[0].dimension[0d])
+		assertEquals(doc.resultComponents[0].dimension[0d].size(), 3)
+	}
+	
+	@Test
+	public void shouldNotParseInvalidTimeConcentration() throws URISyntaxException {
+		String resourceFile =
+			NuMLReaderTest.class.getResource("/InvalidTimeConcentration.xml").toURI().toString();
+		def parser = new NuMLReader(lenient: true)
+		def doc = parser.parse(resourceFile);
+		assertNotNull(doc);
+		assertEquals(doc.invalidSettings.size(), 3)
+		assertEquals(parser.parseErrors.size(), 5)
 	}
 
 }

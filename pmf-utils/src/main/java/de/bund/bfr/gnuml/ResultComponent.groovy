@@ -16,6 +16,8 @@
  ******************************************************************************/
 package de.bund.bfr.gnuml
 
+import java.util.List;
+
 import groovy.util.Node;
 
 /**
@@ -25,23 +27,36 @@ class ResultComponent extends NMBase {
 	@Required
 	String id
 	@Required
-	Object dimensions
-	
+	Object dimension
+
 	String name
-	
+	@Required
 	Descriptor descriptor
-	
-	/* (non-Javadoc)
-	 * @see de.bund.bfr.gnuml.NMBase#setOriginalNode(groovy.util.Node)
-	 */
+
 	@Override
-	public void setOriginalNode(Node originalNode) {
-		super.setOriginalNode(originalNode);
+	List<String> getInvalidSettings(String prefix) {
+		def invalidSettings = []
+		
+		if(id && !isValidNMId(id))
+			invalidSettings << "$prefix $id is not a valid NMId"
+		
+		invalidSettings + super.getInvalidSettings(prefix)
+	}
+
+	@Override
+	public void setOriginalNode(Node originalNode) {		
+		super.setOriginalNode(originalNode)
 		
 		this.id = originalNode.'@id'
 		this.name = originalNode.'@name'
-		
-		descriptor = Descriptor.fromDescription(this.document, this.originalNode.dimensionDescription.first().children().first())
-		dimensions = descriptor.parse(this.originalNode.dimension.first())
+
+		def description = originalNode.dimensionDescription?.first()?.children()?.first()
+		this.descriptor = null
+		this.dimension = null
+		if(description) {
+			this.descriptor = Descriptor.fromDescription(this.document, description)
+			if(originalNode.dimension?.first())
+				this.dimension = descriptor.parse(originalNode.dimension?.first())
+		}
 	}
 }

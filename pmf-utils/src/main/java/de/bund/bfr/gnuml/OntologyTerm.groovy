@@ -16,6 +16,10 @@
  ******************************************************************************/
 package de.bund.bfr.gnuml
 
+import java.util.List;
+
+import org.codehaus.groovy.ast.stmt.CatchStatement;
+
 import groovy.util.Node;
 
 /**
@@ -25,18 +29,36 @@ class OntologyTerm extends NMBase {
 	@Required
 	String id, term, sourceTermId
 	@Required
-	URI ontologyURI
+	String ontologyURI
 	
-	/* (non-Javadoc)
-	 * @see de.bund.bfr.gnuml.NMBase#setOriginalNode(groovy.util.Node)
-	 */
+	void setOntologyURI(URI ontologyURI) {
+		this.ontologyURI = ontologyURI?.toString()
+	}
+	
 	@Override
-	public void setOriginalNode(Node originalNode) {
-		super.setOriginalNode(originalNode);
-		
+	public void setOriginalNode(Node originalNode) {			
+		super.setOriginalNode(originalNode)
+			
 		this.id = originalNode.'@id'
 		this.term = originalNode.'@term'
 		this.sourceTermId = originalNode.'@sourceTermId'
-		this.ontologyURI = new URI(originalNode.'@ontologyURI')
+		this.ontologyURI = originalNode.'@ontologyURI'
+	}
+	
+	@Override
+	List<String> getInvalidSettings(String prefix) {
+		def invalidSettings = []
+		
+		if(id && !isValidNMId(id))
+			invalidSettings << "$prefix $id is not a valid NMId"
+	
+		if(this.ontologyURI)
+			try {
+				new URI(this.ontologyURI)
+			} catch(e) {
+				invalidSettings << "$prefix Invalid ontologyURI ${originalNode.'@ontologyURI'}"
+			}
+			
+		invalidSettings + super.getInvalidSettings(prefix)
 	}
 }	

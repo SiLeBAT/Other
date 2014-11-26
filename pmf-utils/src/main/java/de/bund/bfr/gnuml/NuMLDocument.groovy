@@ -16,12 +16,14 @@
  ******************************************************************************/
 package de.bund.bfr.gnuml;
 
+import java.util.List;
+
 import groovy.util.Node;
 
 /**
  * 
  */
-public class NUMLDocument extends NMBase {
+public class NuMLDocument extends NMBase {
 	@Required
 	int level = 1, version = 1
 	
@@ -29,7 +31,7 @@ public class NUMLDocument extends NMBase {
 	
 	List<ResultComponent> resultComponents = []
 	
-	NUMLDocument() {
+	NuMLDocument() {
 		this.document = this
 	}
 	
@@ -58,15 +60,31 @@ public class NUMLDocument extends NMBase {
 	}
 	
 	/* (non-Javadoc)
+	 * @see de.bund.bfr.gnuml.NMBase#getInvalidSettings()
+	 */
+	List<String> getInvalidSettings(String prefix = '') {
+		def invalidSettings = []
+		
+		if(!ontologyTerms)
+			invalidSettings << "$prefix Document must have ontologyTerms section with at least one ontologyTerm"
+			
+		if(!resultComponents)
+			invalidSettings << "$prefix Document must have at least one resultComponent section"
+			
+		invalidSettings + super.getInvalidSettings(prefix)
+	}
+	
+	/* (non-Javadoc)
 	 * @see de.bund.bfr.gnuml.NMBase#setOriginalNode(groovy.util.Node)
 	 */
 	@Override
-	public void setOriginalNode(Node node) {
-		super.setOriginalNode(node);
+	public void setOriginalNode(Node node) {		
+		super.setOriginalNode(node)
 		
-		ontologyTerms = node.ontologyTerms.ontologyTerm.collect { 
+		ontologyTerms = node.ontologyTerms?.ontologyTerm.collect { 
 			new OntologyTerm(document: this, originalNode: it) 
 		}
+				
 		resultComponents = node.resultComponent.collect { 
 			new ResultComponent(document: this, originalNode: it) 
 		}
