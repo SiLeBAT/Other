@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRow;
@@ -110,10 +111,12 @@ public class MyImporterNodeModel extends NodeModel {
 		                    	cell = row.getCell(14); // Spalte O
 		                    	str = getStrVal(cell);
 		                    	if (str != null && str.trim().length() > 2) bl = str.substring(2).trim();
-	                    		// Ansprechpartner, Labname, AnsprechpartnerMail, Akkreditiert, Staat, Saison, Agents
+		                    	if (bl == null) continue; // kann evtl. auch weg
+
+		                    	// Ansprechpartner, Labname, AnsprechpartnerMail, Akkreditiert, Staat, Saison, Agents
 		                    	String staat = null;
 		                    	String saison = null;
-		                    	HashMap<Integer, Testings> agents = new HashMap<Integer, Testings>();
+		                    	LinkedHashMap<Integer, Testings> tests = new LinkedHashMap<Integer, Testings>();
 		                    	int firstDataRow = 0;
 		                    	for (int plusIndex = 1;plusIndex<20;plusIndex++) {
 			                    	row = sheet.getRow(rowIndex + plusIndex);
@@ -133,37 +136,37 @@ public class MyImporterNodeModel extends NodeModel {
 			                    	str = getStrVal(cell);
 			                    	if (str != null && str.trim().length() > 2 && str.startsWith("**")) saison = str.substring(2).trim();
 			                    	Testings tst = null;
+			                    	boolean anzahlFound = false;
 			                    	for (int j=7;j<19;j++) {
 				                    	cell = row.getCell(j); // Spalte H-S
 				                    	str = getStrVal(cell);
-				                    	if (str != null && (str.trim().equals("Anzahl") || str.trim().equals("Zahl"))) {
-					                    	cell = row.getCell(j - 1);
-					                    	str = getStrVal(cell);
-					                    	if (str != null && (str.trim().equals("Name"))) {
-					                    		agents.put(j, null);
-					                    	}
-					                    	else {
-					                    		for (int minusIndex = 5; minusIndex > 0;minusIndex--) {
-						                    		row = sheet.getRow(rowIndex + plusIndex - minusIndex);
-							                    	cell = row.getCell(j);
-							                    	str = getStrVal(cell);
-							                    	if (str != null && str.trim().length() > 3) {
-							                    		if (str.startsWith("**") || str.startsWith("* ")) {
-							                    			tst = new Testings();
-							                    			tst.setAgent(str.substring(2).trim());	
-							                    			// default ist "positiv", kann nachher noch überschrieben werden von KBE/g
-							                    			Quant q = new Quant("positiv", null);
-							                    			tst.getQuants().put(j, q);
-							                    		}
-							                    		else if (str.indexOf("KBE/g") > 0) {
-							                    			Quant q = new Quant(str, null);
-							                    			tst.getQuants().put(j, q);
-							                    		}
-							                    	}
-					                    		}
-				                    			agents.put(j, tst);
-					                    		row = sheet.getRow(rowIndex + plusIndex);
-					                    	}
+				                    	if (anzahlFound || str != null && (str.trim().equals("Anzahl") || str.trim().equals("Zahl"))) {
+				                    		anzahlFound = true;
+				                    		boolean starFound = false;
+				                    		for (int minusIndex = 5; minusIndex > 0;minusIndex--) {
+					                    		row = sheet.getRow(rowIndex + plusIndex - minusIndex);
+						                    	cell = row.getCell(j);
+						                    	str = getStrVal(cell);
+						                    	if (str != null && str.trim().length() > 3) {
+						                    		if (str.startsWith("**") || str.startsWith("* ")) {
+						                    			starFound = true;
+						                    			tst = new Testings();
+						                    			tst.setAgent(str.substring(2).trim());	
+						                    			// default ist "positiv", kann nachher noch überschrieben werden von KBE/g
+						                    			Quant q = new Quant("positiv", null);
+						                    			tst.getQuants().put(j, q);
+						                    		}
+						                    		else if (str.indexOf("KBE/g") > 0) {
+						                    			Quant q = new Quant(str, null);
+						                    			tst.getQuants().put(j, q);
+						                    		}
+						                    	}
+				                    		}
+				                    		if (starFound) tests.put(j, tst);
+				                    		else if ((j+1) % 2 == 0) { // Spalten H, J, L, N, P
+				                    			tests.put(j, null);
+				                    		}
+				                    		row = sheet.getRow(rowIndex + plusIndex);
 				                    	}
 			                    	}
 			                    	
@@ -188,6 +191,7 @@ public class MyImporterNodeModel extends NodeModel {
 			                    	// Source, Methode, Grund, Ebene
 			                    	row = sheet.getRow(rowIndex + plusIndex);
 			                    	if (row == null) break;
+			                    	// Checke, ob neuer Block
 			                    	cell = row.getCell(8); // Spalte I
 			                    	String bitte = getStrVal(cell);
 			                    	cell = row.getCell(11); // Spalte L
@@ -197,6 +201,8 @@ public class MyImporterNodeModel extends NodeModel {
 			                    	if (bitte != null && bitte.trim().equals("bitte ggf. Zeilen einfügen")
 			                    			|| astJahr != null && astJahr.trim().equals("**" + jahr)
 			                    			|| bland != null && bland.trim().equals("Bundesland:")) break;
+			                    	
+			                    	// Nein, ok, dann weiter
 			                    	cell = row.getCell(0); // Spalte A
 			                    	str = getStrVal(cell);
 			                    	if (str != null && str.trim().length() > 0) SourceA = str.trim();
@@ -204,64 +210,92 @@ public class MyImporterNodeModel extends NodeModel {
 			                    	str = getStrVal(cell);
 			                    	if (str != null && str.trim().length() > 0) SourceB = str.trim();
 			                    	String SourceC = null;
-			                    	cell = row.getCell(1); // Spalte C
+			                    	cell = row.getCell(2); // Spalte C
 			                    	str = getStrVal(cell);
 			                    	if (str != null && str.trim().length() > 0) SourceC = str.trim();
 
-				                    	String Methode = null;
-				                    	cell = row.getCell(3); // Spalte D
-				                    	str = getStrVal(cell);
-				                    	if (str != null && str.trim().length() > 0) Methode = str.trim();
-				                    	String Grund = null;
-				                    	cell = row.getCell(4); // Spalte E
-				                    	str = getStrVal(cell);
-				                    	if (str != null && str.trim().length() > 0) Grund = str.trim();
-				                    	String Ebene = null;
-				                    	cell = row.getCell(5); // Spalte F
-				                    	str = getStrVal(cell);
-				                    	if (str != null && str.trim().length() > 0) Ebene = str.trim();
-				                    	String Anzahl = null;
-				                    	cell = row.getCell(6); // Spalte G
-				                    	str = getStrVal(cell);
-				                    	if (str != null && str.trim().length() > 0) Anzahl = str.trim();
-				                    	if (Anzahl == null) continue;
+			                    	String Methode = null;
+			                    	cell = row.getCell(3); // Spalte D
+			                    	str = getStrVal(cell);
+			                    	if (str != null && str.trim().length() > 0) Methode = str.trim();
+			                    	String Grund = null;
+			                    	cell = row.getCell(4); // Spalte E
+			                    	str = getStrVal(cell);
+			                    	if (str != null && str.trim().length() > 0) Grund = str.trim();
+			                    	String Ebene = null;
+			                    	cell = row.getCell(5); // Spalte F
+			                    	str = getStrVal(cell);
+			                    	if (str != null && str.trim().length() > 0) Ebene = str.trim();
+			                    	String Anzahl = null;
+			                    	cell = row.getCell(6); // Spalte G
+			                    	str = getStrVal(cell);
+			                    	if (str != null && str.trim().length() > 0) Anzahl = str.trim();
+			                    	if (Anzahl == null || Integer.parseInt(Anzahl) == 0) continue;
 
-				                    	int furtherAgentsIndex = 0;
-				                    	for (int j=7;j<19;j++) {
-				                    		if (agents.containsKey(j)) { // sonst empty oder Name
-						                    	cell = row.getCell(j); // Spalte H-S
-						                    	str = getStrVal(cell);
-						                    	if (str != null && str.trim().length() > 0) {
-						                    		String pos = str.trim();
-						                    		Testings tst = agents.get(j);
-						                    		if (tst == null) {
-								                    	cell = row.getCell(j - 1);
-								                    	str = getStrVal(cell);
-								                    	if (str != null && str.trim().length() > 0) {
-									                    	tst = new Testings();
-							                    			tst.setAgent(str.trim());
-							                    			Quant q = new Quant("positiv", Integer.parseInt(pos));
-							                    			tst.getQuants().put(j, q);
-							                    			agents.put(furtherAgentsIndex, tst);
-							                    			furtherAgentsIndex--;
-								                    	}
-						                    		}
-						                    		else {
-						                    			tst.getQuants().get(j).setAmount(Integer.parseInt(pos));
-						                    		}
-						                    	}
-				                    		}
-
-					                    		
-				                    	String remark = null;
-				                    	cell = row.getCell(19); // Spalte T
-				                    	str = getStrVal(cell);
-				                    	if (str != null && str.trim().length() > 0) remark = str.trim();
-				                    	
-				                    	if (bl == null) continue; // kann evtl. auch weg
-				                    	
-				                    	for (Testings tst : agents.values()) {
-				                    		if (tst != null) {
+			                    	int furtherAgentsIndex = 0;
+			                    	Integer allPositive = null;
+			                    	Integer sumPositive = null;
+			                    	if (Anzahl.equals("207")) {
+			                    		System.err.print("");
+			                    	}
+			                    	for (int j=7;j<19;j++) {
+			                    		if (tests.containsKey(j)) { // sonst empty oder Name
+					                    	cell = row.getCell(j); // Spalte H-S
+					                    	str = getStrVal(cell);
+				                    		Testings tst = tests.get(j);
+					                    	if (str != null && str.trim().length() > 0) {
+					                    		if (sumPositive == null) sumPositive = 0;
+					                    		String pos = str.trim();
+				                    			int posi = Integer.parseInt(pos);
+					                    		if (tst == null) {
+							                    	cell = row.getCell(j - 1);
+							                    	str = getStrVal(cell);
+							                    	if (str != null && str.trim().length() > 0) {
+								                    	tst = new Testings();
+						                    			tst.setAgent(str.trim());
+						                    			if (j == 7) allPositive = posi;
+						                    			else sumPositive += posi;
+						                    			Quant q = new Quant("positiv", posi);
+						                    			tst.getQuants().put(j, q);
+						                    			tests.put(furtherAgentsIndex, tst);
+						                    			furtherAgentsIndex--;
+							                    	}
+					                    		}
+					                    		else {
+					                    			tst.getQuants().get(j).setAmount(posi);
+					                    			if (j == 7) allPositive = posi;
+					                    			else sumPositive += posi;
+					                    		}
+					                    	}
+					                    	else {
+					                    		if (tst != null) {
+					                    			tst.getQuants().get(j).setAmount(null);					                    				
+					                    		}
+					                    	}
+			                    		}
+			                    	}
+			                    	if (allPositive == null) allPositive = sumPositive;
+			                    	if (allPositive != null && sumPositive > allPositive) {
+			                    		System.err.println("komisch: sumPositive > allPositive...");
+			                    	}
+			                    	String remark = null;
+			                    	cell = row.getCell(19); // Spalte T
+			                    	str = getStrVal(cell);
+			                    	if (str != null && str.trim().length() > 0) remark = str.trim();
+			                    	
+			                    	for (Integer j : tests.keySet()) {
+			                    		Testings tst = tests.get(j);
+			                    		if (tst != null) {
+					        				Quant[] a = tst.getQuants().values().toArray(new Quant[]{});
+					        				int k=0;
+					        				boolean hasTests = false;
+					        				for (;k<a.length;k++) {
+					        					if (a[k] != null && a[k].getAmount() != null) {
+					        						hasTests = true;
+					        						break;
+					        					}
+					        				}
+					        				if (hasTests || j == 7) {
 						        				DataCell[] cells = new DataCell[57];
 						        				cells[0] = DataType.getMissingCell();
 						        				cells[1] = DataType.getMissingCell();
@@ -305,16 +339,16 @@ public class MyImporterNodeModel extends NodeModel {
 						        				cells[39] = DataType.getMissingCell();
 						        				cells[40] = DataType.getMissingCell();
 						        				cells[41] = (Anzahl == null ? DataType.getMissingCell() : new StringCell(Anzahl));
-						        				Quant[] a = tst.getQuants().values().toArray(new Quant[]{});
-						        				cells[42] = (a.length > 1 || a[0] == null ? DataType.getMissingCell() : new StringCell(a[0].getAmount()+""));
-						        				cells[43] = (a[0] == null || a[0].getQuantum().equals("positiv") ? DataType.getMissingCell() : new StringCell(a[0].getAmount()+""));
-						        				cells[44] = (a.length < 2 || a[1] == null ? DataType.getMissingCell() : new StringCell(a[1].getAmount()+""));
-						        				cells[45] = (a.length < 3 || a[2] == null ? DataType.getMissingCell() : new StringCell(a[2].getAmount()+""));
-						        				cells[46] = (a.length < 4 || a[3] == null ? DataType.getMissingCell() : new StringCell(a[3].getAmount()+""));
-						        				cells[47] = (a[0] == null || a[0].getQuantum().equals("positiv") ? DataType.getMissingCell() : new StringCell(a[0].getQuantum()));
-						        				cells[48] = (a.length < 2 || a[1] == null ? DataType.getMissingCell() : new StringCell(a[1].getQuantum()));
-						        				cells[49] = (a.length < 3 || a[2] == null ? DataType.getMissingCell() : new StringCell(a[2].getQuantum()));
-						        				cells[50] = (a.length < 4 || a[3] == null ? DataType.getMissingCell() : new StringCell(a[3].getQuantum()));
+						        				if (j == 7 && a.length == 1) cells[42] = (allPositive == null ? new StringCell("-") : new StringCell(allPositive+""));
+						        				else cells[42] = (a[0] == null || a[0].getAmount() == null ? DataType.getMissingCell() : new StringCell(a[0].getAmount()+""));
+						        				cells[43] = (a[0] == null || a[0].getQuantum().equals("positiv") || a[0].getAmount() == null ? DataType.getMissingCell() : new StringCell(a[0].getAmount()+""));
+						        				cells[44] = (a.length < 2 || a[1] == null || a[1].getAmount() == null ? DataType.getMissingCell() : new StringCell(a[1].getAmount()+""));
+						        				cells[45] = (a.length < 3 || a[2] == null || a[2].getAmount() == null ? DataType.getMissingCell() : new StringCell(a[2].getAmount()+""));
+						        				cells[46] = (a.length < 4 || a[3] == null || a[3].getAmount() == null ? DataType.getMissingCell() : new StringCell(a[3].getAmount()+""));
+						        				cells[47] = (a[0] == null || a[0].getQuantum().equals("positiv") || a[0].getQuantum() == null ? DataType.getMissingCell() : new StringCell(a[0].getQuantum()));
+						        				cells[48] = (a.length < 2 || a[1] == null || a[1].getQuantum() == null ? DataType.getMissingCell() : new StringCell(a[1].getQuantum()));
+						        				cells[49] = (a.length < 3 || a[2] == null || a[2].getQuantum() == null ? DataType.getMissingCell() : new StringCell(a[2].getQuantum()));
+						        				cells[50] = (a.length < 4 || a[3] == null || a[3].getQuantum() == null ? DataType.getMissingCell() : new StringCell(a[3].getQuantum()));
 						        				cells[51] = (remark == null ? DataType.getMissingCell() : new StringCell(remark));
 						        				String asp = null;
 						        				if (ansprechpartner != null) asp = ansprechpartner;
@@ -329,8 +363,12 @@ public class MyImporterNodeModel extends NodeModel {
 						        				DataRow outputRow = new DefaultRow(key, cells);
 
 						        				buf.addRowToTable(outputRow);
-				                    		}
-				                    	}
+					        				}						        				
+			                    		}
+			                    	}
+			                    	furtherAgentsIndex++;
+			                    	for (;furtherAgentsIndex<=0;furtherAgentsIndex++) {
+				                    	tests.remove(furtherAgentsIndex);			                    		
 			                    	}
 		                    	}
 		                    	
