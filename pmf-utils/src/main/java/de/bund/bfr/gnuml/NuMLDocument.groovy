@@ -16,23 +16,26 @@
  ******************************************************************************/
 package de.bund.bfr.gnuml;
 
-import java.util.List;
-
-import groovy.util.Node;
+import groovy.transform.EqualsAndHashCode
+import groovy.xml.NamespaceBuilderSupport
 
 /**
  * 
  */
-public class NuMLDocument extends NMBase {
+@EqualsAndHashCode(callSuper = true)
+class NuMLDocument extends NMBase {
 	@Required
 	int level = 1, version = 1
 	
-	List<OntologyTerm> ontologyTerms = []
+	List<OntologyTerm> ontologyTerms = new ObservableList()
 	
-	List<ResultComponent> resultComponents = []
+	List<ResultComponent> resultComponents = new ObservableList()
 	
 	NuMLDocument() {
 		this.document = this
+		this.elementName = 'numl'
+		resultComponents.addPropertyChangeListener { resultComponents*.document = this }
+		ontologyTerms.addPropertyChangeListener { ontologyTerms*.document = this ; resultComponents*.document = this }
 	}
 	
 	/**
@@ -40,7 +43,7 @@ public class NuMLDocument extends NMBase {
 	 *
 	 * @param level the level to set
 	 */
-	public void setLevel(int level) {
+	void setLevel(int level) {
 		if (level < 1)
 			throw new IllegalArgumentException("level must be > 0");
 
@@ -48,37 +51,81 @@ public class NuMLDocument extends NMBase {
 	}
 	
 	/**
+	 * Sets the resultComponents to the specified value.
+	 *
+	 * @param resultComponents the resultComponents to set
+	 */
+	void setResultComponents(List<ResultComponent> resultComponents) {
+		if (resultComponents == null)
+			throw new NullPointerException("resultComponents must not be null");
+
+		this.resultComponents = new ObservableList(resultComponents)
+		this.resultComponents.addPropertyChangeListener { resultComponents*.document = this }
+		this.resultComponents*.document = this
+	}
+	
+	
+	/**
+	 * Sets the ontologyTerms to the specified value.
+	 *
+	 * @param ontologyTerms the ontologyTerms to set
+	 */
+	void setOntologyTerms(List<OntologyTerm> ontologyTerms) {
+		if (ontologyTerms == null)
+			throw new NullPointerException("ontologyTerms must not be null");
+			
+		this.ontologyTerms = new ObservableList(resultComponents)
+		this.ontologyTerms.addPropertyChangeListener { ontologyTerms*.document = this ; resultComponents*.document = this }
+		this.ontologyTerms*.document = this
+	}
+		
+	/**
 	 * Sets the version to the specified value.
 	 *
 	 * @param version the version to set
 	 */
-	public void setVersion(int version) {
-		if (version == null)
+	void setVersion(int version) {
+		if (version < 1)
 			throw new IllegalArgumentException("version must be > 0");
 
 		this.version = version;
 	}
 	
+	boolean addOntologyTerm(OntologyTerm term) {
+		// already existing; do nothing
+		if(this.ontologyTerms.contains(term))
+			return false
+			
+		if(term.id) {
+			def sameId = this.ontologyTerms.find { term.id == it.id }
+			if(sameId)
+				throw new IllegalArgumentException("Another ontology with that id exists $sameId")
+		} else {
+			// increment number in label
+			def lastId = this.ontologyTerms ? this.ontologyTerms.last().id : 'term0'
+			def idParts = (lastId =~ /(.*)(\d+)/)[0]
+			term.id = idParts[1] + (idParts[2].toInteger() + 1)
+		}
+		this.ontologyTerms.add(term)
+	}
+	
 	/* (non-Javadoc)
 	 * @see de.bund.bfr.gnuml.NMBase#getInvalidSettings()
 	 */
-	List<String> getInvalidSettings(String prefix = '') {
+	List<String> getInvalidSettings(String prefix = 'numl') {
 		def invalidSettings = []
 		
 		if(!ontologyTerms)
-			invalidSettings << "$prefix Document must have ontologyTerms section with at least one ontologyTerm"
+			invalidSettings << "$prefix must have ontologyTerms section with at least one ontologyTerm"
 			
 		if(!resultComponents)
-			invalidSettings << "$prefix Document must have at least one resultComponent section"
+			invalidSettings << "$prefix must have at least one resultComponent section"
 			
 		invalidSettings + super.getInvalidSettings(prefix)
 	}
 	
-	/* (non-Javadoc)
-	 * @see de.bund.bfr.gnuml.NMBase#setOriginalNode(groovy.util.Node)
-	 */
 	@Override
-	public void setOriginalNode(Node node) {		
+	void setOriginalNode(Node node) {		
 		super.setOriginalNode(node)
 		
 		ontologyTerms = node.ontologyTerms?.ontologyTerm.collect { 
@@ -87,6 +134,19 @@ public class NuMLDocument extends NMBase {
 				
 		resultComponents = node.resultComponent.collect { 
 			new ResultComponent(document: this, originalNode: it) 
+		}
+	}
+	
+	@Override
+	public void write(BuilderSupport builder) {
+		def attributes = [version: this.version, level: this.level]
+		if(builder instanceof NamespaceBuilderSupport)
+			attributes += builder.nsMap.collectEntries { prefix, uri -> [prefix ? "xmlns:$prefix" : "xmlns", uri] }
+		builder.numl(attributes) {		
+			builder.ontologyTerms {
+				this.ontologyTerms*.write(builder)
+			}
+			this.resultComponents*.write(builder)
 		}
 	}
 }

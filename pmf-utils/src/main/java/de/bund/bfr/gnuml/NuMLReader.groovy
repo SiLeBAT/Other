@@ -67,7 +67,7 @@ class NuMLReader {
 		if(!lenient) {
 			def invalidSettings = parser.errorHandler.errors + doc.invalidSettings
 			if(invalidSettings)
-				throw new NuMLException("Invalid settings in $this").with { errors = invalidSettings; it }
+				throw new NuMLException("Invalid NuML document").with { errors = invalidSettings; it }
 		}
 
 		doc

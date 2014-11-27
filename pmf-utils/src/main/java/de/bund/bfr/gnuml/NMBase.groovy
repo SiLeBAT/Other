@@ -16,12 +16,14 @@
  ******************************************************************************/
 package de.bund.bfr.gnuml
 
-import java.lang.reflect.Modifier;
-import java.util.List;
+import groovy.text.markup.IncludeType;
+import groovy.transform.EqualsAndHashCode;
+import groovy.xml.MarkupBuilder
 
 /**
  * 
  */
+@EqualsAndHashCode(includes = ['metaId', 'annotations', 'notes'])
 class NMBase {
 	String metaId
 	
@@ -29,9 +31,11 @@ class NMBase {
 	
 	List<Node> notes = []
 	
-	Node originalNode
+	transient Node originalNode
 	
-	NuMLDocument document
+	transient NuMLDocument document
+	
+	protected transient elementName = this.class.simpleName[0].toLowerCase() + this.class.simpleName[1..-1] 
 	
 	/**
 	 * Sets the originalNode to the specified value and parses the relevant attributes and elements.
@@ -46,6 +50,37 @@ class NMBase {
 		this.metaId = originalNode.'@metaid'
 		this.notes = originalNode.notes*.first()
 		this.annotations = originalNode.annotations*.first()
+	}
+	
+	protected Map<String, Object> getAttributeValues() {		
+		def ignoredProperties = ['document', 'originalNode']
+		def properties = this.metaClass.properties.grep { !(it.name in ignoredProperties)  && it.setter }
+		properties.collectEntries { [(it.name): it.getProperty(this)] }
+	}
+	
+	void write(BuilderSupport builder) {
+		def propertyValues = this.attributeValues
+		def nonNull = propertyValues.subMap(propertyValues.grep { it.value }*.key)
+		def subTypes = nonNull.subMap(nonNull.grep { it.value instanceof NMBase || (it.value instanceof Collection)}*.key)
+		def attributes = nonNull - subTypes
+		
+		builder.invokeMethod(this.elementName, [attributes, {
+			if(this.notes)
+				builder.notes { notesNode ->
+					this.notes.each { notesNode.append(it) }
+				}
+			if(this.annotations)
+				builder.annotation { annotationNode ->
+					this.annotations.each { annotationNode.append(it) }
+				}
+			writeBody(builder, subTypes)
+		}])
+	}
+	
+	void writeBody(BuilderSupport builder, Map subTypes) {
+		subTypes.each { key, value ->
+			value*.write(builder)
+		}
 	}
 	
 	/**
@@ -70,7 +105,16 @@ class NMBase {
 		id =~ /[\p{Alpha}_][\p{Alnum}_]*/
 	}
 	
-	List<String> getInvalidSettings(String prefix) {
+	void setDocument(NuMLDocument document) {
+		if(!this.document.is(document)) {
+			this.document = document
+			
+			def subTypes = this.attributeValues*.value.flatten().grep { it instanceof NMBase }	
+			subTypes*.document = document			
+		}
+	}
+	
+	List<String> getInvalidSettings(String prefix = '') {
 		def ignoredProperties = ['document']
 		def properties = this.metaClass.properties.grep { !(it.name in ignoredProperties)  && it.setter }
 		
@@ -86,16 +130,12 @@ class NMBase {
 		def subInvalidSettings = subTypes.collect { it.getInvalidSettings("$prefix/${it.class.simpleName}") } 
 		invalidSettings + subInvalidSettings.flatten()
 	}
-	
-	String getName() {
-		this.class.simpleName
-	}
-	
+		
 	String toString() {		
 		def ignoredProperties = ['document', 'originalNode']
-		def properties = this.metaClass.properties.grep { !(it.name in ignoredProperties) && it.setter}
+		def properties = this.metaClass.properties.grep { !(it.name in ignoredProperties)  && it.setter }
 		def propertyValues = properties.collectEntries { [(it.name): it.getProperty(this)] }
 		def reversedNonNull = propertyValues.grep { it.value }
-		"$name ${reversedNonNull}"
+		"<${this.elementName} ${reversedNonNull}>"
 	}
 }

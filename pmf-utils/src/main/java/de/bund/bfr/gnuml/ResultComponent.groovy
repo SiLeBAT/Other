@@ -16,13 +16,12 @@
  ******************************************************************************/
 package de.bund.bfr.gnuml
 
-import java.util.List;
-
-import groovy.util.Node;
+import groovy.transform.EqualsAndHashCode
 
 /**
  * 
  */
+@EqualsAndHashCode(callSuper = true)
 class ResultComponent extends NMBase {
 	@Required
 	String id
@@ -31,7 +30,7 @@ class ResultComponent extends NMBase {
 
 	String name
 	@Required
-	Descriptor descriptor
+	Description dimensionDescription
 
 	@Override
 	List<String> getInvalidSettings(String prefix) {
@@ -42,6 +41,23 @@ class ResultComponent extends NMBase {
 		
 		invalidSettings + super.getInvalidSettings(prefix)
 	}
+	
+	@Override
+	protected Map<String, Object> getAttributeValues() {
+		def attributeValues = super.getAttributeValues()
+		attributeValues.remove('dimension')
+		attributeValues
+	}
+
+	@Override
+	public void writeBody(BuilderSupport builder, Map subTypes) {
+		builder.dimensionDescription {
+			dimensionDescription.write(builder)
+		}
+		builder.dimension {			
+			dimensionDescription.writeData(builder, this.dimension)
+		}
+	}
 
 	@Override
 	public void setOriginalNode(Node originalNode) {		
@@ -51,12 +67,12 @@ class ResultComponent extends NMBase {
 		this.name = originalNode.'@name'
 
 		def description = originalNode.dimensionDescription?.first()?.children()?.first()
-		this.descriptor = null
+		this.dimensionDescription = null
 		this.dimension = null
 		if(description) {
-			this.descriptor = Descriptor.fromDescription(this.document, description)
+			this.dimensionDescription = Description.fromNuML(this.document, description)
 			if(originalNode.dimension?.first())
-				this.dimension = descriptor.parse(originalNode.dimension?.first())
+				this.dimension = dimensionDescription.parseData(originalNode.dimension?.first())
 		}
 	}
 }

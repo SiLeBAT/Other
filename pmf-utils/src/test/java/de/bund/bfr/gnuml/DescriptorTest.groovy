@@ -23,17 +23,17 @@ import org.junit.Test
 /**
  * 
  */
-public class DescriptorTest {
+public class DescriptionTest {
 	
 	@Test
 	void shouldReturnInvalidSettings() {
-		def root = new CompositeDescriptor(name: 'TimeSeries', descriptor:
-			new TupleDescriptor(descriptors: [
-				new AtomicDescriptor(name: 'time'),
-				new AtomicDescriptor(name: 'concentration')
+		def root = new CompositeDescription(name: 'TimeSeries', Description:
+			new TupleDescription(Descriptions: [
+				new AtomicDescription(name: 'time', indexType: DataType.Double),
+				new AtomicDescription(name: 'concentration')
 				]))
-		println root.invalidSettings
-		assertNotEquals([], root.invalidSettings)
+		// no indexType for root and concentration
+		assertEquals(2, root.invalidSettings.size())
 	}
 	
 	/**
@@ -41,12 +41,13 @@ public class DescriptorTest {
 	 */
 	@Test
 	void shouldPrettyPrintNesting() {
-		def root = new CompositeDescriptor(name: 'TimeSeries', indexType: DataType.Double, descriptor:
-			new TupleDescriptor(descriptors: [
-				new AtomicDescriptor(name: 'time'),
-				new AtomicDescriptor(name: 'concentration')
+		def root = new CompositeDescription(name: 'TimeSeries', indexType: DataType.Double, Description:
+			new TupleDescription(Descriptions: [
+				new AtomicDescription(name: 'time'),
+				new AtomicDescription(name: 'concentration')
 				]))
 		assertNotNull(root.toString())
+		println root
 	}
 	
 }

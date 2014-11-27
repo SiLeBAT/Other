@@ -16,15 +16,14 @@
  ******************************************************************************/
 package de.bund.bfr.gnuml
 
-import java.util.List;
-
-import org.codehaus.groovy.ast.stmt.CatchStatement;
-
-import groovy.util.Node;
+import groovy.transform.AutoClone;
+import groovy.transform.EqualsAndHashCode
 
 /**
  * 
  */
+@EqualsAndHashCode(callSuper = true)
+@AutoClone
 class OntologyTerm extends NMBase {
 	@Required
 	String id, term, sourceTermId
@@ -33,6 +32,15 @@ class OntologyTerm extends NMBase {
 	
 	void setOntologyURI(URI ontologyURI) {
 		this.ontologyURI = ontologyURI?.toString()
+	}
+	
+	URI getOntologyURI() {
+		this.ontologyURI ? new URI(this.ontologyURI) : null
+	}
+	
+	void setId(String id) {
+		checkParamNMId(id, 'id')
+		this.id = id
 	}
 	
 	@Override
@@ -44,7 +52,7 @@ class OntologyTerm extends NMBase {
 		this.sourceTermId = originalNode.'@sourceTermId'
 		this.ontologyURI = originalNode.'@ontologyURI'
 	}
-	
+		
 	@Override
 	List<String> getInvalidSettings(String prefix) {
 		def invalidSettings = []
@@ -61,4 +69,6 @@ class OntologyTerm extends NMBase {
 			
 		invalidSettings + super.getInvalidSettings(prefix)
 	}
+	
+	
 }	
