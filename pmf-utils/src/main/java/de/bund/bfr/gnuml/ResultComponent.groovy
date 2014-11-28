@@ -37,7 +37,7 @@ class ResultComponent extends NMBase {
 		def invalidSettings = []
 		
 		if(id && !isValidNMId(id))
-			invalidSettings << "$prefix $id is not a valid NMId"
+			invalidSettings << new ConformityMessage("$prefix $id is not a valid NMId")
 		
 		invalidSettings + super.getInvalidSettings(prefix)
 	}

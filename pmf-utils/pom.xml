@@ -21,7 +21,7 @@
 	<repositories>
 		<repository>
 			<id>ondex</id>
-			<url>http://ondex.rothamsted.ac.uk/nexus/content/groups/public/</url>
+			<url>file://${basedir}/localRepo</url>
 		</repository>
 	</repositories>
 	<dependencies>
@@ -31,15 +31,30 @@
 			<version>2.3.7</version>
 		</dependency>
 		<dependency>
-			<groupId>jsbml</groupId>
+			<groupId>org.sbml</groupId>
 			<artifactId>jsbml</artifactId>
-			<version>1.0</version>
+			<version>1.0-rc1</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.11</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.codehaus.woodstox</groupId>
+			<artifactId>woodstox-core-lgpl</artifactId>
+			<version>4.0.9</version>
+		</dependency>
+		<dependency>
+			<groupId>org.w3c.jigsaw</groupId>
+			<artifactId>jigsaw</artifactId>
+			<version>2.2.6</version>
+		</dependency>
+		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<version>1.2.8</version>
 		</dependency>
 	</dependencies>
 </project>

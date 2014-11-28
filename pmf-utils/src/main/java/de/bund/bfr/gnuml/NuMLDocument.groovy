@@ -16,6 +16,8 @@
  ******************************************************************************/
 package de.bund.bfr.gnuml;
 
+import java.util.logging.Level;
+
 import groovy.transform.EqualsAndHashCode
 import groovy.xml.NamespaceBuilderSupport
 
@@ -116,10 +118,10 @@ class NuMLDocument extends NMBase {
 		def invalidSettings = []
 		
 		if(!ontologyTerms)
-			invalidSettings << "$prefix must have ontologyTerms section with at least one ontologyTerm"
+			invalidSettings << new ConformityMessage("$prefix must have ontologyTerms section with at least one ontologyTerm")
 			
 		if(!resultComponents)
-			invalidSettings << "$prefix must have at least one resultComponent section"
+			invalidSettings << new ConformityMessage("$prefix must have at least one resultComponent section")
 			
 		invalidSettings + super.getInvalidSettings(prefix)
 	}

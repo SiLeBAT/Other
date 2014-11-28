@@ -16,6 +16,8 @@
  ******************************************************************************/
 package de.bund.bfr.gnuml
 
+import java.util.logging.Level;
+
 import groovy.text.markup.IncludeType;
 import groovy.transform.EqualsAndHashCode;
 import groovy.xml.MarkupBuilder
@@ -60,8 +62,8 @@ class NMBase {
 	
 	void write(BuilderSupport builder) {
 		def propertyValues = this.attributeValues
-		def nonNull = propertyValues.subMap(propertyValues.grep { it.value }*.key)
-		def subTypes = nonNull.subMap(nonNull.grep { it.value instanceof NMBase || (it.value instanceof Collection)}*.key)
+		def nonNull = propertyValues.findAll { it.value }
+		def subTypes = nonNull.findAll { it.value instanceof NMBase || it.value instanceof Collection }
 		def attributes = nonNull - subTypes
 		
 		builder.invokeMethod(this.elementName, [attributes, {
@@ -114,17 +116,17 @@ class NMBase {
 		}
 	}
 	
-	List<String> getInvalidSettings(String prefix = '') {
+	List<ConformityMessage> getInvalidSettings(String prefix = '') {
 		def ignoredProperties = ['document']
 		def properties = this.metaClass.properties.grep { !(it.name in ignoredProperties)  && it.setter }
 		
 		def requiredProps = properties.grep { it.field?.field?.getAnnotation(Required) }
 		def invalidSettings = requiredProps.grep { it.getProperty(this) == null }.collect { 
-			"$prefix Required value $it.name not set for $this"
+			new ConformityMessage("$prefix Required value $it.name not set for $this")
 		}
 		
 		if(metaId && !isValidNMId(metaId))
-			invalidSettings << "$prefix metaId $metaId is not a valid NMId"
+			invalidSettings << new ConformityMessage("$prefix metaId $metaId is not a valid NMId")
 		
 		def subTypes = properties.collect { it.getProperty(this) }.flatten().grep { it instanceof NMBase }
 		def subInvalidSettings = subTypes.collect { it.getInvalidSettings("$prefix/${it.class.simpleName}") } 

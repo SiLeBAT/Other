@@ -14,26 +14,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package de.bund.bfr.gnuml;
+package de.bund.bfr.gpmf
 
-import static org.junit.Assert.*;
+import org.sbml.jsbml.SBMLDocument;
 
-import org.junit.Test;
+import de.bund.bfr.gnuml.NuMLDocument;
 
 /**
  * 
  */
-class NuMLWriterReaderTest {
-	@Test
-	void testReadWriteRead() throws Exception {
-		String resourceFile =
-			NuMLReaderTest.class.getResource("/gnuml/TimeConcentration.xml").toURI().toString();
-		NuMLDocument doc = new NuMLReader().read(resourceFile)
-		
-		def writtenXml = new NuMLWriter().toString(doc)		
-		
-		NuMLDocument doc2 = new NuMLReader().parseText(writtenXml)
-		
-		assertEquals(doc, doc2)
-	}
+class PMFDocument {
+	Map<String, SBMLDocument> models = [:]
+	Map<String, NuMLDocument> experiments = [:]
 }

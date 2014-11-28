@@ -16,6 +16,8 @@
  ******************************************************************************/
 package de.bund.bfr.gnuml
 
+import java.util.logging.Level;
+
 import javax.xml.XMLConstants;
 
 import groovy.xml.XmlUtil;
@@ -31,29 +33,31 @@ class NuMLReader {
 	private XmlParser parser = new XmlParser(XmlUtil.newSAXParser(XMLConstants.W3C_XML_SCHEMA_NS_URI, true, false,
 	    NuMLReader.class.getResource("/NUMLSchema.xsd").toURI().toURL()))
 	
+	private NuMLDocument document
+	
 	boolean lenient
 
 	def NuMLReader() {
 		parser.errorHandler = new CollectingErrorHandler()
 	}
 
-	NuMLDocument parse(File file) {
+	NuMLDocument read(File file) {
 		parseNode(parser.parse(file))
 	}
 
-	NuMLDocument parse(InputSource input) {
+	NuMLDocument read(InputSource input) {
 		parseNode(parser.parse(input))
 	}
 
-	NuMLDocument parse(InputStream input) {
+	NuMLDocument read(InputStream input) {
 		parseNode(parser.parse(input))
 	}
 
-	NuMLDocument parse(Reader reader) {
+	NuMLDocument read(Reader reader) {
 		parseNode(parser.parse(reader))
 	}
 
-	NuMLDocument parse(String uri) {
+	NuMLDocument read(String uri) {
 		parseNode(parser.parse(uri))
 	}
 
@@ -62,38 +66,42 @@ class NuMLReader {
 	}
 
 	NuMLDocument parseNode(Node node) {
-		def doc = new NuMLDocument(originalNode: node)
-
+		// reset
+		document = null
+		parser.errorHandler.messages.clear()
+		
+		document = new NuMLDocument(originalNode: node)
 		if(!lenient) {
-			def invalidSettings = parser.errorHandler.errors + doc.invalidSettings
-			if(invalidSettings)
-				throw new NuMLException("Invalid NuML document").with { errors = invalidSettings; it }
+			def messages = this.parseMessages
+			if(messages)
+				throw new NuMLException("Invalid NuML document").with { errors = messages; it }
 		}
-
-		doc
+		document
 	}
 	
-	List<String> getParseErrors() {
-		parser.errorHandler.errors
+	List<ConformityMessage> getParseMessages(Level level = Level.SEVERE) {
+		document.invalidSettings + 
+			parser.errorHandler.messages.grep { it.level.intValue() >= level.intValue() }
 	}
 }
 
 class CollectingErrorHandler implements ErrorHandler {
-	def errors = [], fatals = [], warnings = []
+	def messages = []
 
 	void error(final SAXParseException ex) {
-		errors << formatMsg("XML validation error", ex)
+		addMsg(Level.SEVERE, "XML validation error", ex)
 	}
 
 	void fatalError(final SAXParseException ex) {
-		fatals << formatMsg("Fatal XML validation error", ex);
+		addMsg(Level.SEVERE,"Fatal XML validation error", ex);
 	}
 
 	void warning(final SAXParseException ex) {
-		warnings << formatMsg("XML validation warning", ex);
+		addMsg(Level.WARNING,"XML validation warning", ex);
 	}
 
-	private formatMsg(final String msg, final SAXParseException ex) {
-		"$msg @ line ${ex.lineNumber}, column ${ex.columnNumber}: ${ex.message}"
+	private addMsg(Level level, String msg, SAXParseException ex) {
+		messages << new ConformityMessage(level: level, 
+			message: "$msg @ line ${ex.lineNumber}, column ${ex.columnNumber}: ${ex.message}")
 	}
 }

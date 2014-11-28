@@ -26,7 +26,7 @@ public class NuMLReaderTest {
 	public void shouldParseValidTimeConcentration() throws URISyntaxException {
 		String resourceFile =
 			NuMLReaderTest.class.getResource("/gnuml/TimeConcentration.xml").toURI().toString();
-		NuMLDocument doc = new NuMLReader().parse(resourceFile);
+		NuMLDocument doc = new NuMLReader().read(resourceFile)
 		assertNotNull(doc);
 		assertEquals(doc.resultComponents.size(), 1)
 		assertEquals(doc.resultComponents[0].dimension.size(), 2)
@@ -39,10 +39,10 @@ public class NuMLReaderTest {
 		String resourceFile =
 			NuMLReaderTest.class.getResource("/gnuml/InvalidTimeConcentration.xml").toURI().toString();
 		def parser = new NuMLReader(lenient: true)
-		def doc = parser.parse(resourceFile);
+		def doc = parser.read(resourceFile)
 		assertNotNull(doc);
 		assertEquals(doc.invalidSettings.size(), 3)
-		assertEquals(parser.parseErrors.size(), 5)
+		assertEquals(parser.parseMessages.size(), 8)
 	}
 
 }

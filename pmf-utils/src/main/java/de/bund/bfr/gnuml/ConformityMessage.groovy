@@ -14,26 +14,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package de.bund.bfr.gnuml;
+package de.bund.bfr.gnuml
 
-import static org.junit.Assert.*;
-
-import org.junit.Test;
+import java.util.logging.Level;
 
 /**
  * 
  */
-class NuMLWriterReaderTest {
-	@Test
-	void testReadWriteRead() throws Exception {
-		String resourceFile =
-			NuMLReaderTest.class.getResource("/gnuml/TimeConcentration.xml").toURI().toString();
-		NuMLDocument doc = new NuMLReader().read(resourceFile)
+class ConformityMessage {
+	Level level = Level.SEVERE
+	
+	String message
+	
+	def ConformityMessage() {
 		
-		def writtenXml = new NuMLWriter().toString(doc)		
-		
-		NuMLDocument doc2 = new NuMLReader().parseText(writtenXml)
-		
-		assertEquals(doc, doc2)
+	}
+	
+	def ConformityMessage(String message) {
+		this.message = message
 	}
 }

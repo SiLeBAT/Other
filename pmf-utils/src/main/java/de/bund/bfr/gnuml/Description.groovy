@@ -68,12 +68,12 @@ abstract class Description extends NMBase {
 	List<String> getInvalidSettings(String prefix) {
 		// if the ontology term is not registered in document, we cannot really check other values
 		if(ontologyTerm && document && !(ontologyTerm in document.ontologyTerms))
-			return [
-				"$prefix Ontology term $ontologyTerm.id not registered in document; available: ${document.ontologyTerms*.id}"]
+			return [new ConformityMessage(
+				"$prefix Ontology term $ontologyTerm.id not registered in document; available: ${document.ontologyTerms*.id}")]
 		def invalidSettings = []
 
 		if(id && !isValidNMId(id))
-			invalidSettings << "$prefix id $id is not a valid NMId"
+			invalidSettings << new ConformityMessage("$prefix id $id is not a valid NMId")
 
 		invalidSettings + super.getInvalidSettings(prefix)
 	}
@@ -156,7 +156,7 @@ class AtomicDescription extends Description {
 		try {
 			return valueType.parseData(node.text())
 		} catch(e) {
-			parseDataErrors << "Unable to parseData ${node.text()} of expected type $indexType in $name"
+			parseDataErrors << new ConformityMessage("Unable to parseData ${node.text()} of expected type $indexType in $name")
 		}
 	}
 
@@ -189,7 +189,8 @@ class CompositeDescription extends Description {
 			try {
 				values[indexType.parseData(child.'@indexValue')] = description.parseData(child)
 			} catch(e) {
-				parseDataErrors << "Unable to parseData index value ${child.'@indexValue'?.text()} of expected type $indexType in $name"
+				parseDataErrors << new ConformityMessage(
+					"Unable to parseData index value ${child.'@indexValue'} of expected type $indexType in $name")
 			}
 		}
 		values
@@ -224,7 +225,7 @@ class TupleDescription extends Description {
 	Object parseData(Node node) {
 		def children = node.children()
 		if(descriptions.size() != children.size())
-			parseDataErrors << "Expected ${descriptions.size()} children, but encountered ${children.size()}"
+			parseDataErrors << new ConformityMessage("Expected ${descriptions.size()} children, but encountered ${children.size()}")
 
 		def values = []
 		children.eachWithIndex { child, index ->
