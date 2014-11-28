@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 import org.apache.poi.hssf.usermodel.HSSFCell;
@@ -90,6 +89,7 @@ public class MyImporterNodeModel extends NodeModel {
         	String laborname = null;
         	String ansprechpartnerMail = null;
         	Boolean akkreditiert = null;
+        	LinkedHashMap<Integer, Testings> tests = new LinkedHashMap<Integer, Testings>();
 			for (int i=0; i<wb.getNumberOfNames(); i++) {
 	            Name name = wb.getNameAt(i);
 	            if (!"import".equals(name.getSheetName())) continue;
@@ -116,10 +116,22 @@ public class MyImporterNodeModel extends NodeModel {
 		                    	// Ansprechpartner, Labname, AnsprechpartnerMail, Akkreditiert, Staat, Saison, Agents
 		                    	String staat = null;
 		                    	String saison = null;
-		                    	LinkedHashMap<Integer, Testings> tests = new LinkedHashMap<Integer, Testings>();
 		                    	int firstDataRow = 0;
+		                    	boolean anzahlFin = false;
 		                    	for (int plusIndex = 1;plusIndex<20;plusIndex++) {
 			                    	row = sheet.getRow(rowIndex + plusIndex);
+
+			                    	if (plusIndex > 5) { // anzahlFin
+				                    	cell = row.getCell(0); // Spalte A
+				                    	str = getStrVal(cell);
+				                    	if (str != null && str.trim().length() > 1 &&
+				                    			str.indexOf("*") < 0 && str.indexOf("Probenart") < 0 && str.indexOf("Herkunftsstaat unbedingt angeben") < 0
+				                    			) { // "'Probenart*,**", "Lebensmittel*", "'Probenart*" ?????
+				                    		firstDataRow = plusIndex;
+				                    		break;
+				                    	}
+			                    	}			                    	
+
 			                    	cell = row.getCell(12); // Spalte M
 			                    	str = getStrVal(cell);
 			                    	if (str != null && str.trim().length() > 2 && str.startsWith("**")) ansprechpartner = str.substring(2).trim();
@@ -141,7 +153,8 @@ public class MyImporterNodeModel extends NodeModel {
 				                    	cell = row.getCell(j); // Spalte H-S
 				                    	str = getStrVal(cell);
 				                    	if (anzahlFound || str != null && (str.trim().equals("Anzahl") || str.trim().equals("Zahl"))) {
-				                    		anzahlFound = true;
+				                    		if (!anzahlFin) tests = new LinkedHashMap<Integer, Testings>();
+				                    		anzahlFound = true; anzahlFin = true;
 				                    		boolean starFound = false;
 				                    		for (int minusIndex = 5; minusIndex > 0;minusIndex--) {
 					                    		row = sheet.getRow(rowIndex + plusIndex - minusIndex);
@@ -168,25 +181,16 @@ public class MyImporterNodeModel extends NodeModel {
 				                    		}
 				                    		row = sheet.getRow(rowIndex + plusIndex);
 				                    	}
-			                    	}
-			                    	
-			                    	if (plusIndex > 5) {
-				                    	cell = row.getCell(0); // Spalte A
-				                    	str = getStrVal(cell);
-				                    	if (str != null && str.trim().length() > 1 && str.indexOf("*") < 0) { // "'Probenart*,**", "Lebensmittel*", "'Probenart*" ?????
-				                    		firstDataRow = plusIndex;
-				                    		break;
-				                    	}
 			                    	}			                    	
 		                    	}
 		                    	
 		                    	if (firstDataRow == 0) {
 		                    		System.err.println("firstDataRow = 0...");
-		                    		break;
+		                    		continue;
 		                    	}
 		        				int plusIndex = firstDataRow;
 		                    	System.err.println("Start: " + name.getNameName() + "\t" + (rowIndex + plusIndex));
-		                    	String SourceA = null, SourceB = null;
+		                    	String SourceA = null, SourceB = null, SourceC = null;
 		                    	for (;;plusIndex++) {
 			                    	// Source, Methode, Grund, Ebene
 			                    	row = sheet.getRow(rowIndex + plusIndex);
@@ -205,14 +209,20 @@ public class MyImporterNodeModel extends NodeModel {
 			                    	// Nein, ok, dann weiter
 			                    	cell = row.getCell(0); // Spalte A
 			                    	str = getStrVal(cell);
-			                    	if (str != null && str.trim().length() > 0) SourceA = str.trim();
+			                    	if (str != null && str.trim().length() > 0) {
+			                    		SourceA = str.trim();
+			                    		SourceB = null; SourceC = null;
+			                    	}
 			                    	cell = row.getCell(1); // Spalte B
 			                    	str = getStrVal(cell);
-			                    	if (str != null && str.trim().length() > 0) SourceB = str.trim();
-			                    	String SourceC = null;
+			                    	if (str != null && str.trim().length() > 0) {
+			                    		SourceB = str.trim();
+			                    		SourceC = null;
+			                    	}
 			                    	cell = row.getCell(2); // Spalte C
 			                    	str = getStrVal(cell);
 			                    	if (str != null && str.trim().length() > 0) SourceC = str.trim();
+			                    	// Herden/Gehöfte vs. Einzeltiere .... Gewicht (in T) vs. Sendungen
 
 			                    	String Methode = null;
 			                    	cell = row.getCell(3); // Spalte D
@@ -230,7 +240,7 @@ public class MyImporterNodeModel extends NodeModel {
 			                    	cell = row.getCell(6); // Spalte G
 			                    	str = getStrVal(cell);
 			                    	if (str != null && str.trim().length() > 0) Anzahl = str.trim();
-			                    	if (Anzahl == null || Integer.parseInt(Anzahl) == 0) continue;
+		                    		if (Anzahl == null || Integer.parseInt(Anzahl) == 0) continue;
 
 			                    	int furtherAgentsIndex = 0;
 			                    	Integer allPositive = null;
@@ -299,7 +309,7 @@ public class MyImporterNodeModel extends NodeModel {
 						        				DataCell[] cells = new DataCell[57];
 						        				cells[0] = DataType.getMissingCell();
 						        				cells[1] = DataType.getMissingCell();
-						        				cells[2] = new StringCell(name.getNameName());
+						        				cells[2] = new StringCell(name.getNameName().substring(name.getNameName().indexOf("_") + 1));
 						        				cells[3] = (staat == null ? DataType.getMissingCell() : new StringCell(staat));
 						        				cells[4] = DataType.getMissingCell();
 						        				cells[5] = (jahr == null ? DataType.getMissingCell() : new IntCell(jahr));
@@ -309,7 +319,7 @@ public class MyImporterNodeModel extends NodeModel {
 						        				cells[9] = DataType.getMissingCell();
 						        				cells[10] = (laborname == null ? DataType.getMissingCell() : new StringCell(laborname));
 						        				cells[11] = (akkreditiert == null ? DataType.getMissingCell() : akkreditiert ? BooleanCell.TRUE : BooleanCell.FALSE);
-						        				cells[12] = (SourceA == null && SourceB == null ? DataType.getMissingCell() : new StringCell(SourceA + "." + SourceB));
+						        				cells[12] = (SourceA == null && SourceB == null ? DataType.getMissingCell() : SourceB == null ? new StringCell(SourceA) : new StringCell(SourceB));
 						        				cells[13] = DataType.getMissingCell();
 						        				cells[14] = DataType.getMissingCell();
 						        				cells[15] = DataType.getMissingCell();
@@ -333,14 +343,17 @@ public class MyImporterNodeModel extends NodeModel {
 						        				cells[33] = DataType.getMissingCell();
 						        				cells[34] = (tst.getAgent() == null ? DataType.getMissingCell() : new StringCell(tst.getAgent()));
 						        				cells[35] = DataType.getMissingCell();
-						        				cells[36] = DataType.getMissingCell();
+						        				boolean isGruppe = SourceC != null && (SourceC.equals("Herden/Gehöfte") || SourceC.equals("Sendungen"));
+						        				boolean isIndividual = SourceC != null && (SourceC.equals("Einzeltiere") || SourceC.equals("Gewicht (in T)"));
+						        				cells[36] = (!isGruppe ? DataType.getMissingCell() : new StringCell(SourceC));
 						        				cells[37] = DataType.getMissingCell();
-						        				cells[38] = DataType.getMissingCell();
-						        				cells[39] = DataType.getMissingCell();
-						        				cells[40] = DataType.getMissingCell();
-						        				cells[41] = (Anzahl == null ? DataType.getMissingCell() : new StringCell(Anzahl));
-						        				if (j == 7 && a.length == 1) cells[42] = (allPositive == null ? new StringCell("-") : new StringCell(allPositive+""));
-						        				else cells[42] = (a[0] == null || a[0].getAmount() == null ? DataType.getMissingCell() : new StringCell(a[0].getAmount()+""));
+						        				cells[38] = (!isGruppe || Anzahl == null ? DataType.getMissingCell() : new StringCell(Anzahl));
+						        				if (j == 7 && a.length == 1) cells[39] = (!isGruppe || allPositive == null ? new StringCell("-") : new StringCell(allPositive+""));
+						        				else cells[39] = (!isGruppe || a[0] == null || a[0].getAmount() == null ? DataType.getMissingCell() : new StringCell(a[0].getAmount()+""));
+						        				cells[40] = (!isIndividual ? DataType.getMissingCell() : new StringCell(SourceC));
+						        				cells[41] = (!isIndividual || Anzahl == null ? DataType.getMissingCell() : new StringCell(Anzahl));
+						        				if (j == 7 && a.length == 1) cells[42] = (!isIndividual || allPositive == null ? new StringCell("-") : new StringCell(allPositive+""));
+						        				else cells[42] = (!isIndividual || a[0] == null || a[0].getAmount() == null ? DataType.getMissingCell() : new StringCell(a[0].getAmount()+""));
 						        				cells[43] = (a[0] == null || a[0].getQuantum().equals("positiv") || a[0].getAmount() == null ? DataType.getMissingCell() : new StringCell(a[0].getAmount()+""));
 						        				cells[44] = (a.length < 2 || a[1] == null || a[1].getAmount() == null ? DataType.getMissingCell() : new StringCell(a[1].getAmount()+""));
 						        				cells[45] = (a.length < 3 || a[2] == null || a[2].getAmount() == null ? DataType.getMissingCell() : new StringCell(a[2].getAmount()+""));
