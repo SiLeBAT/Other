@@ -89,6 +89,7 @@ public class MyImporterNodeModel extends NodeModel {
         	String laborname = null;
         	String ansprechpartnerMail = null;
         	Boolean akkreditiert = null;
+        	String defSourceC = null;
         	LinkedHashMap<Integer, Testings> tests = new LinkedHashMap<Integer, Testings>();
 			for (int i=0; i<wb.getNumberOfNames(); i++) {
 	            Name name = wb.getNameAt(i);
@@ -118,7 +119,6 @@ public class MyImporterNodeModel extends NodeModel {
 		                    	String saison = null;
 		                    	int firstDataRow = 0;
 		                    	boolean anzahlFin = false;
-		                    	String defSourceC = null;
 		                    	for (int plusIndex = 1;plusIndex<20;plusIndex++) {
 			                    	row = sheet.getRow(rowIndex + plusIndex);
 
@@ -135,8 +135,16 @@ public class MyImporterNodeModel extends NodeModel {
 
 			                    	cell = row.getCell(2); // Spalte C
 			                    	str = getStrVal(cell);
-			                    	if (str != null && str.trim().length() > 0 && !str.trim().startsWith("Beispiel")) {
-			                    		defSourceC = str.trim();
+			                    	if (str != null && str.trim().equalsIgnoreCase("alles bezogen auf")) {	
+			                    		for (int pp=1;pp<10;pp++) {
+				                    		HSSFRow nextRow = sheet.getRow(rowIndex + plusIndex + pp);		
+				                    		str = getStrVal(nextRow.getCell(2));
+					                    	if (str != null && str.trim().length() > 0 && !str.trim().startsWith("Beispiel")) {
+					                    		defSourceC = str.trim();
+					                    		break;
+					                    	}
+					                    	if (str != null && str.trim().startsWith("Beispiel")) break;
+			                    		}
 			                    	}
 			                    		
 			                    	cell = row.getCell(12); // Spalte M
@@ -162,9 +170,6 @@ public class MyImporterNodeModel extends NodeModel {
 				                    	cell = row.getCell(j); // Spalte H-S
 				                    	str = getStrVal(cell);
 				                    	if (anzahlFound || str != null && (str.trim().equals("Anzahl") || str.trim().equals("Zahl"))) {
-				                    		if (name.getNameName().equals("C._01.40")) {
-				                    			System.err.print("");
-				                    		}
 				                    		if (!anzahlFin) tests = new LinkedHashMap<Integer, Testings>();
 				                    		anzahlFound = true; anzahlFin = true;
 				                    		boolean starFound = false;
@@ -231,12 +236,12 @@ public class MyImporterNodeModel extends NodeModel {
 			                    			|| astJahr != null && astJahr.trim().equals("**" + jahr)
 			                    			|| bland != null && bland.trim().equals("Bundesland:")) break;
 			                    	
-			                    	if (rowProps != null && rowProps.getAmount() == 4909) {
-			                    		System.err.print("");
-			                    	}
 			                    	// Nein, ok, dann weiter
 			                    	rowProps = getA2G(row, rowProps, defSourceC);
 			                    	if (rowProps == null) continue;
+			                    	if (rowProps != null && rowProps.getAmount() == 5 && name.getNameName().equals("B._14.20")) {
+			                    		System.err.print("");
+			                    	}
 
 			                    	int furtherAgentsIndex = 0;
 			                    	Integer allPositive = null;
@@ -300,7 +305,7 @@ public class MyImporterNodeModel extends NodeModel {
 				                    	plusIndex++;
 				                    	row = sheet.getRow(rowIndex + plusIndex);
 				                    	RowProps tmpRowProps = getA2G(row, rowProps, defSourceC);
-				                    	if (!rowProps.equals(tmpRowProps)) {
+				                    	if (tmpRowProps == null || !rowProps.equals(tmpRowProps)) {
 				                    		plusIndex--;
 				                    		break;
 				                    	}
@@ -368,6 +373,7 @@ public class MyImporterNodeModel extends NodeModel {
 						        				cells[38] = (!isGruppe || rowProps.getAmount() == null ? DataType.getMissingCell() : new StringCell(rowProps.getAmount()+""));
 						        				
 						        				if (tst.hasKBE()) allPositive = tst.getQuantSum();
+						        				else if (rowProps.getAmount() != null && allPositive != null && allPositive > rowProps.getAmount()) allPositive = rowProps.getAmount();
 						        				
 						        				if (j == 7 && a.length == 1 || tst.hasKBE()) cells[39] = (!isGruppe || allPositive == null ? new StringCell("-") : new StringCell(allPositive+""));
 						        				else cells[39] = (!isGruppe || a[0] == null || a[0].getAmount() == null ? DataType.getMissingCell() : new StringCell(a[0].getAmount()+""));
@@ -435,6 +441,7 @@ public class MyImporterNodeModel extends NodeModel {
     	HSSFCell cell = row.getCell(0); // Spalte A
     	String str = getStrVal(cell);
     	if (str != null && str.trim().length() > 0) {
+    		if (str.startsWith("!")) return null;
     		result.setSourceA(str.trim()); result.setSourceB(null);
     		if (result.getSourceC() == null) result.setSourceC(defSourceC);
     	}

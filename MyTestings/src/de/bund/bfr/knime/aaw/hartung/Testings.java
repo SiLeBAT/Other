@@ -43,6 +43,7 @@ public class Testings {
 				result += q.getAmount();
 			}
 		}
+		if (result == null) result = 0;
 		return result;
 	}
 }
