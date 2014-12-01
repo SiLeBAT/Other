@@ -16,12 +16,11 @@
  ******************************************************************************/
 package de.bund.bfr.gnuml
 
-import java.util.logging.Level;
-
 import javax.xml.XMLConstants;
 
 import groovy.xml.XmlUtil;
 
+import org.apache.log4j.Level;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource
 import org.xml.sax.SAXParseException;
@@ -33,55 +32,60 @@ class NuMLReader {
 	private XmlParser parser = new XmlParser(XmlUtil.newSAXParser(XMLConstants.W3C_XML_SCHEMA_NS_URI, true, false,
 	    NuMLReader.class.getResource("/NUMLSchema.xsd").toURI().toURL()))
 	
-	private NuMLDocument document
+	NuMLDocument document
 	
-	boolean lenient
+	boolean validating = false
 
 	def NuMLReader() {
 		parser.errorHandler = new CollectingErrorHandler()
 	}
 
 	NuMLDocument read(File file) {
+		parser.errorHandler.messages.clear()
 		parseNode(parser.parse(file))
 	}
 
 	NuMLDocument read(InputSource input) {
+		parser.errorHandler.messages.clear()
 		parseNode(parser.parse(input))
 	}
 
 	NuMLDocument read(InputStream input) {
+		parser.errorHandler.messages.clear()
 		parseNode(parser.parse(input))
 	}
 
 	NuMLDocument read(Reader reader) {
+		parser.errorHandler.messages.clear()
 		parseNode(parser.parse(reader))
 	}
 
 	NuMLDocument read(String uri) {
+		parser.errorHandler.messages.clear()
 		parseNode(parser.parse(uri))
 	}
 
 	NuMLDocument parseText(String text) {
+		parser.errorHandler.messages.clear()
 		parseNode(parser.parseText(text))
 	}
 
 	NuMLDocument parseNode(Node node) {
 		// reset
 		document = null
-		parser.errorHandler.messages.clear()
 		
 		document = new NuMLDocument(originalNode: node)
-		if(!lenient) {
-			def messages = this.parseMessages
+		if(!validating) {
+			def messages = this.getParseMessages(Level.ERROR)
 			if(messages)
 				throw new NuMLException("Invalid NuML document").with { errors = messages; it }
 		}
 		document
 	}
 	
-	List<ConformityMessage> getParseMessages(Level level = Level.SEVERE) {
+	List<ConformityMessage> getParseMessages(Level level = Level.WARN) {
 		document.invalidSettings + 
-			parser.errorHandler.messages.grep { it.level.intValue() >= level.intValue() }
+			parser.errorHandler.messages.grep { it.level.isGreaterOrEqual(level) }
 	}
 }
 
@@ -89,15 +93,15 @@ class CollectingErrorHandler implements ErrorHandler {
 	def messages = []
 
 	void error(final SAXParseException ex) {
-		addMsg(Level.SEVERE, "XML validation error", ex)
+		addMsg(Level.ERROR, "XML validation error", ex)
 	}
 
 	void fatalError(final SAXParseException ex) {
-		addMsg(Level.SEVERE,"Fatal XML validation error", ex);
+		addMsg(Level.FATAL,"Fatal XML validation error", ex);
 	}
 
 	void warning(final SAXParseException ex) {
-		addMsg(Level.WARNING,"XML validation warning", ex);
+		addMsg(Level.WARN,"XML validation warning", ex);
 	}
 
 	private addMsg(Level level, String msg, SAXParseException ex) {

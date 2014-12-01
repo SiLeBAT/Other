@@ -14,31 +14,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package de.bund.bfr.gnuml
+package de.bund.bfr.gpmf
 
-import groovy.transform.EqualsAndHashCode;
-import groovy.transform.ToString;
+import org.sbml.jsbml.AbstractSBase;
+import org.sbml.jsbml.xml.XMLNode
 
-import org.apache.log4j.Level;
+import de.bund.bfr.gnuml.ConformityMessage;
 
 /**
  * 
  */
-@EqualsAndHashCode
-class ConformityMessage {
-	Level level = Level.ERROR
+class PMFUtil {
+	static PMF_NS = 'http://sourceforge.net/projects/microbialmodelingexchange/files/PMF-ML'
 	
-	String message
-	
-	def ConformityMessage() {
-		
-	}
-	
-	def ConformityMessage(String message) {
-		this.message = message
-	}
-	
-	String toString() {
-		"$level: $message"
+	static XMLNode getPMFAnnotation(AbstractSBase node, String annotationName) {
+		if(!node.annotation)
+			return null
+			
+		node.annotation.nonRDFannotation.find { 
+			it.triple.name == annotationName && it.triple.namespaceURI == PMF_NS
+		}
 	}
 }

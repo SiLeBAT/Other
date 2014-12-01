@@ -16,10 +16,11 @@
  ******************************************************************************/
 package de.bund.bfr.gnuml;
 
-import java.util.Map;
-
 import groovy.transform.EqualsAndHashCode
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat
+import java.text.ParseException
 import javax.xml.xpath.XPathFactory
 
 
@@ -75,7 +76,7 @@ abstract class Description extends NMBase {
 		if(id && !isValidNMId(id))
 			invalidSettings << new ConformityMessage("$prefix id $id is not a valid NMId")
 
-		invalidSettings + super.getInvalidSettings(prefix)
+		invalidSettings + parseDataErrors + super.getInvalidSettings(prefix)
 	}
 
 	OntologyTerm getOntologyTerm() {
@@ -118,13 +119,16 @@ enum DataType {
 		def parseData(String value) { xpath.compile(value) ; value }
 	},
 	Float("float") {
-		def parseData(String value) { java.lang.Float.valueOf(value) }
+		def format = NumberFormat.getNumberInstance(Locale.US)
+		def parseData(String value) { format.parse(value) as Float }
 	},
 	Double("double") {
-		def parseData(String value) { java.lang.Double.valueOf(value) }
+		def format = NumberFormat.getNumberInstance(Locale.US)
+		def parseData(String value) { format.parse(value) as Double }
 	},
 	Integer("integer") {
-		def parseData(String value) { java.lang.Integer.valueOf(value) }
+		def format = NumberFormat.getIntegerInstance(Locale.US)
+		def parseData(String value) { format.parse(value) }
 	};
 
 	java.lang.String numlName
@@ -156,7 +160,7 @@ class AtomicDescription extends Description {
 		try {
 			return valueType.parseData(node.text())
 		} catch(e) {
-			parseDataErrors << new ConformityMessage("Unable to parseData ${node.text()} of expected type $indexType in $name")
+			parseDataErrors << new ConformityMessage("Unable to parse ${node.text()} of expected type $indexType in $name")
 		}
 	}
 
@@ -188,9 +192,9 @@ class CompositeDescription extends Description {
 		node.each { child ->
 			try {
 				values[indexType.parseData(child.'@indexValue')] = description.parseData(child)
-			} catch(e) {
+			} catch(ParseException e) {
 				parseDataErrors << new ConformityMessage(
-					"Unable to parseData index value ${child.'@indexValue'} of expected type $indexType in $name")
+					"Unable to parse index value ${child.'@indexValue'} of expected type $indexType in $name " + e)
 			}
 		}
 		values
@@ -223,9 +227,9 @@ class TupleDescription extends Description {
 
 	@Override
 	Object parseData(Node node) {
-		def children = node.children()
+		def children = node.tuple.first().children()
 		if(descriptions.size() != children.size())
-			parseDataErrors << new ConformityMessage("Expected ${descriptions.size()} children, but encountered ${children.size()}")
+			parseDataErrors << new ConformityMessage("Expected ${descriptions.size()} children in tuple with parent ${node.name()} ${node.attributes()}, but encountered ${children.size()}")
 
 		def values = []
 		children.eachWithIndex { child, index ->

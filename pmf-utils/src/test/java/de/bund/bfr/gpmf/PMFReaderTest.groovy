@@ -26,11 +26,37 @@ import org.junit.Test;
 class PMFReaderTest {
 	@Test
 	void testInvalidNuML() {
-		def doc = new PMFReader().readFileSet(
-			PMFReader.getResource('/gpmf/InvalidNuMLModel.xml'), 
-			PMFReader.getResource('/gpmf/InvalidNuMLData.xml'))
-		
+		def reader = new PMFReader(validating: true)
+		def doc = reader.readFileSet(
+			PMFReaderTest.getResource('/gpmf/InvalidNuMLModel.xml'), 
+			PMFReaderTest.getResource('/gpmf/InvalidNuMLData.xml'))
+				
+		// despite some errors in the NuML document, we expect a parsed result
+		assertNotNull(doc)
 		assertEquals(1, doc.models.size())
 		assertEquals(1, doc.experiments.size())
+		
+		// however, we also expect several errors
+		assertEquals(4, reader.parseMessages.size())
+	}
+	
+	@Test
+	void testValidFileSet() {
+		def dataFile = PMFReaderTest.getResource('/gpmf/ValidData.xml')
+		def modelFile = PMFReaderTest.getResource('/gpmf/ValidModel.xml')
+		def reader = new PMFReader(validating: true)
+		def doc = reader.readFileSet(dataFile, modelFile)
+				
+		assertNotNull(doc)
+		assertEquals(1, doc.models.size())
+		assertEquals(1, doc.experiments.size())
+		
+		assertEquals(0, reader.parseMessages.size())
+		
+		// check parsed values for correctness
+		def dimension = doc.experiments[dataFile].resultComponents[0].dimension
+		assertEquals(4, dimension.size())
+		assertNotNull(dimension['t3'])
+		assertEquals(103.965, dimension['t3'][1], 0.01)
 	}
 }

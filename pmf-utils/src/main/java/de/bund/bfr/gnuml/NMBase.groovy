@@ -33,9 +33,9 @@ class NMBase {
 	
 	List<Node> notes = []
 	
-	transient Node originalNode
+	protected transient Node originalNode
 	
-	transient NuMLDocument document
+	protected transient NuMLDocument document
 	
 	protected transient elementName = this.class.simpleName[0].toLowerCase() + this.class.simpleName[1..-1] 
 	

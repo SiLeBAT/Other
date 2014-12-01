@@ -18,9 +18,16 @@ package de.bund.bfr.gpmf
 
 import java.util.zip.ZipFile
 
+import org.apache.log4j.AppenderSkeleton
+import org.apache.log4j.Level
+import org.apache.log4j.Logger
+import org.apache.log4j.spi.LoggingEvent
 import org.sbml.jsbml.SBMLDocument
+import org.sbml.jsbml.SBMLException
 import org.sbml.jsbml.SBMLReader
+import org.sbml.jsbml.validator.SBMLValidator;
 
+import de.bund.bfr.gnuml.ConformityMessage
 import de.bund.bfr.gnuml.NuMLDocument
 import de.bund.bfr.gnuml.NuMLReader
 
@@ -28,7 +35,11 @@ import de.bund.bfr.gnuml.NuMLReader
  * 
  */
 class PMFReader {
-	def fileTypeReaders = [sbml: SBMLAdapter, numl: NuMLReader, xml: [SBMLAdapter, NuMLReader]]
+	static final fileTypeReaders = [sbml: SBMLAdapter, numl: NuMLReader, xml: [SBMLAdapter, NuMLReader]]
+	
+	def document, messages
+	
+	boolean validating = false
 	
 	def PMFReader() {
 	}
@@ -83,29 +94,33 @@ class PMFReader {
 	}
 	
 	PMFDocument readNamedStreams(Map<String, Closure> streamFactories) {
-		def messages = [], readDocuments = [:], ignoredFiles = []
+		def readDocuments = [:], ignoredFiles = []
+		this.messages = []
+		this.document = null
 		
 		streamFactories.each { name, streamFactory ->
 			def fileExtension = (name =~ /.*?(?:\.(.*))?$/)[0][1].toLowerCase()
-			def doc = fileTypeReaders[fileExtension]?.findResult { readerType ->
+			def validReader = fileTypeReaders[fileExtension]*.newInstance(validating: validating)?.find() { reader ->
 				def stream = streamFactory()
-				readerType.newInstance().read(stream)
+				reader.read(stream)
 			}
-			if(doc)
-				readDocuments[name] = doc
+			if(validReader) {
+				readDocuments[name] = validReader.document
+				messages.addAll(validReader.parseMessages.collect { it.message = "$name: " + it.message; it })
+			}
 			else ignoredFiles << name
 		}
 		
-		new PMFDocument(experiments: readDocuments.findAll { it instanceof NuMLDocument }, 
-			models: readDocuments.findAll { it instanceof SBMLDocument })
+		if(readDocuments) {
+			this.document = new PMFDocument(experiments: readDocuments.findAll { it.value instanceof NuMLDocument }, 
+				models: readDocuments.findAll { it.value instanceof SBMLDocument })
+			ValidationRule.values()*.validate(this.document, this.messages)
+		}
+		this.document
+	}
+	
+	List<ConformityMessage> getParseMessages(Level level = Level.WARN) {
+		messages.grep { it.level.isGreaterOrEqual(level) }
 	}
 }
 
-class SBMLAdapter {
-	SBMLReader reader = new SBMLReader()
-	
-	def read(InputStream stream) {
-		def doc = reader.readSBMLFromStream(stream)
-		doc.level == -1 ? null : doc
-	}
-}
