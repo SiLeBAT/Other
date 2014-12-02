@@ -13,9 +13,6 @@ import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
-import org.apache.poi.ss.usermodel.Name;
-import org.apache.poi.ss.util.AreaReference;
-import org.apache.poi.ss.util.CellReference;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
@@ -37,6 +34,7 @@ import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
+
 
 /**
  * This is the model implementation of MyImporter.
@@ -91,7 +89,20 @@ public class MyImporterNodeModel extends NodeModel {
         	Boolean akkreditiert = null;
         	String defSourceC = null;
         	LinkedHashMap<Integer, Testings> tests = new LinkedHashMap<Integer, Testings>();
-			for (int i=0; i<wb.getNumberOfNames(); i++) {
+        	for (int i=0;i<sheet.getPhysicalNumberOfRows();i++) {
+        		row = sheet.getRow(i);
+        		if (row == null) break;
+        		HSSFCell cell = row.getCell(0); // Spalte A
+        		String str = getStrVal(cell);
+        		if (str == null || (!str.trim().startsWith("A. ") && !str.trim().startsWith("B. "))) continue;
+        		int inedx = str.indexOf(". ") + 2;
+        		int index2 = str.indexOf(" ", inedx);
+        		System.err.println(str + "\t" + inedx + "\t" + index2);
+        		String namename = index2 < 0 ? str.substring(inedx) : str.substring(inedx, index2);
+        		int rowIndex = i;
+        	//}
+			//for (int i=0; i<wb.getNumberOfNames(); i++) {
+				/*
 	            Name name = wb.getNameAt(i);
 	            if (!"import".equals(name.getSheetName())) continue;
 	            if (name.getNameName().equals("Print_Area")) continue;
@@ -102,11 +113,12 @@ public class MyImporterNodeModel extends NodeModel {
 		                if (area.isSingleCell()) {
 		                    CellReference crList[] = area.getAllReferencedCells();
 		                    if (crList[0].getCol() == 1) {
-		        				int rowIndex = crList[0].getRow();
-		                    	row = sheet.getRow(rowIndex);
+		                    */
+		        				//int rowIndex = crList[0].getRow();
+		                    	//row = sheet.getRow(rowIndex);
 		                    	//Jahr
-		                    	HSSFCell cell = row.getCell(11); // Spalte L
-		                    	String str = getStrVal(cell);
+		                    	cell = row.getCell(11); // Spalte L
+		                    	str = getStrVal(cell);
 		                    	if (str != null && str.trim().length() > 2) jahr = Integer.parseInt(str.substring(2).trim());
 		                    	//Bundesland
 		                    	cell = row.getCell(14); // Spalte O
@@ -219,7 +231,7 @@ public class MyImporterNodeModel extends NodeModel {
 		                    		continue;
 		                    	}
 		        				int plusIndex = firstDataRow;
-		                    	System.err.println("Start: " + name.getNameName() + "\t" + (rowIndex + plusIndex));
+		                    	System.err.println("Start: " + namename + "\t" + (rowIndex + plusIndex));
 		                    	RowProps rowProps = null;
 		                    	for (;;plusIndex++) {
 			                    	// Source, Methode, Grund, Ebene
@@ -234,13 +246,20 @@ public class MyImporterNodeModel extends NodeModel {
 			                    	String bland = getStrVal(cell);
 			                    	if (bitte != null && bitte.trim().equals("bitte ggf. Zeilen einfügen")
 			                    			|| astJahr != null && astJahr.trim().equals("**" + jahr)
-			                    			|| bland != null && bland.trim().equals("Bundesland:")) break;
+			                    			|| bland != null && bland.trim().equals("Bundesland:")) {
+			                    		i = rowIndex + plusIndex - 1;
+			                    		break;
+			                    	}
 			                    	
 			                    	// Nein, ok, dann weiter
 			                    	rowProps = getA2G(row, rowProps, defSourceC);
-			                    	if (rowProps == null) continue;
-			                    	if (rowProps != null && rowProps.getAmount() == 5 && name.getNameName().equals("B._14.20")) {
-			                    		System.err.print("");
+			                		if (rowProps == null) continue;
+			                    	if (rowProps.getSourceA() != null && (rowProps.getSourceA().startsWith("A. ") && rowProps.getSourceA().startsWith("B. "))) {
+				                		inedx = str.indexOf(". ") + 2;
+				                		index2 = str.indexOf(" ", inedx);
+				                		System.err.println(str + "\t" + inedx + "\t" + index2);
+				                		namename = index2 < 0 ? str.substring(inedx) : str.substring(inedx, index2);
+				                		continue;
 			                    	}
 
 			                    	int furtherAgentsIndex = 0;
@@ -332,7 +351,7 @@ public class MyImporterNodeModel extends NodeModel {
 						        				DataCell[] cells = new DataCell[57];
 						        				cells[0] = DataType.getMissingCell();
 						        				cells[1] = DataType.getMissingCell();
-						        				cells[2] = new StringCell(name.getNameName().substring(name.getNameName().indexOf("_") + 1));
+						        				cells[2] = new StringCell(namename);//name.getNameName().substring(name.getNameName().indexOf("_") + 1));
 						        				cells[3] = (staat == null ? DataType.getMissingCell() : new StringCell(staat));
 						        				cells[4] = DataType.getMissingCell();
 						        				cells[5] = (jahr == null ? DataType.getMissingCell() : new IntCell(jahr));
@@ -372,17 +391,31 @@ public class MyImporterNodeModel extends NodeModel {
 						        				cells[37] = DataType.getMissingCell();
 						        				cells[38] = (!isGruppe || rowProps.getAmount() == null ? DataType.getMissingCell() : new StringCell(rowProps.getAmount()+""));
 						        				
-						        				if (tst.hasKBE()) allPositive = tst.getQuantSum();
+						                    	if (rowProps.getAmount() == 90 && namename.equals("01.21b")) {
+						                    		System.err.print("");
+						                    	}
+
+						                    	if (tst.hasKBE()) allPositive = tst.getQuantSum();
 						        				else if (rowProps.getAmount() != null && allPositive != null && allPositive > rowProps.getAmount()) allPositive = rowProps.getAmount();
 						        				
-						        				if (j == 7 && a.length == 1 || tst.hasKBE()) cells[39] = (!isGruppe || allPositive == null ? new StringCell("-") : new StringCell(allPositive+""));
-						        				else cells[39] = (!isGruppe || a[0] == null || a[0].getAmount() == null ? DataType.getMissingCell() : new StringCell(a[0].getAmount()+""));
+						        				if (j == 7 && a.length == 1 || tst.hasKBE()) {
+						        					cells[39] = !isGruppe ? DataType.getMissingCell() :
+						        						(allPositive == null ? (rowProps.getSourceA() == null ? new StringCell("-") : new StringCell("-")) : new StringCell(allPositive+""));
+						        				}
+						        				else {
+						        					cells[39] = (!isGruppe || a[0] == null || a[0].getAmount() == null ? DataType.getMissingCell() : new StringCell(a[0].getAmount()+""));
+						        				}
 						        				
 						        				cells[40] = (!isIndividual ? DataType.getMissingCell() : new StringCell(rowProps.getSourceC()));
 						        				cells[41] = (!isIndividual || rowProps.getAmount() == null ? DataType.getMissingCell() : new StringCell(rowProps.getAmount()+""));
 						        				
-						        				if (j == 7 && a.length == 1 || tst.hasKBE()) cells[42] = (!isIndividual || allPositive == null ? new StringCell("-") : new StringCell(allPositive+""));
-						        				else cells[42] = (!isIndividual || a[0] == null || a[0].getAmount() == null ? DataType.getMissingCell() : new StringCell(a[0].getAmount()+""));
+						        				if (j == 7 && a.length == 1 || tst.hasKBE()) {
+						        					cells[42] = !isIndividual ? DataType.getMissingCell() :
+						        						(allPositive == null ? (rowProps.getSourceA() == null ? new StringCell("-") : new StringCell("-")) : new StringCell(allPositive+""));
+						        				}
+						        				else {
+						        					cells[42] = (!isIndividual || a[0] == null || a[0].getAmount() == null ? DataType.getMissingCell() : new StringCell(a[0].getAmount()+""));
+						        				}
 						        				
 						        				cells[43] = (a[0] == null || a[0].getQuantum().equals("positiv") || a[0].getAmount() == null ? DataType.getMissingCell() : new StringCell(a[0].getAmount()+""));
 						        				cells[44] = (a.length < 2 || a[1] == null || a[1].getAmount() == null ? DataType.getMissingCell() : new StringCell(a[1].getAmount()+""));
@@ -418,7 +451,8 @@ public class MyImporterNodeModel extends NodeModel {
 		                    			
 		        				//}
 		        				exec.checkCanceled();
-		                    	System.err.println("End: " + name.getNameName() + "\t" + (rowIndex + plusIndex));
+		                    	System.err.println("End: " + namename + "\t" + (rowIndex + plusIndex));
+		                    	/*
 		                    }
 		                }
 	            	}
@@ -427,6 +461,7 @@ public class MyImporterNodeModel extends NodeModel {
             		System.err.println(e.getMessage());
             		e.printStackTrace();
 	            }
+	            */
 	        }
 		}
 
