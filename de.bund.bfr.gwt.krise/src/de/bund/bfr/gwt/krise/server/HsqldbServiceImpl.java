@@ -64,11 +64,11 @@ public class HsqldbServiceImpl extends RemoteServiceServlet implements HsqldbSer
 						deliveries.put(lieferID, new Delivery(lieferID, from, to));
 						if (!stations.containsKey(from)) {
 							ResultSet rs2 = DBKernel.getResultSet("SELECT \"Name\",\"Longitude\",\"Latitude\" FROM \"Station\" WHERE \"ID\" = " + from);
-							stations.put(from, new Station(from, rs2.getString("Name"), rs2.getDouble("Longitude"), rs2.getDouble("Latitude")));
+							if (rs2 != null && rs2.first()) stations.put(from, new Station(from, rs2.getString("Name"), rs2.getDouble("Longitude"), rs2.getDouble("Latitude")));
 						}
 						if (!stations.containsKey(to)) {
 							ResultSet rs2 = DBKernel.getResultSet("SELECT \"Name\",\"Longitude\",\"Latitude\" FROM \"Station\" WHERE \"ID\" = " + to);
-							stations.put(to, new Station(to, rs2.getString("Name"), rs2.getDouble("Longitude"), rs2.getDouble("Latitude")));
+							if (rs2 != null && rs2.first()) stations.put(to, new Station(to, rs2.getString("Name"), rs2.getDouble("Longitude"), rs2.getDouble("Latitude")));
 						}
 				} while (rs.next());
 				mtd.setDeliveries(deliveries);
@@ -111,11 +111,11 @@ public class HsqldbServiceImpl extends RemoteServiceServlet implements HsqldbSer
 						deliveries.put(lieferID, new Delivery(lieferID, from, to));
 						if (!stations.containsKey(from)) {
 							ResultSet rs2 = DBKernel.getResultSet("SELECT \"Name\",\"Longitude\",\"Latitude\" FROM \"Station\" WHERE \"ID\" = " + from);
-							stations.put(from, new Station(from, rs2.getString("Name"), rs2.getDouble("Longitude"), rs2.getDouble("Latitude")));
+							if (rs2 != null && rs2.first()) stations.put(from, new Station(from, rs2.getString("Name"), rs2.getDouble("Longitude"), rs2.getDouble("Latitude")));
 						}
 						if (!stations.containsKey(to)) {
 							ResultSet rs2 = DBKernel.getResultSet("SELECT \"Name\",\"Longitude\",\"Latitude\" FROM \"Station\" WHERE \"ID\" = " + to);
-							stations.put(to, new Station(to, rs2.getString("Name"), rs2.getDouble("Longitude"), rs2.getDouble("Latitude")));
+							if (rs2 != null && rs2.first()) stations.put(to, new Station(to, rs2.getString("Name"), rs2.getDouble("Longitude"), rs2.getDouble("Latitude")));
 						}
 				} while (rs.next());
 				mtd.setDeliveries(deliveries);

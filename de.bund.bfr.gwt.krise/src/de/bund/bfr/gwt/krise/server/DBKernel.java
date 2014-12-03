@@ -17,7 +17,7 @@ public class DBKernel {
 		if (theConn == null) {
 		    try {
 			    Class.forName("org.hsqldb.jdbc.JDBCDriver").newInstance();
-			    String serverPath = "localhost/tracingnrw";//"192.168.212.54/silebat"; nrw
+			    String serverPath = "localhost/tracing_ehec";//"192.168.212.54/silebat"; tracing_hepa tracing_nrw tracing_ehec
 			    String connStr = "jdbc:hsqldb:hsql://" + serverPath;
 			    theConn = DriverManager.getConnection(connStr, "SA", "");  
 		    }
