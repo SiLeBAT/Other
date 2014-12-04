@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.gwtopenmaps.openlayers.client.Bounds;
 import org.gwtopenmaps.openlayers.client.LonLat;
@@ -79,6 +81,8 @@ public class MyTracingMap extends MapWidget {
 	private LinkedHashMap<Integer, HashSet<VectorFeature>> deliveries = null;
 
 	private Map theMap = null;
+	private Logger logger;
+	private boolean showArrows = true;
 
 	public MyTracingMap() {
 		this((HsqldbServiceAsync) GWT.create(HsqldbService.class));
@@ -87,6 +91,7 @@ public class MyTracingMap extends MapWidget {
 	public MyTracingMap(HsqldbServiceAsync hsqldbService) {
 		super("100%", "100%", defaultMapOptions);
 		this.hsqldbService = hsqldbService;
+		logger = Logger.getLogger(this.getClass().getSimpleName());
 		buildPanel();
 		fetchMyData("");
 	}
@@ -111,7 +116,7 @@ public class MyTracingMap extends MapWidget {
 			for (Delivery d : allDeliveries.values()) {
 				boolean fromLarger = (d.getFrom() > d.getTo());
 				String key = fromLarger ? d.getTo() + "_" + d.getFrom() : d.getFrom() + "_" + d.getTo();
-				if (bw.containsKey(key)) bw.put(key, bw.get(key) + 5);
+				if (bw.containsKey(key)) continue;//bw.put(key, bw.get(key) + 5);
 				else bw.put(key, 30.0);
 				VectorFeature vf = addDelivery2Feature(d.getId(), d.getFrom(), d.getTo(), bw.get(key));
 				if (!deliveries.containsKey(d.getFrom())) deliveries.put(d.getFrom(), new HashSet<VectorFeature>());
@@ -200,7 +205,7 @@ public class MyTracingMap extends MapWidget {
 		// Add Layers
 		//clusterStrategy = new AnimatedClusterStrategy(new AnimatedClusterStrategyOptions());
 		clusterStrategy = new ClusterStrategy();
-		clusterStrategy.setDistance(60);
+		clusterStrategy.setDistance(showArrows ? 60 : 0);
 		clusterStrategy.setThreshold(2);
 
 		VectorOptions vectorOptions = new VectorOptions();
@@ -217,6 +222,7 @@ public class MyTracingMap extends MapWidget {
 		try {
 			stationId = Integer.parseInt(id);
 		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		if (stationId >= 0) result = stations.get(stationId);
 		return result;
@@ -227,6 +233,7 @@ public class MyTracingMap extends MapWidget {
 		try {
 			deliveryId = Integer.parseInt(id);
 		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		if (deliveryId >= 0) result = allDeliveries.get(deliveryId);
 		return result;
@@ -256,29 +263,40 @@ public class MyTracingMap extends MapWidget {
 	}
 
 	private void addDeliveries() {
-		deliveryLayer.removeAllFeatures();
-		labelLayer.removeAllFeatures();
-		if (stationLayer != null && stationLayer.getFeatures() != null) {
-			VectorFeature[] vfs = stationLayer.getFeatures();
-			for (VectorFeature vf : vfs) {
-				if (vf != null && vf.getFeatureId() != null) {
-					Bounds b = theMap.getExtent();
-					if (vf.getCluster() == null && b.containsLonLat(vf.getCenterLonLat(), true)) {
-						Station station = getStation(vf.getFeatureId());
-						if (station != null) {
-							if (deliveries != null && deliveries.containsKey(station.getId())) {
-								HashSet<VectorFeature> hs = deliveries.get(station.getId());
-								for (VectorFeature vff : hs) {
-									deliveryLayer.addFeature(vff);
+		if (showArrows) {
+			//logger.log(Level.SEVERE, "addDeliveries - Start");
+			try {
+				deliveryLayer.removeAllFeatures();
+				labelLayer.removeAllFeatures();
+				if (stationLayer != null && stationLayer.getFeatures() != null) {
+					VectorFeature[] vfs = stationLayer.getFeatures();
+					for (VectorFeature vf : vfs) {
+						if (vf != null && vf.getFeatureId() != null) {
+							Bounds b = theMap.getExtent();
+							if (vf.getCluster() == null && b.containsLonLat(vf.getCenterLonLat(), true)) {
+								Station station = getStation(vf.getFeatureId());
+								if (station != null) {
+									if (deliveries != null && deliveries.containsKey(station.getId())) {
+										HashSet<VectorFeature> hs = deliveries.get(station.getId());
+										if (hs != null) {
+											for (VectorFeature vff : hs) {
+												if (vff != null) deliveryLayer.addFeature(vff);
+											}
+										}
+									}
+									addLabel(station);
 								}
 							}
-							addLabel(station);
 						}
 					}
 				}
+				//theMap.setLayerZIndex(labelLayer, 500);
 			}
+			catch (Exception e) {
+				logger.log(Level.SEVERE, "addDeliveries - exception: " + e.getMessage());
+			}
+			//logger.log(Level.SEVERE, "addDeliveries - End");
 		}
-		//theMap.setLayerZIndex(labelLayer, 500);
 	}
 
 	private void addLabel(Station s) {
