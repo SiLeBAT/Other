@@ -16,14 +16,79 @@
  ******************************************************************************/
 package de.bund.bfr.gpmf
 
-import org.sbml.jsbml.SBMLDocument;
+import java.nio.charset.Charset
 
-import de.bund.bfr.gnuml.NuMLDocument;
+import org.sbml.jsbml.SBMLDocument
+
+import de.bund.bfr.gnuml.ConformityMessage
+import de.bund.bfr.gnuml.NuMLDocument
+import de.bund.bfr.gnuml.NuMLWriter
 
 /**
  * 
  */
 class PMFDocument {
-	Map<String, SBMLDocument> models = [:]
-	Map<String, NuMLDocument> experiments = [:]
+	Map<String, SBMLDocument> models = new ObservableMap()
+	Map<String, NuMLDocument> dataSets = new ObservableMap()
+		
+	PMFDocument() {
+		models.addPropertyChangeListener({ models.each { PMFUtil.wrap(it.value) } })
+		dataSets.addPropertyChangeListener({ dataSets.each { PMFUtil.wrap(it.value) } })
+	}
+	
+	// mostly for additional validation (XPath evaluation etc)
+	Map<Object, Closure<InputStream>> documentStreamFactories = [:]
+	
+	InputStream getInputStream(Object doc) {
+		documentStreamFactories[doc] ?: createFallbackFactory(doc)
+	}
+	
+	static final fileTypeWriters = [SBMLDocument: SBMLAdapter, NuMLDocument: NuMLWriter]
+	
+	def createFallbackFactory(Object doc) {
+		def writer = fileTypeWriters[doc.class]
+		def factory = {
+			def xmlString = writer.toString(doc)
+			new ByteArrayInputStream(xmlString.getBytes(Charset.forName("utf-8")))
+		}
+		factory
+	}
+	
+	def resolve(String xlinkRef) {
+		def doc = models[xlinkRef] ?: dataSets[xlinkRef]
+		if(!doc)
+			throw new IllegalArgumentException("Unknown document $xlinkRef")
+		doc
+	}
+	
+	/**
+	 * Sets the dataSets to the specified value.
+	 *
+	 * @param dataSets the dataSets to set
+	 */
+	public void setDataSets(Map<String, NuMLDocument> dataSets) {
+		if (dataSets == null)
+			throw new NullPointerException("dataSets must not be null");
+
+		this.dataSets.clear()
+		this.dataSets.putAll(dataSets)
+	}
+	
+	List<String> getInvalidSettings(String prefix = 'pmf') {
+		dataSets.collect { name, numl -> numl.getInvalidSettings("$prefix/$name/numl") } +
+		models.collect { name, sbml -> PMFUtil.getInvalidSettings(sbml, "$prefix/$name/sbml", this) }
+	}
+	
+	/**
+	 * Sets the models to the specified value.
+	 *
+	 * @param models the models to set
+	 */
+	public void setModels(Map<String, SBMLDocument> models) {
+		if (models == null)
+			throw new NullPointerException("models must not be null");
+			
+		this.models.clear()
+		this.models.putAll(models)
+	}
 }

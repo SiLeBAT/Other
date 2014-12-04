@@ -14,40 +14,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package de.bund.bfr.gnuml;
+package de.bund.bfr.gpmf
 
-import static org.junit.Assert.*
-
-import org.junit.Test
+import groovy.transform.InheritConstructors;
 
 /**
  * 
  */
-public class DescriptionTest {
-	
-	@Test
-	void shouldReturnInvalidSettings() {
-		def root = new CompositeDescription(name: 'TimeSeries', description:
-			new TupleDescription(descriptions: [
-				new AtomicDescription(name: 'time', valueType: DataType.Double),
-				new AtomicDescription(name: 'concentration')
-				]))
-		// no indexType for root and concentration
-		assertEquals(2, root.invalidSettings.size())
+@InheritConstructors
+class PMFException extends RuntimeException {
+	def errors = []
+
+	@Override
+	String getMessage() {
+		"${super.getMessage()}:\n${errors.join('\n')}"
 	}
-	
-	/**
-	 * A rather soft test for debugging.
-	 */
-	@Test
-	void shouldPrettyPrintNesting() {
-		def root = new CompositeDescription(name: 'TimeSeries', indexType: DataType.Double, description:
-			new TupleDescription(descriptions: [
-				new AtomicDescription(name: 'time'),
-				new AtomicDescription(name: 'concentration')
-				]))
-		assertNotNull(root.toString())
-		println root
-	}
-	
 }

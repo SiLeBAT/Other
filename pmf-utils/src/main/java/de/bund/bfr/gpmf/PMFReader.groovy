@@ -94,7 +94,7 @@ class PMFReader {
 	}
 	
 	PMFDocument readNamedStreams(Map<String, Closure> streamFactories) {
-		def readDocuments = [:], ignoredFiles = []
+		def readDocuments = [:], ignoredFiles = [], documentStreamFactories = [:]
 		this.messages = []
 		this.document = null
 		
@@ -106,15 +106,17 @@ class PMFReader {
 			}
 			if(validReader) {
 				readDocuments[name] = validReader.document
+				documentStreamFactories[validReader.document] = streamFactory
 				messages.addAll(validReader.parseMessages.collect { it.message = "$name: " + it.message; it })
 			}
 			else ignoredFiles << name
 		}
 		
 		if(readDocuments) {
-			this.document = new PMFDocument(experiments: readDocuments.findAll { it.value instanceof NuMLDocument }, 
-				models: readDocuments.findAll { it.value instanceof SBMLDocument })
-			ValidationRule.values()*.validate(this.document, this.messages)
+			this.document = new PMFDocument(dataSets: readDocuments.findAll { it.value instanceof NuMLDocument }, 
+				models: readDocuments.findAll { it.value instanceof SBMLDocument },
+				documentStreamFactories: documentStreamFactories)
+//			ValidationRule.values()*.validate(this.document, this.messages)
 		}
 		this.document
 	}

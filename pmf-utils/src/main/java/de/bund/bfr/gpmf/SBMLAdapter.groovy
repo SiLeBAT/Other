@@ -23,9 +23,11 @@ import org.apache.log4j.spi.LoggingEvent
 import org.sbml.jsbml.SBMLDocument
 import org.sbml.jsbml.SBMLException
 import org.sbml.jsbml.SBMLReader
+import org.sbml.jsbml.SBMLWriter
 import org.sbml.jsbml.validator.SBMLValidator
 
 import de.bund.bfr.gnuml.ConformityMessage
+
 
 class SBMLAdapter {
 	SBMLReader reader = new SBMLReader()
@@ -38,10 +40,13 @@ class SBMLAdapter {
 		logAdapter = Logger.getLogger(SBMLReader).hierarchy.currentLoggers.findResult { it.allAppenders.find { it } }
 	}
 	
-	def read(InputStream stream) {
+	SBMLDocument read(InputStream stream) {		
+		parseText(stream.text)
+	}
+	
+	SBMLDocument parseText(String xmlString) {
 		this.messages = logAdapter.messages = []
 		
-		String xmlString = stream.text
 		document = reader.readSBMLFromString(xmlString)
 		logAdapter.messages = []
 		if(document.level == -1)
@@ -57,6 +62,10 @@ class SBMLAdapter {
 			}
 		}
 		document
+	}
+	
+	String toString(SBMLDocument document) {
+		new SBMLWriter().writeSBMLToString(document)
 	}
 	
 	List<ConformityMessage> getParseMessages(Level level = Level.WARN) {

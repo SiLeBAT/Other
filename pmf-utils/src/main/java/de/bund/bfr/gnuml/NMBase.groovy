@@ -16,11 +16,7 @@
  ******************************************************************************/
 package de.bund.bfr.gnuml
 
-import java.util.logging.Level;
-
-import groovy.text.markup.IncludeType;
-import groovy.transform.EqualsAndHashCode;
-import groovy.xml.MarkupBuilder
+import groovy.transform.EqualsAndHashCode
 
 /**
  * 
@@ -29,13 +25,13 @@ import groovy.xml.MarkupBuilder
 class NMBase {
 	String metaId
 	
-	List<Node> annotations = []
+	Node annotations
 	
-	List<Node> notes = []
+	Node notes
+	
+	NMBase parent
 	
 	protected transient Node originalNode
-	
-	protected transient NuMLDocument document
 	
 	protected transient elementName = this.class.simpleName[0].toLowerCase() + this.class.simpleName[1..-1] 
 	
@@ -50,12 +46,23 @@ class NMBase {
 
 		this.originalNode = originalNode
 		this.metaId = originalNode.'@metaid'
-		this.notes = originalNode.notes*.first()
-		this.annotations = originalNode.annotations*.first()
+		this.notes = originalNode.notes[0]
+		this.annotations = originalNode.annotations[0]
+	}
+	
+	List<NMBase> getChildren() {
+		def propertyValues = this.attributeValues
+		def nonNull = propertyValues*.value.findAll{ it }.findAll { 
+			it instanceof NMBase || (it instanceof Collection && it[0] instanceof NMBase )
+		}.flatten()
+	}
+	
+	NuMLDocument getDocument() {
+		parent?.document
 	}
 	
 	protected Map<String, Object> getAttributeValues() {		
-		def ignoredProperties = ['document', 'originalNode']
+		def ignoredProperties = ['document', 'parent', 'originalNode']
 		def properties = this.metaClass.properties.grep { !(it.name in ignoredProperties)  && it.setter }
 		properties.collectEntries { [(it.name): it.getProperty(this)] }
 	}
@@ -63,24 +70,20 @@ class NMBase {
 	void write(BuilderSupport builder) {
 		def propertyValues = this.attributeValues
 		def nonNull = propertyValues.findAll { it.value }
-		def subTypes = nonNull.findAll { it.value instanceof NMBase || it.value instanceof Collection }
-		def attributes = nonNull - subTypes
+		def children = nonNull.findAll { it.value instanceof NMBase || (it.value instanceof Collection && it.value[0] instanceof NMBase ) }
+		def attributes = nonNull - children
 		
 		builder.invokeMethod(this.elementName, [attributes, {
 			if(this.notes)
-				builder.notes { notesNode ->
-					this.notes.each { notesNode.append(it) }
-				}
+				builder.append(this.notes)
 			if(this.annotations)
-				builder.annotation { annotationNode ->
-					this.annotations.each { annotationNode.append(it) }
-				}
-			writeBody(builder, subTypes)
+				builder.append(this.annotations)
+			writeBody(builder, children)
 		}])
 	}
 	
-	void writeBody(BuilderSupport builder, Map subTypes) {
-		subTypes.each { key, value ->
+	void writeBody(BuilderSupport builder, Map children) {
+		children.each { key, value ->
 			value*.write(builder)
 		}
 	}
@@ -107,17 +110,17 @@ class NMBase {
 		id =~ /[\p{Alpha}_][\p{Alnum}_]*/
 	}
 	
-	void setDocument(NuMLDocument document) {
-		if(!this.document.is(document)) {
-			this.document = document
-			
-			def subTypes = this.attributeValues*.value.flatten().grep { it instanceof NMBase }	
-			subTypes*.document = document			
-		}
-	}
+//	void setDocument(NuMLDocument document) {
+//		if(!this.document.is(document)) {
+//			this.document = document
+//			
+//			def subTypes = this.attributeValues*.value.flatten().grep { it instanceof NMBase }	
+//			subTypes*.document = document			
+//		}
+//	}
 	
 	List<ConformityMessage> getInvalidSettings(String prefix = '') {
-		def ignoredProperties = ['document']
+		def ignoredProperties = ['document', 'parent']
 		def properties = this.metaClass.properties.grep { !(it.name in ignoredProperties)  && it.setter }
 		
 		def requiredProps = properties.grep { it.field?.field?.getAnnotation(Required) }
@@ -134,10 +137,12 @@ class NMBase {
 	}
 		
 	String toString() {		
-		def ignoredProperties = ['document', 'originalNode']
+		def ignoredProperties = ['parent', 'document', 'originalNode']
 		def properties = this.metaClass.properties.grep { !(it.name in ignoredProperties)  && it.setter }
 		def propertyValues = properties.collectEntries { [(it.name): it.getProperty(this)] }
-		def reversedNonNull = propertyValues.grep { it.value }
-		"<${this.elementName} ${reversedNonNull}>"
+		def nonNull = propertyValues.findAll { it.value }.collectEntries { key, value ->
+			[(key): value instanceof ObservableList ? value as ArrayList : value]
+		}
+		"<${this.elementName} ${nonNull}>"
 	}
 }

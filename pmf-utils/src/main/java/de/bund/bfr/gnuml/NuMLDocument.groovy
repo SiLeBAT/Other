@@ -18,6 +18,8 @@ package de.bund.bfr.gnuml;
 
 import java.util.logging.Level;
 
+import org.xml.sax.InputSource;
+
 import groovy.transform.EqualsAndHashCode
 import groovy.xml.NamespaceBuilderSupport
 
@@ -29,15 +31,14 @@ class NuMLDocument extends NMBase {
 	@Required
 	int level = 1, version = 1
 	
-	List<OntologyTerm> ontologyTerms = new ObservableList()
+	final List<OntologyTerm> ontologyTerms = new ObservableList()
 	
-	List<ResultComponent> resultComponents = new ObservableList()
-	
+	final List<ResultComponent> resultComponents = new ObservableList()
+		
 	NuMLDocument() {
-		this.document = this
 		this.elementName = 'numl'
-		resultComponents.addPropertyChangeListener { resultComponents*.document = this }
-		ontologyTerms.addPropertyChangeListener { ontologyTerms*.document = this ; resultComponents*.document = this }
+		resultComponents.addPropertyChangeListener { resultComponents*.parent = this }
+		ontologyTerms.addPropertyChangeListener { ontologyTerms*.parent = this ; resultComponents*.parent = this }
 	}
 	
 	/**
@@ -52,6 +53,11 @@ class NuMLDocument extends NMBase {
 		this.level = level;
 	}
 	
+	@Override
+	NuMLDocument getDocument() {
+		this
+	}
+	
 	/**
 	 * Sets the resultComponents to the specified value.
 	 *
@@ -61,9 +67,8 @@ class NuMLDocument extends NMBase {
 		if (resultComponents == null)
 			throw new NullPointerException("resultComponents must not be null");
 
-		this.resultComponents = new ObservableList(resultComponents)
-		this.resultComponents.addPropertyChangeListener { resultComponents*.document = this }
-		this.resultComponents*.document = this
+		this.resultComponents.clear()
+		this.resultComponents.addAll(resultComponents)
 	}
 	
 	
@@ -76,9 +81,8 @@ class NuMLDocument extends NMBase {
 		if (ontologyTerms == null)
 			throw new NullPointerException("ontologyTerms must not be null");
 			
-		this.ontologyTerms = new ObservableList(resultComponents)
-		this.ontologyTerms.addPropertyChangeListener { ontologyTerms*.document = this ; resultComponents*.document = this }
-		this.ontologyTerms*.document = this
+		this.ontologyTerms.clear()
+		this.ontologyTerms.addAll(ontologyTerms)
 	}
 		
 	/**
@@ -130,13 +134,13 @@ class NuMLDocument extends NMBase {
 	void setOriginalNode(Node node) {		
 		super.setOriginalNode(node)
 		
-		ontologyTerms = node.ontologyTerms?.ontologyTerm.collect { 
-			new OntologyTerm(document: this, originalNode: it) 
-		}
+		setOntologyTerms(node.ontologyTerms?.ontologyTerm.collect { 
+			new OntologyTerm(parent: this, originalNode: it) 
+		})
 				
-		resultComponents = node.resultComponent.collect { 
-			new ResultComponent(document: this, originalNode: it) 
-		}
+		setResultComponents(node.resultComponent.collect { 
+			new ResultComponent(parent: this, originalNode: it) 
+		})
 	}
 	
 	@Override

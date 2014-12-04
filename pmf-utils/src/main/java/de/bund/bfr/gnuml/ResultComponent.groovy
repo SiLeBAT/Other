@@ -58,6 +58,20 @@ class ResultComponent extends NMBase {
 			dimensionDescription.writeData(builder, this.dimension)
 		}
 	}
+	
+	/**
+	 * Sets the dimensionDescription to the specified value.
+	 *
+	 * @param dimensionDescription the dimensionDescription to set
+	 */
+	void setDimensionDescription(Description dimensionDescription) {
+		if (dimensionDescription == null)
+			throw new NullPointerException("dimensionDescription must not be null");
+
+		this.dimensionDescription = dimensionDescription
+		dimensionDescription.parent = this
+	}
+	
 
 	@Override
 	public void setOriginalNode(Node originalNode) {		
@@ -70,7 +84,7 @@ class ResultComponent extends NMBase {
 		this.dimensionDescription = null
 		this.dimension = null
 		if(description) {
-			this.dimensionDescription = Description.fromNuML(this.document, description)
+			setDimensionDescription(Description.fromNuML(this, description))
 			if(originalNode.dimension?.first())
 				this.dimension = dimensionDescription.parseData(originalNode.dimension?.first())
 		}

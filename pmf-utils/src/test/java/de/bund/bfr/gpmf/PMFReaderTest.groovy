@@ -19,6 +19,9 @@ package de.bund.bfr.gpmf
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+import org.sbml.jsbml.SBase;
+
+import de.bund.bfr.gnuml.NMBase;
 
 /**
  * 
@@ -34,14 +37,14 @@ class PMFReaderTest {
 		// despite some errors in the NuML document, we expect a parsed result
 		assertNotNull(doc)
 		assertEquals(1, doc.models.size())
-		assertEquals(1, doc.experiments.size())
+		assertEquals(1, doc.dataSets.size())
 		
 		// however, we also expect several errors
 		assertEquals(4, reader.parseMessages.size())
 	}
 	
 	@Test
-	void testValidFileSet() {
+	void shouldSuccessfullyParseValidData() {
 		def dataFile = PMFReaderTest.getResource('/gpmf/ValidData.xml')
 		def modelFile = PMFReaderTest.getResource('/gpmf/ValidModel.xml')
 		def reader = new PMFReader(validating: true)
@@ -49,14 +52,54 @@ class PMFReaderTest {
 				
 		assertNotNull(doc)
 		assertEquals(1, doc.models.size())
-		assertEquals(1, doc.experiments.size())
+		assertEquals(1, doc.dataSets.size())
 		
 		assertEquals(0, reader.parseMessages.size())
 		
 		// check parsed values for correctness
-		def dimension = doc.experiments[dataFile].resultComponents[0].dimension
+		def dimension = doc.dataSets[dataFile as String].resultComponents[0].dimension
 		assertEquals(4, dimension.size())
 		assertNotNull(dimension['t3'])
 		assertEquals(103.965, dimension['t3'][1], 0.01)
+	}
+	
+	@Test
+	void shouldReplaceSBMLElements() {
+		def dataFile = PMFReaderTest.getResource('/gpmf/ValidData.xml')
+		def modelFile = PMFReaderTest.getResource('/gpmf/ValidModel.xml')
+		def reader = new PMFReader(validating: true)
+		def doc = reader.readFileSet(dataFile, modelFile)
+				
+		assertNotNull(doc)
+		assertEquals(1, doc.models.size())
+		assertEquals(1, doc.dataSets.size())
+		
+		assertEquals(0, reader.parseMessages.size())
+		
+		// check parsed values for correctness
+		def model = doc.models[modelFile as String].model
+		assertEquals(PMFModel, model.class)
+		assertEquals(PMFCompartment, model.listOfCompartments[0].class)
+		assertEquals(PMFSpecies, model.listOfSpecies[0].class)
+		assertEquals([PMFParameter] * 6, model.listOfParameters*.class)
+	}
+	
+	@Test
+	void shouldReplaceNuMLElements() {
+		def dataFile = PMFReaderTest.getResource('/gpmf/ValidData.xml')
+		def modelFile = PMFReaderTest.getResource('/gpmf/ValidModel.xml')
+		def reader = new PMFReader(validating: true)
+		def doc = reader.readFileSet(dataFile, modelFile)
+				
+		assertNotNull(doc)
+		assertEquals(1, doc.models.size())
+		assertEquals(1, doc.dataSets.size())
+		
+		assertEquals(0, reader.parseMessages.size())
+		
+		// check parsed values for correctness
+		def rc = doc.dataSets[dataFile as String].resultComponents[0]
+		assertEquals(PMFResultComponent, rc.class)
+		assertEquals([PMFAtomicDescription] * 2, rc.dimensionDescription.description.descriptions*.class)
 	}
 }

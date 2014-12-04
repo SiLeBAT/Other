@@ -30,12 +30,12 @@ class NuMLWriterTest {
 		def mass = new OntologyTerm(term: 'mass', sourceTermId: 'SBO:0000345', ontologyURI: new URI('http://www.ebi.ac.uk/sbo/'))
 		def concentration = new OntologyTerm(term: 'concentration', sourceTermId: 'SBO:0000196', ontologyURI: new URI('http://www.ebi.ac.uk/sbo/'))
 		
-		def Description = new CompositeDescription(name: 'Time', indexType: DataType.Integer, ontologyTerm: time, Description:
-			new TupleDescription(Descriptions: [
-				new AtomicDescription(name: 'mass', ontologyTerm: mass, indexType: DataType.Double),
-				new AtomicDescription(name: 'concentration', ontologyTerm: concentration, indexType: DataType.Double)
+		def description = new CompositeDescription(name: 'Time', indexType: DataType.Integer, ontologyTerm: time, description:
+			new TupleDescription(descriptions: [
+				new AtomicDescription(name: 'mass', ontologyTerm: mass, valueType: DataType.Double),
+				new AtomicDescription(name: 'concentration', ontologyTerm: concentration, valueType: DataType.Double)
 				]))
-		def resultComponent = new ResultComponent(id: 'exp1', dimensionDescription: Description)
+		def resultComponent = new ResultComponent(id: 'exp1', dimensionDescription: description)
 		resultComponent.dimension = [
 			(0): [0.11d, 0.12d],
 			(1): [0.13d, 0.11d],

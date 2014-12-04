@@ -42,10 +42,10 @@ abstract class Description extends NMBase {
 		atomicDescription: AtomicDescription
 	]
 
-	static Description fromNuML(NuMLDocument document, Node description) {
+	static Description fromNuML(NMBase parent, Node description) {
 		// We assume the correct namespace here, because the document is validated with the schema separately
 		Class descriptionClass = NodeMapping[description.name().localPart]
-		descriptionClass.newInstance([document: document, originalNode: description])
+		descriptionClass.newInstance([parent: parent, originalNode: description])
 	}
 
 	void setId(String id) {
@@ -82,11 +82,16 @@ abstract class Description extends NMBase {
 	OntologyTerm getOntologyTerm() {
 		ontologyTerm
 	}
-
-	void setDocument(NuMLDocument document) {
-		super.setDocument(document)
+	
+	ResultComponent getResultComponent() {
+		parent instanceof ResultComponent ? parent : parent?.resultComponent
+	}
+	
+	@Override
+	public void setParent(NMBase parent) {
+		super.setParent(parent)
 		if(ontologyTerm)
-			document.addOntologyTerm(ontologyTerm)
+			document?.addOntologyTerm(ontologyTerm)
 	}
 
 	void setOntologyTerm(OntologyTerm ontologyTerm) {
@@ -101,7 +106,7 @@ abstract class Description extends NMBase {
 
 		if(originalNode.'@ontologyTerm')
 			this.ontologyTerm = document.ontologyTerms.find { it.id == originalNode.'@ontologyTerm' } ?:
-			new OntologyTerm(id: originalNode.'@ontologyTerm')
+				new OntologyTerm(id: originalNode.'@ontologyTerm')
 		else this.ontologyTerm = null
 		this.id = originalNode.'@id'
 	}
@@ -190,12 +195,16 @@ class CompositeDescription extends Description {
 	Object parseData(Node node) {
 		def values = [:]
 		node.each { child ->
-			try {
-				values[indexType.parseData(child.'@indexValue')] = description.parseData(child)
-			} catch(ParseException e) {
-				parseDataErrors << new ConformityMessage(
-					"Unable to parse index value ${child.'@indexValue'} of expected type $indexType in $name " + e)
+			if(child.'@indexValue') {
+				try {
+					values[indexType.parseData(child.'@indexValue')] = description.parseData(child)
+				} catch(ParseException e) {
+					parseDataErrors << new ConformityMessage(
+						"Unable to parse index value ${child.'@indexValue'} of expected type $indexType in $name " + e)
+				}
 			}
+			else parseDataErrors << new ConformityMessage(
+				"Index value not found at $parent of expected type $description in $name")
 		}
 		values
 	}
@@ -215,7 +224,20 @@ class CompositeDescription extends Description {
 
 		name = originalNode.'@name'
 		indexType = DataType.byNUMLName(originalNode.'@indexType')
-		description = Description.fromNuML(document, originalNode.children().first())
+		setDescription(Description.fromNuML(this, originalNode.children().first()))
+	}
+	
+	/**
+	 * Sets the description to the specified value.
+	 *
+	 * @param description the description to set
+	 */
+	void setDescription(Description description) {
+		if (description == null)
+			throw new NullPointerException("description must not be null");
+
+		this.description = description
+		this.description.parent = this
 	}
 }
 
@@ -223,8 +245,12 @@ class CompositeDescription extends Description {
 class TupleDescription extends Description {
 	String name
 
-	List<Description> descriptions = []
+	final List<Description> descriptions = new ObservableList()
 
+	TupleDescription() {
+		descriptions.addPropertyChangeListener({ descriptions*.parent = this })
+	}
+	
 	@Override
 	Object parseData(Node node) {
 		def children = node.tuple.first().children()
@@ -244,13 +270,26 @@ class TupleDescription extends Description {
 			descriptions[index].writeData(builder, value)
 		}
 	}
+	
+	/**
+	 * Sets the descriptions to the specified value.
+	 *
+	 * @param descriptions the descriptions to set
+	 */
+	void setDescriptions(List<Description> descriptions) {
+		if (descriptions == null)
+			throw new NullPointerException("descriptions must not be null");
 
+		this.descriptions.clear()
+		this.descriptions.addAll(descriptions)
+	}
+		
 	@Override
 	void setOriginalNode(Node originalNode) {
 		super.setOriginalNode(originalNode)
 
 		name = originalNode.'@name'
-		descriptions = originalNode.collect { Description.fromNuML(document, it) }
+		setDescriptions(originalNode.collect { Description.fromNuML(this, it) })
 	}
 }
 
