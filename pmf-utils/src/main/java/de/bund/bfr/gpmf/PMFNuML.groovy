@@ -16,9 +16,12 @@
  ******************************************************************************/
 package de.bund.bfr.gpmf
 
+import java.util.Map;
+
+import javax.xml.namespace.QName;
+
 import groovy.transform.InheritConstructors
 
-import org.apache.log4j.Level
 import org.sbml.jsbml.Model
 import org.sbml.jsbml.SBMLDocument
 import org.sbml.jsbml.SBMLWriter
@@ -34,10 +37,8 @@ import de.bund.bfr.gnuml.TupleDescription
 @InheritConstructors
 class PMFResultComponent extends ResultComponent {
 	final static sbmlTemplate = """
-		<sbml xmlns='http://www.sbml.org/sbml/level2/version4' level='2' version='1'>
-			<model id='test'>
-				%s
-			</model>
+		<sbml xmlns='http://www.sbml.org/sbml/level3/version1/core' level='3' version='1'>
+			%s
 		</sbml>
 	"""
 	
@@ -45,6 +46,10 @@ class PMFResultComponent extends ResultComponent {
 		// rather inefficient but versatile
 		setParent(rc.parent)
 		setOriginalNode(rc.originalNode)
+	}
+	
+	{
+		elementName = this.class.superclass.simpleName[0].toLowerCase() + this.class.superclass.simpleName[1..-1] 
 	}
 		
 	void setSbml(Model sbml) {
@@ -59,7 +64,7 @@ class PMFResultComponent extends ResultComponent {
 		}
 		def bais = new ByteArrayInputStream(baos.toByteArray()).withStream { input ->
 			def node = new XmlParser().parse(input)
-			PMFUtil.setPMFAnnotation(this, 'sbml', node.model)
+			setAnnotation('model', PMFUtil.SBML_NS, node.model)
 		}
 	}
 	
@@ -68,24 +73,80 @@ class PMFResultComponent extends ResultComponent {
 	}
 	
 	SBMLAdapter getSbmlReader() {		
-		def sbmlMetaData = PMFUtil.getPMFAnnotation(this, 'sbml')
+		def sbmlMetaData = getAnnotationNode('model', PMFUtil.SBML_NS)
 		if(!sbmlMetaData)
 			return null
-		def sbmlMockup = String.format(sbmlTemplate, sbmlMetaData.toXMLString())
+		def sbmlXml = new StringWriter()
+		sbmlXml.withPrintWriter { writer ->
+			new XmlNodePrinter(writer).print(sbmlMetaData)
+		}
+		def sbmlMockup = String.format(sbmlTemplate, sbmlXml.toString())
 		def sbmlReader = new SBMLAdapter(validating: true)
 		sbmlReader.parseText(sbmlMockup)
 		sbmlReader
 	}
 
 	@Override
-	List<ConformityMessage> getInvalidSettings() {
-		sbmlReader?.getParseMessages(Level.ERROR) + super.getInvalidSettings()
+	List<ConformityMessage> getInvalidSettings(String prefix) {
+		List messages = []
+		def sbml = this.sbml
+		if(!sbml)
+			messages << new ConformityMessage("$prefix: resultComponent $id must be annotated with pmf:sbml (Specification 13)")
+		else {
+			messages.addAll(sbmlReader?.parseMessages?.collect {
+				it.message = "$prefix: resultComponent $id: pmf:sbml: $it.message"
+			})
+			
+			if(sbml) {
+				if(!sbml.listOfCompartments)
+					messages << new ConformityMessage("$prefix/resultComponent[$id]/sbml:model must have at least one compartment (Specification 13)")
+				if(!sbml.listOfSpecies)
+					messages << new ConformityMessage("$prefix/resultComponent[$id]/sbml:model must have at least one species (Specification 13)")
+				if(!sbml.listOfUnitDefinitions)
+					messages << new ConformityMessage("$prefix/resultComponent[$id]/sbml:model must have at least one unit definition (Specification 13)")
+			}
+		}
+	
+		messages + super.getInvalidSettings(prefix)
 	}
 	
 	void replace(ResultComponent rc) {
 		NuMLDocument newParent = rc.parent
 		def index = newParent.resultComponents.findIndexOf { it.is(rc) }
 		newParent.resultComponents.set(index, this)
+	}
+	
+	Map<QName, String> getQualifiedAnnotations() {
+		PMFUtil.getPMFAnnotation(this, 'metadata')?.children().collectEntries { annotation ->
+			[(PMFUtil.toJavaQName(annotation.name())): annotation.value as String]
+		}.findAll { it.value }
+	}
+	
+	Map<String, String> getAnnotations() {
+		qualifiedAnnotations.collectEntries { [(it.key.localPart): it.value] }
+	}
+	
+	String getAnnotation(String localPart, String uri = null) {
+		getAnnotationNode(localPart, uri)?.value
+	}
+	
+	Node getAnnotationNode(String localPart, String uri = null) {
+		PMFUtil.getPMFAnnotation(this, 'metadata')?.getAt(new groovy.xml.QName(uri, localPart))[0]
+	}
+	
+	void setAnnotation(String localPart, String uri, String value) {
+		def oldAnnotation = getAnnotation(localPart, uri)
+		if(oldAnnotation)
+			PMFUtil.getPMFAnnotation(this, 'metadata')?.remove(oldAnnotation)
+		PMFUtil.ensurePMFAnnotation(this, 'metadata').append(
+			new Node(annotation, new groovy.xml.QName(localPart, uri), [:], value))
+	}
+	
+	void setAnnotation(String localPart, String uri, Node value) {		
+		def oldAnnotation = getAnnotation(localPart, uri)
+		if(oldAnnotation)
+			PMFUtil.getPMFAnnotation(this, 'metadata')?.remove(oldAnnotation)
+		PMFUtil.ensurePMFAnnotation(this, 'metadata').append(value)
 	}
 }
 
@@ -95,6 +156,10 @@ class PMFAtomicDescription extends AtomicDescription {
 		// rather inefficient but versatile
 		setParent(atomicDescription.parent)
 		setOriginalNode(atomicDescription.originalNode)
+	}
+	
+	{
+		elementName = this.class.superclass.simpleName[0].toLowerCase() + this.class.superclass.simpleName[1..-1] 
 	}
 	
 	/**
@@ -123,7 +188,19 @@ class PMFAtomicDescription extends AtomicDescription {
 		if(!rc)
 			return null
 			
-		rc.sbml.listOfUnitDefinitions.find { it.id == unitAnnotation.ref }
+		rc.sbml?.listOfUnitDefinitions?.find { it.id == unitAnnotation.ref }
+	}
+			
+	List<ConformityMessage> getInvalidSettings(String prefix) {
+		def messages = []
+		def unitAnnotation = PMFUtil.getPMFAnnotation(this, 'unit')
+		PMFResultComponent rc = resultComponent
+		def unitDefs = rc.sbml?.listOfUnitDefinitions ?: []
+		if(!unitAnnotation)
+			messages << new ConformityMessage("$prefix: atomic value $name must have pmf:unit annotation (Specification 13)")
+		else if(!unitDefs.find { it.id == unitAnnotation.'@ref' })
+			messages << new ConformityMessage("$prefix: atomic value $name unknown unit id '${unitAnnotation.'@ref'}' in pmf:unit annotation, known units ${unitDefs*.id} (Specification 13)")
+		messages
 	}
 	
 	void replace(AtomicDescription description) {

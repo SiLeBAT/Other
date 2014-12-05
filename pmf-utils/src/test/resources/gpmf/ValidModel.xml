@@ -2,10 +2,9 @@
 <!-- Created by salm25_salmonella_spp_culture_broth_broth_culture_culture_medium_Huang_Model_primary_Huang_2008_2013_iPMP_Full_Growth_Models_Eq_5 
 	version 1.0 on 2014-11-20 13:37 with JSBML version 1.0-rc1. -->
 <sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" level="3" version="1"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-	xmlns:pmml="http://www.dmg.org/PMML-4_2" xmlns:pmf="http://sourceforge.net/projects/microbialmodelingexchange/files/PMF-ML"
-	xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/"
-	xmlns:numl="http://www.numl.org/numl/level1/version1" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:pmml="http://www.dmg.org/PMML-4_2"
+	xmlns:pmf="http://sourceforge.net/projects/microbialmodelingexchange/files/PMF-ML" xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:dcterms="http://purl.org/dc/terms/" xmlns:numl="http://www.numl.org/numl/level1/version1"
 	xmlns:xlink="http://www.w3.org/1999/xlink">
 
 	<model
@@ -32,7 +31,7 @@
 				<pmml:ModelQuality targetField="Value" dataName="MyData" dataUsage="training"
 					r-squared="0.9511" rootMeanSquaredError="0.0208" />
 				<pmf:dataSources>
-					<pmf:dataSource id="source1" xlink:href="growthexperiment.xml" />
+					<pmf:dataSource id="source1" xlink:href="ValidData.xml" />
 				</pmf:dataSources>
 			</pmf:metadata>
 		</annotation>
@@ -70,8 +69,10 @@
 		<listOfParameters>
 			<parameter id="Value" constant="false" value="0" units="item_g">
 				<annotation>
-					<pmf:sourceValues source="source1"
-						descriptor="//numl:ResultComponent[@id='resultComponent1']//numl:atomicDescription[@name='mass']" />
+					<pmf:sourceValues>
+						<pmf:sourceValue source="source1"
+							descriptor="//numl:ResultComponent[@id='resultComponent1']//numl:atomicDescription[@name='mass']" />
+					</pmf:sourceValues>
 				</annotation>
 			</parameter>
 			<parameter id="lambda" constant="true" value="42.15624402963166" />
@@ -80,8 +81,10 @@
 			<parameter id="Y0" constant="true" value="6.147902198294101" />
 			<parameter id="time" constant="false" value="0" units="h">
 				<annotation>
-					<pmf:sourceValues source="source1"
-						descriptor="//numl:ResultComponent[@id='resultComponent1']//numl:atomicDescription[@name='time']" />
+					<pmf:sourceValues>
+						<pmf:sourceValue source="source1"
+							descriptor="//numl:ResultComponent[@id='resultComponent1']//numl:atomicDescription[@name='time']" />
+					</pmf:sourceValues>
 				</annotation>
 			</parameter>
 		</listOfParameters>

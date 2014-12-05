@@ -37,7 +37,9 @@ import de.bund.bfr.gnuml.NuMLReader
 class PMFReader {
 	static final fileTypeReaders = [sbml: SBMLAdapter, numl: NuMLReader, xml: [SBMLAdapter, NuMLReader]]
 	
-	def document, messages
+	private PMFDocument document
+	
+	private List<ConformityMessage> messages = []
 	
 	boolean validating = false
 	
@@ -116,13 +118,31 @@ class PMFReader {
 			this.document = new PMFDocument(dataSets: readDocuments.findAll { it.value instanceof NuMLDocument }, 
 				models: readDocuments.findAll { it.value instanceof SBMLDocument },
 				documentStreamFactories: documentStreamFactories)
-//			ValidationRule.values()*.validate(this.document, this.messages)
+			messages = this.document.invalidSettings
 		}
 		this.document
 	}
 	
 	List<ConformityMessage> getParseMessages(Level level = Level.WARN) {
 		messages.grep { it.level.isGreaterOrEqual(level) }
+	}
+	
+	/**
+	 * Returns the document.
+	 * 
+	 * @return the document
+	 */
+	PMFDocument getDocument() {
+		this.document
+	}
+	
+	/**
+	 * Returns the messages.
+	 * 
+	 * @return the messages
+	 */
+	List<ConformityMessage> getMessages() {
+		this.messages
 	}
 }
 

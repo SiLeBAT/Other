@@ -33,6 +33,8 @@ import de.bund.bfr.gnuml.NuMLDocument
  */
 class PMFUtil {
 	static String PMF_NS = 'http://sourceforge.net/projects/microbialmodelingexchange/files/PMF-ML'
+	static String SBML_NS = 'http://www.sbml.org/sbml/level3/version1/core'
+	static String NUML_NS = 'http://www.numl.org/numl/level1/version1'
 	static String COMP_NS = 'http://www.sbml.org/sbml/level3/version1/comp/version1'
 	static String DC_NS = 'http://purl.org/dc/elements/1.1/'
 	static String XLINK_NS = 'http://www.w3.org/1999/xlink'
@@ -73,20 +75,18 @@ class PMFUtil {
 	}
 	
 	static Node getPMFAnnotation(NMBase node, String annotationName) {
-		if(!node.annotations)
+		if(!node.annotation)
 			return null
-
-		node.annotations.find {
-			it.name.localPart == annotationName && it.name.namespaceURI == PMF_NS
-		}
+			
+		node.annotation."$PMF_NS:$annotationName"[0]
 	}
 	
 	static void setPMFAnnotation(NMBase node, String annotationName, Node annotation) {
-		node.annotations.remove(getPMFAnnotation(node, annotationName))
+		node.annotation.remove(getPMFAnnotation(node, annotationName))
 		annotation.name = new groovy.xml.QName(PMF_NS, annotationName, annotation.name.prefix)
-		node.annotations.add(annotation)
+		node.annotation.add(annotation)
 	}
-	
+
 	static javax.xml.namespace.QName toJavaQName(XMLToken token) {
 		 new javax.xml.namespace.QName(token.URI, token.name, token.prefix)
 	}

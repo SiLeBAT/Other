@@ -224,7 +224,9 @@ class CompositeDescription extends Description {
 
 		name = originalNode.'@name'
 		indexType = DataType.byNUMLName(originalNode.'@indexType')
-		setDescription(Description.fromNuML(this, originalNode.children().first()))
+		setDescription(Description.fromNuML(this, originalNode.children().find { Node child ->
+			child.name().localPart.endsWith('Description') 
+		}))
 	}
 	
 	/**
@@ -289,7 +291,9 @@ class TupleDescription extends Description {
 		super.setOriginalNode(originalNode)
 
 		name = originalNode.'@name'
-		setDescriptions(originalNode.collect { Description.fromNuML(this, it) })
+		setDescriptions(originalNode.findAll { 
+			it.name().localPart.endsWith('Description') 
+		}.collect { Description.fromNuML(this, it) })
 	}
 }
 

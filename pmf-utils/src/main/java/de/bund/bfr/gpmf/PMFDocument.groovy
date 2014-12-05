@@ -17,10 +17,12 @@
 package de.bund.bfr.gpmf
 
 import java.nio.charset.Charset
+import java.nio.file.Paths
+
+import javax.xml.xpath.XPathFactory;
 
 import org.sbml.jsbml.SBMLDocument
 
-import de.bund.bfr.gnuml.ConformityMessage
 import de.bund.bfr.gnuml.NuMLDocument
 import de.bund.bfr.gnuml.NuMLWriter
 
@@ -40,22 +42,27 @@ class PMFDocument {
 	Map<Object, Closure<InputStream>> documentStreamFactories = [:]
 	
 	InputStream getInputStream(Object doc) {
-		documentStreamFactories[doc] ?: createFallbackFactory(doc)
+		documentStreamFactories[doc]() ?: createFallbackInputStream(doc)
 	}
 	
 	static final fileTypeWriters = [SBMLDocument: SBMLAdapter, NuMLDocument: NuMLWriter]
 	
-	def createFallbackFactory(Object doc) {
-		def writer = fileTypeWriters[doc.class]
-		def factory = {
-			def xmlString = writer.toString(doc)
-			new ByteArrayInputStream(xmlString.getBytes(Charset.forName("utf-8")))
-		}
-		factory
+	def createFallbackInputStream(Object doc) {
+		def xmlString = fileTypeWriters[doc.class].newInstance().toString(doc)
+		new ByteArrayInputStream(xmlString.getBytes(Charset.forName("utf-8")))
 	}
 	
-	def resolve(String xlinkRef) {
+	def resolve(String xlinkRef, Object baseDoc = null) {
+		// first try look directly for it
 		def doc = models[xlinkRef] ?: dataSets[xlinkRef]
+		if(!doc && baseDoc) {
+			def baseDocKey = (models.find { it.value.is(baseDoc) } ?: dataSets.find { it.value.is(baseDoc) })?.key
+			if(baseDocKey) {
+				def basePath = Paths.get(new URI(baseDocKey))
+				def fullPath = basePath.parent.resolve(xlinkRef)
+				doc = (models.find { Paths.get(new URI(it.key)) == fullPath } ?: dataSets.find { Paths.get(new URI(it.key)) == fullPath })?.value
+			}
+		}
 		if(!doc)
 			throw new IllegalArgumentException("Unknown document $xlinkRef")
 		doc
@@ -75,8 +82,10 @@ class PMFDocument {
 	}
 	
 	List<String> getInvalidSettings(String prefix = 'pmf') {
-		dataSets.collect { name, numl -> numl.getInvalidSettings("$prefix/$name/numl") } +
-		models.collect { name, sbml -> PMFUtil.getInvalidSettings(sbml, "$prefix/$name/sbml", this) }
+		def messages = dataSets.collect { name, numl -> numl.getInvalidSettings("$prefix/$name") }.flatten()
+		messages += models.collect { name, sbml -> PMFUtil.getInvalidSettings(sbml, "$prefix/$name", this) }.flatten()
+		ValidationRule.values()*.validate(this, messages)
+		messages
 	}
 	
 	/**

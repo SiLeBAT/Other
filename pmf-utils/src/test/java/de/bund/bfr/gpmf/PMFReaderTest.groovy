@@ -16,12 +16,10 @@
  ******************************************************************************/
 package de.bund.bfr.gpmf
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.*
 
-import org.junit.Test;
-import org.sbml.jsbml.SBase;
-
-import de.bund.bfr.gnuml.NMBase;
+import org.apache.log4j.Level
+import org.junit.Test
 
 /**
  * 
@@ -40,7 +38,7 @@ class PMFReaderTest {
 		assertEquals(1, doc.dataSets.size())
 		
 		// however, we also expect several errors
-		assertEquals(4, reader.parseMessages.size())
+		assertEquals(10, reader.parseMessages.size())
 	}
 	
 	@Test
@@ -54,7 +52,7 @@ class PMFReaderTest {
 		assertEquals(1, doc.models.size())
 		assertEquals(1, doc.dataSets.size())
 		
-		assertEquals(0, reader.parseMessages.size())
+		assertEquals(0, reader.getParseMessages(Level.ERROR).size())
 		
 		// check parsed values for correctness
 		def dimension = doc.dataSets[dataFile as String].resultComponents[0].dimension
@@ -74,7 +72,7 @@ class PMFReaderTest {
 		assertEquals(1, doc.models.size())
 		assertEquals(1, doc.dataSets.size())
 		
-		assertEquals(0, reader.parseMessages.size())
+		assertEquals(0, reader.getParseMessages(Level.ERROR).size())
 		
 		// check parsed values for correctness
 		def model = doc.models[modelFile as String].model
@@ -95,7 +93,7 @@ class PMFReaderTest {
 		assertEquals(1, doc.models.size())
 		assertEquals(1, doc.dataSets.size())
 		
-		assertEquals(0, reader.parseMessages.size())
+		assertEquals(0, reader.getParseMessages(Level.ERROR).size())
 		
 		// check parsed values for correctness
 		def rc = doc.dataSets[dataFile as String].resultComponents[0]

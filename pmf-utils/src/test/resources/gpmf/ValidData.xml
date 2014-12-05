@@ -2,30 +2,7 @@
 <numl level="1" version="1" xmlns="http://www.numl.org/numl/level1/version1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.numl.org/numl/level1/version1 https://numl.googlecode.com/svn/trunk/NUMLSchema.xsd"
 	xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/"
-	xmlns:sbml="http://www.sbml.org/sbml/level3/version1/core" xmlns:pmf="http://sourceforge.net/projects/microbialmodelingexchange/files/PMF-ML">
-	<annotation>
-		<pmf:sbml>
-			<listOfUnitDefinitions>
-				<unitDefinition id="item_g">
-					<listOfUnits>
-						<unit kind="item" />
-						<unit exponent="-1" kind="gram" />
-					</listOfUnits>
-				</unitDefinition>
-				<unitDefinition id="h">
-					<listOfUnits>
-						<unit multiplier="3600" kind="second" />
-					</listOfUnits>
-				</unitDefinition>
-			</listOfUnitDefinitions>
-			<listOfCompartments>
-				<compartment id="culture_broth_broth_culture_culture_medium" name="culture broth, broth culture, culture medium" />
-			</listOfCompartments>
-			<listOfSpecies>
-				<species id="salmonella_spp" name="salmonella spp" compartment="culture_broth_broth_culture_culture_medium" />
-			</listOfSpecies>
-		</pmf:sbml>
-	</annotation>
+	 xmlns:pmf="http://sourceforge.net/projects/microbialmodelingexchange/files/PMF-ML">
 	<ontologyTerms>
 		<ontologyTerm id="massTerm" term="mass" sourceTermId="SBO:0000504" ontologyURI="http://www.ebi.ac.uk/sbo/" />
 		<ontologyTerm id="timeTerm" term="time" sourceTermId="SBO:0000345" ontologyURI="http://www.ebi.ac.uk/sbo/" />
@@ -43,7 +20,27 @@
 				<dc:language>en</dc:language>
 				<dc:hasVersion>V1.0</dc:hasVersion>
 				<dc:format>JSBML v0.8</dc:format>
-				<sbml:speciesReference species="salmonella_spp" />
+				<model xmlns="http://www.sbml.org/sbml/level3/version1/core">
+					<listOfUnitDefinitions>
+						<unitDefinition id="item_g">
+							<listOfUnits>
+								<unit kind="item" />
+								<unit exponent="-1" kind="gram" />
+							</listOfUnits>
+						</unitDefinition>
+						<unitDefinition id="h">
+							<listOfUnits>
+								<unit multiplier="3600" kind="second" />
+							</listOfUnits>
+						</unitDefinition>
+					</listOfUnitDefinitions>
+					<listOfCompartments>
+						<compartment id="culture_broth_broth_culture_culture_medium" name="culture broth, broth culture, culture medium" />
+					</listOfCompartments>
+					<listOfSpecies>
+						<species id="salmonella_spp" name="salmonella spp" compartment="culture_broth_broth_culture_culture_medium" />
+					</listOfSpecies>
+				</model>
 			</pmf:metadata>
 		</annotation>
 
@@ -52,7 +49,7 @@
 				<tupleDescription>
 					<atomicDescription name="mass" valueType="double" ontologyTerm="massTerm">
 						<annotation>
-							<pmf:unit ref="gram" />
+							<pmf:unit ref="item_g" />
 						</annotation>
 					</atomicDescription>
 					<atomicDescription name="time" valueType="double" ontologyTerm="timeTerm">

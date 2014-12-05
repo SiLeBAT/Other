@@ -74,19 +74,19 @@ class PMFUnitDefinition extends UnitDefinition implements SBMLReplacement {
 
 	String getTransformation() {
 		def pmfTransformation = PMFUtil.getPMFAnnotation(this, 'transformation')
-		pmfTransformation?.'@name'
+		pmfTransformation?.getAttrValue('name')
 	}
 	
 	List<ConformityMessage> getInvalidSettings(SBMLDocument document, String prefix, PMFDocument pmf) {
 		def messages = []
 		def transformation = PMFUtil.getPMFAnnotation(this, 'transformation')
 		if(!transformation && [id, name].any { it.contains('log') })
-			messages << new ConformityMessage("Log unit $id must contain PMF unit annotation (Specification 8)")
+			messages << new ConformityMessage("$prefix: Log unit $id must contain PMF unit annotation (Specification 8)")
 		else if(transformation) {
 			if(!transformation.getAttrValue('name'))
-				messages << new ConformityMessage("PMF unit $id must contain name (Specification 8)")
+				messages << new ConformityMessage("$prefix: PMF unit $id must contain name (Specification 8)")
 			if(!transformation.getAttrValue('href', PMFUtil.XLINK_NS))
-				messages << new ConformityMessage("PMF unit $id must refer to PMF units (Specification 8)")
+				messages << new ConformityMessage("$prefix: PMF unit $id must refer to PMF units (Specification 8)")
 		}
 		messages
 	}
@@ -137,7 +137,7 @@ class PMFModel extends Model implements SBMLReplacement, MetadataAnnotation {
 		XMLNode pmfMetaData = PMFUtil.getPMFAnnotation(this, 'metadata')
 		def dataSources = pmfMetaData?.getChildElement('dataSources', PMFUtil.PMF_NS)
 		dataSources?.getChildElements('dataSource', PMFUtil.PMF_NS).collectEntries { source ->
-			[source.'@id', source.'@path']
+			[source.getAttrValue('id'), source.getAttrValue('href', PMFUtil.XLINK_NS)]
 		} ?: [:]
 	}
 	
@@ -165,12 +165,18 @@ class PMFModel extends Model implements SBMLReplacement, MetadataAnnotation {
 	
 	List<ConformityMessage> getInvalidSettings(SBMLDocument document, String prefix, PMFDocument pmf) {
 		def messages = []
-		def elemMetaData = PMFUtil.getPMFAnnotation(this, "metadata")
-		if(!elemMetaData)
+		
+		if(!getAnnotation('modelquality', PMFUtil.PMML_NS))
 			messages << new ConformityMessage(level: Level.WARN,
-				message: "$name: ${annotationElem}s should be annotated (Specification 11/13)")
-		def annotations = getQualifiedAnnotations()
-			PMFUtil.BaseAnnotations
+				message: "$name: model quality should be annotated (Specification 12)")
+			
+		def dataSources = this.dataSources
+		if(!dataSources)
+			messages << new ConformityMessage("$prefix: model $model.id must reference dataSets with at least one pmf:dataSource element (Specification 13)")
+		else if(dataSources.find { it.key == null })
+			messages << new ConformityMessage("$prefix: model $model.id contains $index pmf:dataSource without id (Specification 13)")
+		else if(dataSources.find { it.value == null })
+			messages << new ConformityMessage("$prefix: model $model.id contains $index pmf:dataSource without xlink:href (Specification 13)")
 		messages		
 	}
 }
@@ -193,7 +199,7 @@ class SourceValue {
 
 	XPathExpression getXPathExpression() {
 		javax.xml.xpath.XPath xpath = XPathFactory.newInstance().newXPath()
-		xpath.compile(xpath)
+		xpath.compile(this.xpath)
 	}
 }
 
@@ -213,33 +219,32 @@ class DoubleRange {
 @InheritConstructors
 class PMFParameter extends Parameter implements SBMLReplacement {	
 	List<SourceValue> getSourceValues() {
-		XMLNode pmfMetaData = PMFUtil.getPMFAnnotation(this, 'metadata')
-		def sourceValues = pmfMetaData?.getChildElement('sourceValues', PMFUtil.PMF_NS)
+		def sourceValues = PMFUtil.getPMFAnnotation(this, 'sourceValues')
 		sourceValues?.getChildElements('sourceValue', PMFUtil.PMF_NS).collect { source ->
-			new SourceValue(source.'@sourceId', source.'@descriptor')
-		} ?: [:]
+			new SourceValue(source.getAttrValue('source'), source.getAttrValue('descriptor'))
+		} ?: []
 	}
 	
-	Object getSourceValues(PMFDocument pmfDoc) {
+	List<Object> getValueInstances(PMFDocument pmfDoc) {
 		this.sourceValues.inject([]) { result, sourceValue ->
 			def xlink = (this.SBMLDocument.model as PMFModel).getDataSource(sourceValue.sourceId)
 			if(!xlink)
 				throw new IllegalArgumentException("The provided SBML document did not declare data source ${sourceValue.sourceId}")
-			def dataSet = pmfDoc.resolve(xlink)
-			result + sourceValue.XPathExpression.evaluate(new InputSource(pmfDoc.getInputStream(dataSet)))
+			def dataSet = pmfDoc.resolve(xlink, this.SBMLDocument)
+			def input = pmfDoc.getInputStream(dataSet)
+			result + sourceValue.XPathExpression.evaluate(new InputSource(input))
 		}
 	}
 		
 	void setSourceValues(List<SourceValue> sourceValues) {
-		XMLNode pmfMetaData = PMFUtil.ensurePMFAnnotation(this, 'metadata')
-		def sourcesNode = new XMLNode(new XMLTriple('sourceValues', PMFUtil.PMF_NS, null))
+		XMLNode sourcesNode = PMFUtil.ensurePMFAnnotation(this, 'sourceValues')
+		sourcesNode.removeChildren()
 		sourceValues.each { sourceId, xpath ->
 			def sourceValue = new XMLNode(new XMLTriple('sourceValue', PMFUtil.PMF_NS, null))
-			sourceValue.addAttr('sourceId', id)
+			sourceValue.addAttr('source', id)
 			sourceValue.addAttr('descriptor', path, PMFUtil.XLINK_NS)
 			sourcesNode.addChild(sourceValue)
 		}
-		PMFUtil.addOrReplace(pmfMetaData, sourcesNode)
 	}
 	
 	void setSourceValue(SourceValue sourceValue) {
@@ -290,12 +295,27 @@ class PMFParameter extends Parameter implements SBMLReplacement {
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see de.bund.bfr.gpmf.SBMLReplacement#getInvalidSettings(org.sbml.jsbml.SBMLDocument, java.lang.String, de.bund.bfr.gpmf.PMFDocument)
-	 */
 	@Override
-	public List<ConformityMessage> getInvalidSettings(SBMLDocument document, String prefix, PMFDocument pmf) {
-		// TODO:
-		return null;
+	List<ConformityMessage> getInvalidSettings(SBMLDocument document, String prefix, PMFDocument pmf) {
+		def messages = []
+		// TODO:		
+		messages.addAll(['value', 'constant'].findAll { this."$it" == null }.collect {
+			new ConformityMessage("$prefix: Parameter $id must contain $it (Specification 9)")
+		})
+		if(!this.constant) {
+			try {
+				if(!sourceValues)
+					messages << new ConformityMessage("$prefix: parameter $id does not contain a source value descriptor (Specification 13)")
+				else
+					try {
+						getValueInstances(pmf)
+					} catch(e) {
+						messages << new ConformityMessage("$prefix: $e.message")
+					}
+			} catch(e) {
+				messages << new ConformityMessage("$prefix: invalid source value because of $e.message: $e.cause (Specification 13)")
+			}
+		}
+		messages
 	}
 }

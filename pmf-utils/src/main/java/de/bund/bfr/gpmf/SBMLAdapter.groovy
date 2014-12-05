@@ -47,19 +47,28 @@ class SBMLAdapter {
 	SBMLDocument parseText(String xmlString) {
 		this.messages = logAdapter.messages = []
 		
-		document = reader.readSBMLFromString(xmlString)
-		logAdapter.messages = []
-		if(document.level == -1)
-			document = null
-		if(!validating) {
-			def messages = this.getParseMessages(Level.ERROR)
-			if(messages)
-				throw new SBMLException("Invalid SBML document")
-		} else { // try additional validation
+		try {
+			document = reader.readSBMLFromString(xmlString)
+			logAdapter.messages = []
+			if(document.level == -1)
+				document = null
+			if(!validating) {
+				def messages = this.getParseMessages(Level.ERROR)
+				if(messages)
+					throw new SBMLException("Invalid SBML document ${messages.join('\n')}")
+			} else { // try additional validation
+				def errorLog = SBMLValidator.checkConsistency(xmlString)
+				this.messages += errorLog.validationErrors.collect { error -> 
+					new ConformityMessage(level: error.severity as Level, message: error.message)
+				}
+			}
+		} catch(e) {		
 			def errorLog = SBMLValidator.checkConsistency(xmlString)
-			this.messages += errorLog.validationErrors.collect { error -> 
+			this.messages += errorLog.validationErrors.collect { error ->
 				new ConformityMessage(level: error.severity as Level, message: error.message)
 			}
+			if(!validating)
+				throw new SBMLException("Invalid SBML document ${messages.join('\n')}", e)
 		}
 		document
 	}

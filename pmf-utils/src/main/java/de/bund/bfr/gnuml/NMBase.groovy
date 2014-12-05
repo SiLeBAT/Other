@@ -16,18 +16,20 @@
  ******************************************************************************/
 package de.bund.bfr.gnuml
 
+import de.bund.bfr.gpmf.PMFUtil;
 import groovy.transform.EqualsAndHashCode
+import groovy.xml.QName;
 
 /**
  * 
  */
-@EqualsAndHashCode(includes = ['metaId', 'annotations', 'notes'])
+@EqualsAndHashCode(includes = ['metaId', 'annotation', 'notes'])
 class NMBase {
 	String metaId
 	
-	Node annotations
+	Node annotation = new Node(null, new QName(PMFUtil.NUML_NS, 'annotation'))
 	
-	Node notes
+	Node notes = new Node(null, new QName(PMFUtil.NUML_NS, 'notes'))
 	
 	NMBase parent
 	
@@ -46,8 +48,8 @@ class NMBase {
 
 		this.originalNode = originalNode
 		this.metaId = originalNode.'@metaid'
-		this.notes = originalNode.notes[0]
-		this.annotations = originalNode.annotations[0]
+		this.notes = originalNode.notes[0] ?: new Node(originalNode, new QName(PMFUtil.NUML_NS, 'notes'))
+		this.annotation = originalNode.annotation[0] ?: new Node(originalNode, new QName(PMFUtil.NUML_NS, 'annotation'))
 	}
 	
 	List<NMBase> getChildren() {
@@ -76,8 +78,8 @@ class NMBase {
 		builder.invokeMethod(this.elementName, [attributes, {
 			if(this.notes)
 				builder.append(this.notes)
-			if(this.annotations)
-				builder.append(this.annotations)
+			if(this.annotation)
+				builder.append(this.annotation)
 			writeBody(builder, children)
 		}])
 	}
@@ -132,7 +134,7 @@ class NMBase {
 			invalidSettings << new ConformityMessage("$prefix metaId $metaId is not a valid NMId")
 		
 		def subTypes = properties.collect { it.getProperty(this) }.flatten().grep { it instanceof NMBase }
-		def subInvalidSettings = subTypes.collect { it.getInvalidSettings("$prefix/${it.class.simpleName}") } 
+		def subInvalidSettings = subTypes.collect { it.getInvalidSettings("$prefix/$elementName") } 
 		invalidSettings + subInvalidSettings.flatten()
 	}
 		

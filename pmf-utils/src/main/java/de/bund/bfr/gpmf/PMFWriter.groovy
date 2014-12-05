@@ -56,13 +56,4 @@ class PMFWriter {
 		}
 	}
 
-	void write(NuMLDocument doc, MarkupBuilder builder) {
-		if(doc.invalidSettings)
-			throw new NuMLException("Invalid NuML document").with { errors = doc.invalidSettings; it }
-		
-		builder.mkp.xmlDeclaration(version: '1.0')
-		def nb = NamespaceBuilder.newInstance(namespaces, builder)
-		nb.namespace("http://www.numl.org/numl/level${doc.level}/version${doc.version}")
-		doc.write(nb)
-	}
 }

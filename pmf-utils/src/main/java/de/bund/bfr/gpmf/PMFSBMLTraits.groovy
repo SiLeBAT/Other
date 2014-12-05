@@ -32,14 +32,6 @@ import de.bund.bfr.gnuml.ConformityMessage;
 
 
 trait MetadataAnnotation extends SBMLReplacement {
-	List<Node> getAnnotationGNodes() {
-		XMLNode pmfMetaData = PMFUtil.getPMFAnnotation(this, 'metadata')
-		if(!pmfMetaData)
-			return []
-		pmfMetaData.children().collect { XMLToken child ->
-			PMFUtil.toGroovyNode(child)
-		}			
-	}
 	
 	Map<QName, String> getQualifiedAnnotations() {
 		groovyAnnotations.collectEntries { annotation ->
@@ -56,11 +48,6 @@ trait MetadataAnnotation extends SBMLReplacement {
 		getAnnotationNode(localPart, uri)?.find { it.text }?.characters
 	}
 	
-	XMLNode getAnnotationNode(String localPart, String uri = null) {
-		XMLNode pmfMetaData = PMFUtil.getPMFAnnotation(this, 'metadata')
-		pmfMetaData?.getChildElement(localPart, uri ?: '*')
-	}
-	
 	void setAnnotation(String localPart, String uri, String value) {
 		setAnnotation(localPart, uri, new XMLNode(value))
 	}
@@ -75,6 +62,20 @@ trait MetadataAnnotation extends SBMLReplacement {
 	void setAnnotation(XMLToken value) {
 		XMLNode pmfMetaData = PMFUtil.ensurePMFAnnotation(this, 'metadata')
 		PMFUtil.addOrReplace(pmfMetaData, value)
+	}
+	
+	List<Node> getAnnotationGNodes() {
+		XMLNode pmfMetaData = PMFUtil.getPMFAnnotation(this, 'metadata')
+		if(!pmfMetaData)
+			return []
+		pmfMetaData.children().collect { XMLToken child ->
+			PMFUtil.toGroovyNode(child)
+		}			
+	}
+	
+	XMLNode getAnnotationNode(String localPart, String uri = null) {
+		XMLNode pmfMetaData = PMFUtil.getPMFAnnotation(this, 'metadata')
+		pmfMetaData?.getChildElement(localPart, uri ?: '*')
 	}
 	
 	List<ConformityMessage> getInvalidSettings(SBMLDocument document, String prefix, PMFDocument pmf) {
@@ -126,7 +127,8 @@ trait SourceAnnotation extends SBMLReplacement {
 	List<ConformityMessage> getInvalidSettings(SBMLDocument document, String prefix, PMFDocument pmf) {
 		if(!source)
 			return [new ConformityMessage(level: Level.WARN,
-				message: "$name: $elementName $id should contain PMF metadata annotation with source (Specification 6/7)")]
+				message: "$prefix: $elementName $id should contain PMF metadata annotation with source (Specification 6/7)")]
+		[]
 	}
 }
 
