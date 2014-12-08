@@ -81,7 +81,7 @@
 					<!-- MainClass in mainfest make a executable jar -->
 					<archive>
 						<manifest>
-							<mainClass>de.bund.bfr.gpmf.Validator</mainClass>
+							<mainClass>de.bund.bfr.pmf.Validator</mainClass>
 						</manifest>
 					</archive>
 
