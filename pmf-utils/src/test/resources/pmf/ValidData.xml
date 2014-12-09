@@ -2,9 +2,31 @@
 <numl level="1" version="1" xmlns="http://www.numl.org/numl/level1/version1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.numl.org/numl/level1/version1 https://numl.googlecode.com/svn/trunk/NUMLSchema.xsd"
 	xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/"
-	 xmlns:pmf="http://sourceforge.net/projects/microbialmodelingexchange/files/PMF-ML">
+	xmlns:pmf="http://sourceforge.net/projects/microbialmodelingexchange/files/PMF-ML" xmlns:xlink="http://www.w3.org/1999/xlink">
 	<ontologyTerms>
-		<ontologyTerm id="massTerm" term="mass" sourceTermId="SBO:0000504" ontologyURI="http://www.ebi.ac.uk/sbo/" />
+		<ontologyTerm id="salmonellaTerm" term="concentration" sourceTermId="SBO:0000196"
+			ontologyURI="http://www.ebi.ac.uk/sbo/">
+			<annotation>
+				<pmf:metadata xmlns="http://www.sbml.org/sbml/level3/version1/core">
+					<unitDefinition id="pmf_log10_cfu_g" name="log10(cfu/g)">
+						<listOfUnits>
+							<annotation>
+								<pmf:transformation name="log10"
+									xlink:href="http://sourceforge.net/projects/microbialmodelingexchange/files/PMF-ML" />
+							</annotation>
+							<unit kind="item" exponent="1" scale="1" multiplier="1" />
+							<unit kind="gram" exponent="-1" scale="1" multiplier="1" />
+						</listOfUnits>
+					</unitDefinition>
+					<listOfCompartments>
+						<compartment id="culture_broth_broth_culture_culture_medium" name="culture broth, broth culture, culture medium" />
+					</listOfCompartments>
+					<listOfSpecies>
+						<species id="salmonella_spp" name="salmonella spp" compartment="culture_broth_broth_culture_culture_medium" />
+					</listOfSpecies>
+				</pmf:metadata>
+			</annotation>
+		</ontologyTerm>
 		<ontologyTerm id="timeTerm" term="time" sourceTermId="SBO:0000345" ontologyURI="http://www.ebi.ac.uk/sbo/" />
 	</ontologyTerms>
 	<resultComponent id="resultComponent1">
@@ -19,44 +41,14 @@
 				<dcterms:created>2014</dcterms:created>
 				<dc:language>en</dc:language>
 				<dc:hasVersion>V1.0</dc:hasVersion>
-				<dc:format>JSBML v0.8</dc:format>
-				<model xmlns="http://www.sbml.org/sbml/level3/version1/core">
-					<listOfUnitDefinitions>
-						<unitDefinition id="item_g">
-							<listOfUnits>
-								<unit kind="item" />
-								<unit exponent="-1" kind="gram" />
-							</listOfUnits>
-						</unitDefinition>
-						<unitDefinition id="h">
-							<listOfUnits>
-								<unit multiplier="3600" kind="second" />
-							</listOfUnits>
-						</unitDefinition>
-					</listOfUnitDefinitions>
-					<listOfCompartments>
-						<compartment id="culture_broth_broth_culture_culture_medium" name="culture broth, broth culture, culture medium" />
-					</listOfCompartments>
-					<listOfSpecies>
-						<species id="salmonella_spp" name="salmonella spp" compartment="culture_broth_broth_culture_culture_medium" />
-					</listOfSpecies>
-				</model>
 			</pmf:metadata>
 		</annotation>
 
 		<dimensionDescription>
 			<compositeDescription indexType="string" name="Time">
 				<tupleDescription>
-					<atomicDescription name="mass" valueType="double" ontologyTerm="massTerm">
-						<annotation>
-							<pmf:unit ref="item_g" />
-						</annotation>
-					</atomicDescription>
-					<atomicDescription name="time" valueType="double" ontologyTerm="timeTerm">
-						<annotation>
-							<pmf:unit ref="h" />
-						</annotation>
-					</atomicDescription>
+					<atomicDescription name="concentration" valueType="double" ontologyTerm="concentrationTerm"/>
+					<atomicDescription name="time" valueType="double" ontologyTerm="timeTerm"/>
 				</tupleDescription>
 			</compositeDescription>
 		</dimensionDescription>

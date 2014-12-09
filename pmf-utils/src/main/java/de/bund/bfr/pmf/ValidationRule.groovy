@@ -38,8 +38,9 @@ import de.bund.bfr.numl.NuMLDocument
 enum ValidationRule {
 	Num_Models() {
 		def validate(PMFDocument document, List<ConformityMessage> messages) {
-			if((document.models*.value*.model - [null]).size() != 1)
-				messages << new ConformityMessage('Each PMF-ML document describes exactly one model (Specification 2)')
+			document.models.each { name, SBMLDocument modelDoc ->
+				messages << new ConformityMessage('$name: Each PMF model document describes exactly one model (Specification 2)')
+			}
 		}
 	},
 	SBML_v3() {

@@ -21,14 +21,6 @@ import static org.junit.Assert.*
 import org.apache.log4j.Level
 import org.junit.Test
 
-import de.bund.bfr.pmf.PMFAtomicDescription;
-import de.bund.bfr.pmf.PMFCompartment;
-import de.bund.bfr.pmf.PMFModel;
-import de.bund.bfr.pmf.PMFParameter;
-import de.bund.bfr.pmf.PMFReader;
-import de.bund.bfr.pmf.PMFResultComponent;
-import de.bund.bfr.pmf.PMFSpecies;
-
 /**
  * 
  */
@@ -46,7 +38,7 @@ class PMFReaderTest {
 		assertEquals(1, doc.dataSets.size())
 		
 		// however, we also expect several errors
-		assertEquals(8, reader.parseMessages.size())
+		assertEquals(27, reader.parseMessages.size())
 	}
 	
 	@Test
@@ -60,7 +52,7 @@ class PMFReaderTest {
 		assertEquals(1, doc.dataSets.size())
 		
 		// however, we also expect several errors
-		assertEquals(8, reader.parseMessages.size())
+		assertEquals(27, reader.parseMessages.size())
 	}
 	
 	@Test
@@ -156,8 +148,9 @@ class PMFReaderTest {
 		assertEquals(0, reader.getParseMessages(Level.ERROR).size())
 		
 		// check parsed values for correctness
-		def rc = doc.dataSets[dataFile as String].resultComponents[0]
+		def dataset = doc.dataSets[dataFile as String]
+		def rc = dataset.resultComponents[0]
 		assertEquals(PMFResultComponent, rc.class)
-		assertEquals([PMFAtomicDescription] * 2, rc.dimensionDescription.description.descriptions*.class)
+		assertEquals([PMFOntologyTerm] * 2, dataset.ontologyTerms*.class)
 	}
 }

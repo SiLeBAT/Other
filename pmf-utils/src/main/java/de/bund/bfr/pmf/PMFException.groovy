@@ -16,14 +16,15 @@
  ******************************************************************************/
 package de.bund.bfr.pmf
 
+import de.bund.bfr.numl.ConformityMessage;
 import groovy.transform.InheritConstructors;
 
 /**
- * 
+ * An exception indicating invalid settings in a {@link PMFDocument} while parsing or writing the document.
  */
 @InheritConstructors
 class PMFException extends RuntimeException {
-	def errors = []
+	List<ConformityMessage> errors = []
 
 	@Override
 	String getMessage() {

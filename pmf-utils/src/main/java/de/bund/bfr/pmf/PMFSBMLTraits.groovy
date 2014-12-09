@@ -16,26 +16,25 @@
  ******************************************************************************/
 package de.bund.bfr.pmf;
 
-import java.util.List;
-
 import javax.xml.namespace.QName
 
+import org.apache.log4j.Level
 import org.sbml.jsbml.ListOf
-import org.sbml.jsbml.SBMLDocument;
+import org.sbml.jsbml.SBMLDocument
 import org.sbml.jsbml.SBase
-import org.sbml.jsbml.util.StringTools;
+import org.sbml.jsbml.util.StringTools
 import org.sbml.jsbml.xml.XMLNode
 import org.sbml.jsbml.xml.XMLToken
 import org.sbml.jsbml.xml.XMLTriple
 
-import de.bund.bfr.numl.ConformityMessage;
+import de.bund.bfr.numl.ConformityMessage
 
 
 trait MetadataAnnotation extends SBMLReplacement {
 	
 	Map<QName, String> getQualifiedAnnotations() {
-		groovyAnnotations.collectEntries { annotation ->
-			groovy.xml.QName name = annotation.name
+		annotationGNodes.collectEntries { annotation ->
+			groovy.xml.QName name = annotation.name()
 			[(new QName(name.namespaceURI, name.localPart, name.prefix)): annotation.value as String]
 		}.findAll { it.value }
 	}
@@ -82,18 +81,18 @@ trait MetadataAnnotation extends SBMLReplacement {
 		def pmfMetaData = PMFUtil.getPMFAnnotation(this, "metadata")
 		if(!pmfMetaData)
 			return [new ConformityMessage(level: Level.WARN,
-				message: "$name: ${annotationElem}s should be annotated (Specification 11/13)")]
+				message: "$prefix: ${elementName}s should be annotated (Specification 11)")]
 		def annotations = getQualifiedAnnotations()*.key
-		def recommended = PMFUtil.BaseAnnotations.collect { ns, tags -> tags.collect { new QName(ns, it, null) } }
+		def recommended = PMFUtil.BaseAnnotations.collect { ns, tags -> tags.collect { new QName(ns, it) } }
 		
 		def missing = annotations - recommended
 		def superfluous = recommended - annotations
-		missing.collect {
+		missing.collect { annotationName ->
 			new ConformityMessage(level: Level.WARN,
-				message: "$name: Recommend annotation $annotationName of $annotationElem ${elem.id} not present (Specification 11/13)")
-		} + superfluous.collect {
+				message: "$prefix: Recommend annotation $annotationName of $elementName ${id} not present (Specification 11)")
+		} + superfluous.collect { annotationName ->
 			new ConformityMessage(level: Level.WARN,
-				message: "$name: Unknown annotation $annotationName found in $annotationElem ${elem.id}, might be an indicator for misspellings (Specification 11/13)")
+				message: "$prefix: Unknown annotation $annotationName found in $elementName ${id}, might be an indicator for misspellings (Specification 11)")
 		}
 	}
 }
@@ -109,7 +108,7 @@ trait SourceAnnotation extends SBMLReplacement {
 			pmfMetaData.addChild(
 					dcSource = new XMLNode(new XMLTriple('source', PMFUtil.DC_NS, null)))
 		dcSource.removeChildren()
-		dcSource.append(new XMLNode(source.toString()))
+		dcSource.addChild(new XMLNode(source.toString()))
 	}
 
 	URI getSource() {

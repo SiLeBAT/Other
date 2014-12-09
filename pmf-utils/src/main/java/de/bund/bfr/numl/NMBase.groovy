@@ -139,7 +139,7 @@ class NMBase {
 		
 		def requiredProps = properties.grep { it.field?.field?.getAnnotation(Required) }
 		def invalidSettings = requiredProps.grep { it.getProperty(this) == null }.collect { 
-			new ConformityMessage("$prefix Required value $it.name not set for $this")
+			new ConformityMessage("$prefix Required value $it.name not set for $elementName (id=$id, parent $parent?.elementName $parent?.id)")
 		}
 		
 		if(metaId && !isValidNMId(metaId))

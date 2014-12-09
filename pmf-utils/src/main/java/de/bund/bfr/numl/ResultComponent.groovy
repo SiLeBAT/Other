@@ -19,7 +19,7 @@ package de.bund.bfr.numl
 import groovy.transform.EqualsAndHashCode
 
 /**
- * 
+ * The actual numerical result. The structure is described in {@link #dimensionDescription} and the values are stored in {@link #dimension}.
  */
 @EqualsAndHashCode(callSuper = true)
 class ResultComponent extends NMBase {
@@ -35,13 +35,13 @@ class ResultComponent extends NMBase {
 	@Override
 	List<String> getInvalidSettings(String prefix) {
 		def invalidSettings = []
-		
+
 		if(id && !isValidNMId(id))
 			invalidSettings << new ConformityMessage("$prefix $id is not a valid NMId")
-		
+
 		invalidSettings + super.getInvalidSettings(prefix)
 	}
-	
+
 	@Override
 	protected Map<String, Object> getAttributeValues() {
 		def attributeValues = super.getAttributeValues()
@@ -51,14 +51,12 @@ class ResultComponent extends NMBase {
 
 	@Override
 	public void writeBody(BuilderSupport builder, Map subTypes) {
-		builder.dimensionDescription {
-			dimensionDescription.write(builder)
-		}
-		builder.dimension {			
+		builder.dimensionDescription { dimensionDescription.write(builder) }
+		builder.dimension {
 			dimensionDescription.writeData(builder, this.dimension)
 		}
 	}
-	
+
 	/**
 	 * Sets the dimensionDescription to the specified value.
 	 *
@@ -71,12 +69,12 @@ class ResultComponent extends NMBase {
 		this.dimensionDescription = dimensionDescription
 		dimensionDescription.parent = this
 	}
-	
+
 
 	@Override
-	public void setOriginalNode(Node originalNode) {		
+	public void setOriginalNode(Node originalNode) {
 		super.setOriginalNode(originalNode)
-		
+
 		this.id = originalNode.'@id'
 		this.name = originalNode.'@name'
 

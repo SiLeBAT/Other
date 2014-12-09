@@ -27,31 +27,46 @@ import de.bund.bfr.numl.NuMLDocument
 import de.bund.bfr.numl.NuMLWriter
 
 /**
- * 
+ * The base {@link PMFDocument} consisting of several NuML data files and 1 SBML model (for now).
  */
 class PMFDocument {
 	Map<String, SBMLDocument> models = new ObservableMap()
 	Map<String, NuMLDocument> dataSets = new ObservableMap()
-		
+
 	PMFDocument() {
-		models.addPropertyChangeListener({ models.each { PMFUtil.wrap(it.value) } })
-		dataSets.addPropertyChangeListener({ dataSets.each { PMFUtil.wrap(it.value) } })
+		models.addPropertyChangeListener({
+			models.each {
+				PMFUtil.wrap(it.value)
+			}
+		})
+		dataSets.addPropertyChangeListener({
+			dataSets.each {
+				PMFUtil.wrap(it.value)
+			}
+		})
 	}
-	
+
 	// mostly for additional validation (XPath evaluation etc)
 	Map<Object, Closure<InputStream>> documentStreamFactories = [:]
-	
+
+	/**
+	 * Returns the input stream for a {@link SBMLDocument} or {@link NuMLDocument}
+	 */
 	InputStream getInputStream(Object doc) {
 		documentStreamFactories[doc]() ?: createFallbackInputStream(doc)
 	}
-	
+
 	static final fileTypeWriters = [SBMLDocument: SBMLAdapter, NuMLDocument: NuMLWriter]
-	
+
 	def createFallbackInputStream(Object doc) {
 		def xmlString = fileTypeWriters[doc.class].newInstance().toString(doc)
 		new ByteArrayInputStream(xmlString.getBytes(Charset.forName("utf-8")))
 	}
-	
+
+	/**
+	 * Returns the {@link SBMLDocument} or {@link NuMLDocument} identified by the given xlink. 
+	 * Optionally a baseDoc can be used to resolve relative paths.
+	 */
 	def resolve(String xlinkRef, Object baseDoc = null) {
 		// first try look directly for it
 		def doc = models[xlinkRef] ?: dataSets[xlinkRef]
@@ -67,7 +82,7 @@ class PMFDocument {
 			throw new IllegalArgumentException("Unknown document $xlinkRef")
 		doc
 	}
-	
+
 	/**
 	 * Sets the dataSets to the specified value.
 	 *
@@ -80,14 +95,18 @@ class PMFDocument {
 		this.dataSets.clear()
 		this.dataSets.putAll(dataSets)
 	}
-	
+
+	/**
+	 * Returns all invalid settings of this PMF document. <br/>
+	 * The invalid settings can be either detected in the underlying model, in the data files, or with the additional set of PMF specification rules.
+	 */
 	List<String> getInvalidSettings(String prefix = 'pmf') {
 		def messages = dataSets.collect { name, numl -> numl.getInvalidSettings("$prefix/$name") }.flatten()
 		messages += models.collect { name, sbml -> PMFUtil.getInvalidSettings(sbml, "$prefix/$name", this) }.flatten()
 		ValidationRule.values()*.validate(this, messages)
 		messages
 	}
-	
+
 	/**
 	 * Sets the models to the specified value.
 	 *
@@ -96,7 +115,7 @@ class PMFDocument {
 	public void setModels(Map<String, SBMLDocument> models) {
 		if (models == null)
 			throw new NullPointerException("models must not be null");
-			
+
 		this.models.clear()
 		this.models.putAll(models)
 	}

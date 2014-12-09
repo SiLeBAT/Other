@@ -84,9 +84,9 @@ class PMFUnitDefinition extends UnitDefinition implements SBMLReplacement {
 			messages << new ConformityMessage("$prefix: Log unit $id must contain PMF unit annotation (Specification 8)")
 		else if(transformation) {
 			if(!transformation.getAttrValue('name'))
-				messages << new ConformityMessage("$prefix: PMF unit $id must contain name (Specification 8)")
+				messages << new ConformityMessage("$prefix: Transformation of PMF unit $id must contain name (Specification 8)")
 			if(!transformation.getAttrValue('href', PMFUtil.XLINK_NS))
-				messages << new ConformityMessage("$prefix: PMF unit $id must refer to PMF units (Specification 8)")
+				messages << new ConformityMessage("$prefix: Transformation of PMF unit $id must refer to PMF units (Specification 8)")
 		}
 		messages
 	}
@@ -164,7 +164,7 @@ class PMFModel extends Model implements SBMLReplacement, MetadataAnnotation {
 	}
 	
 	List<ConformityMessage> getInvalidSettings(SBMLDocument document, String prefix, PMFDocument pmf) {
-		def messages = []
+		def messages = MetadataAnnotation.super.getInvalidSettings(document, prefix, pmf)
 		
 		if(!getAnnotation('modelquality', PMFUtil.PMML_NS))
 			messages << new ConformityMessage(level: Level.WARN,

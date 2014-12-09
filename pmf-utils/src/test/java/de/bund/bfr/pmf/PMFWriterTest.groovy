@@ -15,35 +15,39 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package de.bund.bfr.gpmf
+package de.bund.bfr.pmf
+
+import static org.junit.Assert.*
 
 import java.nio.file.Files
 
 import org.junit.Test
+import org.sbml.jsbml.Unit
 
-import de.bund.bfr.gnuml.AtomicDescription
-import de.bund.bfr.gnuml.CompositeDescription
-import de.bund.bfr.gnuml.DataType
-import de.bund.bfr.gnuml.NuMLDocument
-import de.bund.bfr.gnuml.TupleDescription
-
-import static org.junit.Assert.*
+import de.bund.bfr.numl.AtomicDescription
+import de.bund.bfr.numl.CompositeDescription
+import de.bund.bfr.numl.DataType
+import de.bund.bfr.numl.NuMLDocument
+import de.bund.bfr.numl.TupleDescription
 
 /**
  * Test {@link PMFWriter}.
  */
 class PMFWriterTest {
 	@Test
-	void shouldGenerateDatasetOnlyPMF() {
-		def time = new PMFOntologyTerm(term: 'time', sourceTermId: 'SBO:0000345', 
-			ontologyURI: new URI('http://www.ebi.ac.uk/sbo/'))
+	void shouldGenerateDatasetOnlyPMF() {		
 		def matrix = new PMFCompartment(id: 'culture_broth', name: 'culture broth', 
 			source: new URI('http://identifiers.org/ncim/C0452849'))
 		def salmonelle = new PMFSpecies(id: 'salmonella_spp', name: 'salmonella spp',
-			source: new URI('http://identifiers.org/ncim/C0036111'), compartment: matrix)
+			source: new URI('http://identifiers.org/ncim/C0036111'), compartment: matrix.id)
+		
+		def time = new PMFOntologyTerm(term: 'time', sourceTermId: 'SBO:0000345', 
+			ontologyURI: new URI('http://www.ebi.ac.uk/sbo/'), unit: new Unit(Unit.Kind.SECOND, 3, 1))
+		def logPU = new PMFUnitDefinition(level: 3, version: 1, id: "pmf_log10_cfu_g", name: "log10(cfu/g)", transformation: 'log10')
+		logPU.addUnit(new Unit(Unit.Kind.ITEM, 3, 1))
+		logPU.addUnit(new Unit(Unit.Kind.GRAM, -1d, 3, 1))
 		def salConcentration = new PMFOntologyTerm(term: 'concentration', sourceTermId: 'SBO:0000196', 
-			ontologyURI: new URI('http://www.ebi.ac.uk/sbo/'),
-			species: salmonelle)
+			ontologyURI: new URI('http://www.ebi.ac.uk/sbo/'), unitDefinition: logPU, species: salmonelle)
 		
 		def description = new CompositeDescription(name: 'Time', indexType: DataType.Integer, ontologyTerm: time, description:
 			new TupleDescription(descriptions: [
@@ -58,7 +62,7 @@ class PMFWriterTest {
 		]
 		
 		def dataset = new NuMLDocument(ontologyTerms: [time, salConcentration], resultComponents: [resultComponent])
-		def doc = new PMFDocument(datasets: ['salCons.xml': dataset])
+		def doc = new PMFDocument(dataSets: ['salCons.xml': dataset])
 
 		def finalFile = Files.createTempFile('pmfTest', null)
 		new PMFWriter().write(doc, finalFile)

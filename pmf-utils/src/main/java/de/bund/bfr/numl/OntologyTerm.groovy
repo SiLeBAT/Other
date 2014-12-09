@@ -29,7 +29,7 @@ class OntologyTerm extends NMBase {
 	String id, term, sourceTermId
 	@Required
 	String ontologyURI
-
+	
 	void setOntologyURI(URI ontologyURI) {
 		this.ontologyURI = ontologyURI?.toString()
 	}

@@ -18,6 +18,7 @@ package de.bund.bfr.numl;
 
 import groovy.transform.EqualsAndHashCode
 
+import java.awt.PageAttributes.OriginType;
 import java.text.DecimalFormat;
 import java.text.NumberFormat
 import java.text.ParseException
@@ -68,9 +69,9 @@ abstract class Description extends NMBase {
 	@Override
 	List<String> getInvalidSettings(String prefix) {
 		// if the ontology term is not registered in document, we cannot really check other values
-		if(ontologyTerm && document && !(ontologyTerm in document.ontologyTerms))
+		if((ontologyTerm || this.originalNode?.'@ontologyTerm') && document && !(ontologyTerm in document.ontologyTerms))
 			return [new ConformityMessage(
-				"$prefix Ontology term $ontologyTerm.id not registered in document; available: ${document.ontologyTerms*.id}")]
+				"$prefix Ontology term ${ontologyTerm?.id ?: originalNode.'@ontologyTerm'} not registered in document; available: ${document.ontologyTerms*.id}")]
 		def invalidSettings = []
 
 		if(id && !isValidNMId(id))
@@ -79,10 +80,6 @@ abstract class Description extends NMBase {
 		invalidSettings + 
 			parseDataErrors.collect { it.message = "$prefix: ${it.message}"; it } + 
 			super.getInvalidSettings(prefix)
-	}
-
-	OntologyTerm getOntologyTerm() {
-		ontologyTerm
 	}
 	
 	ResultComponent getResultComponent() {
@@ -106,10 +103,7 @@ abstract class Description extends NMBase {
 	void setOriginalNode(Node originalNode) {
 		super.setOriginalNode(originalNode)
 
-		if(originalNode.'@ontologyTerm')
-			this.ontologyTerm = document.ontologyTerms.find { it.id == originalNode.'@ontologyTerm' } ?:
-				new OntologyTerm(id: originalNode.'@ontologyTerm')
-		else this.ontologyTerm = null
+		this.ontologyTerm = document.ontologyTerms.find { it.id == originalNode.'@ontologyTerm' }
 		this.id = originalNode.'@id'
 	}
 }
@@ -206,7 +200,7 @@ class CompositeDescription extends Description {
 				}
 			}
 			else parseDataErrors << new ConformityMessage(
-				"Index value not found at $parent of expected type $description in $name")
+				"Index value not found at $parent.elementName $parent.id of expected type $indexType in $name")
 		}
 		values
 	}

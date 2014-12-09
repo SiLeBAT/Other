@@ -16,10 +16,13 @@
  ******************************************************************************/
 package de.bund.bfr.pmf
 
+import groovy.xml.QName
+
 import org.sbml.jsbml.AbstractSBase
 import org.sbml.jsbml.Annotation
 import org.sbml.jsbml.SBMLDocument
 import org.sbml.jsbml.SBase
+import org.sbml.jsbml.xml.XMLAttributes
 import org.sbml.jsbml.xml.XMLNode
 import org.sbml.jsbml.xml.XMLToken
 import org.sbml.jsbml.xml.XMLTriple
@@ -82,9 +85,11 @@ class PMFUtil {
 	}
 	
 	static void setPMFAnnotation(NMBase node, String annotationName, Node annotation) {
-		node.annotation.remove(getPMFAnnotation(node, annotationName))
-		annotation.name = new groovy.xml.QName(PMF_NS, annotationName, annotation.name.prefix)
-		node.annotation.add(annotation)
+		def oldAnnotation = getPMFAnnotation(node, annotationName)
+		if(oldAnnotation)
+			node.annotation.remove(oldAnnotation)
+		annotation.name = new groovy.xml.QName(PMF_NS, annotationName)
+		node.annotation.append(annotation)
 	}
 
 	static javax.xml.namespace.QName toJavaQName(XMLToken token) {
@@ -110,7 +115,7 @@ class PMFUtil {
 	static void setPMFAnnotation(SBase node, String annotationName, XMLNode annotationNode) {
 		def annotation = node.annotation
 		if(!annotation || !annotation.nonRDFannotation)
-			node.setAnnotation(annotation = new Annotation(nonRDFannotation: new XMLNode()))
+			node.setAnnotation(annotation = new Annotation(nonRDFannotation: new XMLNode(new XMLTriple('annotation'))))
 		addOrReplace(annotation.nonRDFannotation, annotationNode)
 	}
 	
@@ -126,7 +131,15 @@ class PMFUtil {
 	static XMLNode ensurePMFAnnotation(SBase node, String annotationName) {		
 		XMLNode pmfAnnotation = PMFUtil.getPMFAnnotation(node, annotationName)
 		if(!pmfAnnotation) 
-			setPMFAnnotation(pmfAnnotation = new XMLNode(new XMLTriple(annotationName, PMFUtil.PMF_NS, null)))
+			setPMFAnnotation(node, annotationName, 
+				pmfAnnotation = new XMLNode(new XMLTriple(annotationName, PMFUtil.PMF_NS, null), new XMLAttributes()))
+		pmfAnnotation
+	}
+	
+	static Node ensurePMFAnnotation(NMBase node, String annotationName) {		
+		Node pmfAnnotation = PMFUtil.getPMFAnnotation(node, annotationName)
+		if(!pmfAnnotation) 
+			setPMFAnnotation(node, annotationName, pmfAnnotation = new Node(null, new QName(annotationName, PMFUtil.PMF_NS)))
 		pmfAnnotation
 	}
 	
@@ -149,7 +162,7 @@ class PMFUtil {
 		}
 	}
 	
-	static NuMLReplacements = [PMFResultComponent, PMFAtomicDescription].collectEntries { [(it.superclass): it] }
+	static NuMLReplacements = [PMFResultComponent, PMFOntologyTerm].collectEntries { [(it.superclass): it] }
 	static NuMLDocument wrap(NuMLDocument doc) {		
 		def nodeStack = new LinkedList<NMBase>([doc])
 		while(nodeStack) {

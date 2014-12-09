@@ -113,19 +113,20 @@ class NuMLDocument extends NMBase {
 			term.id = idParts[1] + (idParts[2].toInteger() + 1)
 		}
 		this.ontologyTerms.add(term)
+		term.parent = this
 	}
 	
 	/* (non-Javadoc)
 	 * @see de.bund.bfr.numl.NMBase#getInvalidSettings()
 	 */
-	List<String> getInvalidSettings(String prefix = 'numl') {
+	List<String> getInvalidSettings(String prefix = '') {
 		def invalidSettings = []
 		
 		if(!ontologyTerms)
-			invalidSettings << new ConformityMessage("$prefix must have ontologyTerms section with at least one ontologyTerm")
+			invalidSettings << new ConformityMessage("$prefix/$elementName must have ontologyTerms section with at least one ontologyTerm")
 			
 		if(!resultComponents)
-			invalidSettings << new ConformityMessage("$prefix must have at least one resultComponent section")
+			invalidSettings << new ConformityMessage("$prefix/$elementName must have at least one resultComponent section")
 			
 		invalidSettings + super.getInvalidSettings(prefix)
 	}
