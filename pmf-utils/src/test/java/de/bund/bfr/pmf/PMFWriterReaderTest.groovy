@@ -14,27 +14,30 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package de.bund.bfr.pmf
+package de.bund.bfr.pmf;
 
-import groovy.transform.InheritConstructors
+import static org.junit.Assert.*;
 
-import org.apache.log4j.Level
+import org.junit.Test;
 
-import de.bund.bfr.numl.ConformityMessage
+import de.bund.bfr.numl.NuMLDocument;
+import de.bund.bfr.numl.NuMLReader;
+import de.bund.bfr.numl.NuMLWriter;
 
 /**
- * An exception indicating invalid settings in a {@link PMFDocument} while parsing or writing the document.
+ * 
  */
-@InheritConstructors
-class PMFException extends RuntimeException {
-	List<ConformityMessage> messages = []
-
-	List<ConformityMessage> getErrors() {
-		messages.findAll { it.level.isGreaterOrEqual(Level.ERROR) }
-	}
-	
-	@Override
-	String getMessage() {
-		"${super.getMessage()}:\n${messages.join('\n')}"
+class PMFWriterReaderTest extends PMFWriterTest {
+	@Test
+	void testReadWriteRead() throws Exception {
+		String resourceFile =
+			NuMLReaderTest.class.getResource("/numl/TimeConcentration.xml").toURI().toString();
+		NuMLDocument doc = new NuMLReader().read(resourceFile)
+		
+		def writtenXml = new NuMLWriter().toString(doc)		
+		
+		NuMLDocument doc2 = new NuMLReader().parseText(writtenXml)
+		
+		assertEquals(doc, doc2)
 	}
 }

@@ -41,7 +41,7 @@ class NuMLWriter {
 
 	def write(NuMLDocument doc, Writer writer) {
 		if(doc.invalidSettings.find { it.level.isGreaterOrEqual(Level.ERROR) })
-			throw new NuMLException("Invalid NuML document").with { errors = doc.invalidSettings; it }
+			throw new NuMLException("Invalid NuML document").with { it.messages = doc.invalidSettings; it }
 
 		def builder = NodeBuilder.newInstance()
 		//		builder.mkp.xmlDeclaration(version: '1.0')

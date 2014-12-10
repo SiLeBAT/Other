@@ -81,7 +81,7 @@ class NuMLReader {
 		if(!validating) {
 			def messages = this.getParseMessages(Level.ERROR)
 			if(messages)
-				throw new NuMLException("Invalid NuML document").with { errors = messages; it }
+				throw new NuMLException("Invalid NuML document").with { it.messages = messages; it }
 		}
 		document
 	}

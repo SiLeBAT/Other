@@ -36,13 +36,15 @@ import de.bund.bfr.numl.TupleDescription
 /**
  * Extends the NuML {@link ResultComponent} with convenience methods for PMF annotations and provides shortcuts to access the SBML annotations.
  */
-@InheritConstructors
 class PMFResultComponent extends ResultComponent implements PMFNuMLMetadataContainer {
 	
 	PMFResultComponent(ResultComponent rc) {
 		// rather inefficient but versatile
 		setParent(rc.parent)
 		setOriginalNode(rc.originalNode)
+	}
+	
+	PMFResultComponent() {		
 	}
 	
 	{
@@ -65,7 +67,7 @@ class PMFResultComponent extends ResultComponent implements PMFNuMLMetadataConta
 		} + superfluous.collect { annotationName ->
 			new ConformityMessage(level: Level.WARN,
 				message: "$prefix: Unknown annotation $annotationName found in $elementName ${id}, might be an indicator for misspellings (Specification 11/13)")
-		}
+		} + super.getInvalidSettings(prefix)
 	}
 	
 	void replace(ResultComponent rc) {
@@ -243,14 +245,15 @@ class PMFOntologyTerm extends OntologyTerm implements PMFNuMLMetadataContainer {
 		
 		if(unitDefinition)
 			messages.addAll(unitDefinition.getInvalidSettings(getSbmlReader().document, "$prefix/unitDefinition", null))
-		else
-			messages << new ConformityMessage("$prefix: ontology term ${id ?: term} must have unitDefinition annotation (Specification 13)")
 		
 		if(species)
 			messages.addAll(species.getInvalidSettings(getSbmlReader().document, "$prefix/species", null))
 		else if(unitDefinition?.isVariantOfSubstancePerVolume())		
 			messages << new ConformityMessage(level: Level.WARN,
 				message: "$prefix: ontology term ${id ?: term} seem to denote a concentration and should have a species annotation (Specification 13)")
+			
+		if((species == null) == (unitDefinition == null))
+			messages << new ConformityMessage("$prefix: ontology term ${id ?: term} must have either a unitDefinition or a species annotation (Specification 13)")
 			
 		if(compartment)
 			messages.addAll(compartment.getInvalidSettings(getSbmlReader().document, "$prefix/compartment", null))

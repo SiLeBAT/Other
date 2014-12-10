@@ -16,8 +16,6 @@
  ******************************************************************************/
 package de.bund.bfr.pmf;
 
-import java.util.List;
-
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.InheritConstructors
 import groovy.transform.ToString
@@ -39,12 +37,14 @@ import org.sbml.jsbml.SBase
 import org.sbml.jsbml.Species
 import org.sbml.jsbml.Unit
 import org.sbml.jsbml.UnitDefinition
+import org.sbml.jsbml.Unit.Kind
 import org.sbml.jsbml.xml.XMLNode
 import org.sbml.jsbml.xml.XMLToken
 import org.sbml.jsbml.xml.XMLTriple
 import org.xml.sax.InputSource
 
 import de.bund.bfr.numl.ConformityMessage
+import de.bund.bfr.numl.Description
 
 
 /**
@@ -52,6 +52,11 @@ import de.bund.bfr.numl.ConformityMessage
  */
 @InheritConstructors
 class PMFCompartment extends Compartment implements SourceAnnotation, SBMLReplacement {
+	{
+		initLevelAndVersion()
+		this.spatialDimensions = 3
+		setUnits(Kind.DIMENSIONLESS)
+	}
 }
 
 /**
@@ -59,10 +64,27 @@ class PMFCompartment extends Compartment implements SourceAnnotation, SBMLReplac
  */
 @InheritConstructors
 class PMFSpecies extends Species implements SourceAnnotation, SBMLReplacement {
+	{
+		initLevelAndVersion()
+		this.hasOnlySubstanceUnits = false
+	}
+	
+	List<ConformityMessage> getInvalidSettings(SBMLDocument document, String prefix, PMFDocument pmf) {
+		def messages = SourceAnnotation.super.getInvalidSettings(document, prefix, pmf)
+		
+		if(!this.units)
+			messages << new ConformityMessage("$prefix: species $id must have a unit annotation")
+		
+		messages
+	}
 }
 
 @InheritConstructors
 class PMFUnitDefinition extends UnitDefinition implements SBMLReplacement {
+	{
+		initLevelAndVersion()
+	}
+	
 	void setTransformation(String transformation) {
 		if (transformation == null)
 			throw new NullPointerException("transformation must not be null");
@@ -98,6 +120,10 @@ class PMFUnitDefinition extends UnitDefinition implements SBMLReplacement {
  */
 @InheritConstructors
 class PMFModel extends Model implements SBMLReplacement, MetadataAnnotation {
+	{
+		initLevelAndVersion()
+	}
+	
 	PredictiveModelQuality getModelQuality() {
 		def annotation = getAnnotationNode(PMFUtil.PMML_NS, 'modelquality')
 		if(!annotation)
@@ -136,7 +162,7 @@ class PMFModel extends Model implements SBMLReplacement, MetadataAnnotation {
 	Map<String, String> getDataSources() {
 		XMLNode pmfMetaData = PMFUtil.getPMFAnnotation(this, 'metadata')
 		def dataSources = pmfMetaData?.getChildElement('dataSources', PMFUtil.PMF_NS)
-		dataSources?.getChildElements('dataSource', PMFUtil.PMF_NS).collectEntries { source ->
+		dataSources?.getChildElements('dataSource', PMFUtil.PMF_NS)?.collectEntries { source ->
 			[source.getAttrValue('id'), source.getAttrValue('href', PMFUtil.XLINK_NS)]
 		} ?: [:]
 	}
@@ -168,11 +194,14 @@ class PMFModel extends Model implements SBMLReplacement, MetadataAnnotation {
 		
 		if(!getAnnotation('modelquality', PMFUtil.PMML_NS))
 			messages << new ConformityMessage(level: Level.WARN,
-				message: "$name: model quality should be annotated (Specification 12)")
+				message: "$prefix: model quality should be annotated (Specification 12)")
 			
 		def dataSources = this.dataSources
-		if(!dataSources)
-			messages << new ConformityMessage("$prefix: model $model.id must reference dataSets with at least one pmf:dataSource element (Specification 13)")
+		if(!dataSources) {
+			if(pmf.dataSets)
+				messages << new ConformityMessage(level: Level.WARN,
+					message: "$prefix: model $model.id should reference dataSets with at least one pmf:dataSource element (Specification 13)")
+		}
 		else if(dataSources.find { it.key == null })
 			messages << new ConformityMessage("$prefix: model $model.id contains $index pmf:dataSource without id (Specification 13)")
 		else if(dataSources.find { it.value == null })
@@ -218,6 +247,10 @@ class DoubleRange {
 
 @InheritConstructors
 class PMFParameter extends Parameter implements SBMLReplacement {	
+	{
+		initLevelAndVersion()
+	}
+	
 	List<SourceValue> getSourceValues() {
 		def sourceValues = PMFUtil.getPMFAnnotation(this, 'sourceValues')
 		sourceValues?.getChildElements('sourceValue', PMFUtil.PMF_NS).collect { source ->
@@ -239,11 +272,11 @@ class PMFParameter extends Parameter implements SBMLReplacement {
 	void setSourceValues(List<SourceValue> sourceValues) {
 		XMLNode sourcesNode = PMFUtil.ensurePMFAnnotation(this, 'sourceValues')
 		sourcesNode.removeChildren()
-		sourceValues.each { sourceId, xpath ->
-			def sourceValue = new XMLNode(new XMLTriple('sourceValue', PMFUtil.PMF_NS, null))
-			sourceValue.addAttr('source', id)
-			sourceValue.addAttr('descriptor', path, PMFUtil.XLINK_NS)
-			sourcesNode.addChild(sourceValue)
+		sourceValues.each { sourceValue ->
+			def valueNode = new XMLNode(new XMLTriple('sourceValue', PMFUtil.PMF_NS, null))
+			valueNode.addAttr('source', sourceValue.sourceId)
+			valueNode.addAttr('descriptor', sourceValue.xpath, PMFUtil.XLINK_NS)
+			valueNode.addChild(valueNode)
 		}
 	}
 	
@@ -253,6 +286,10 @@ class PMFParameter extends Parameter implements SBMLReplacement {
 	
 	void setSourceValue(String sourceId, String xpath) {
 		setSourceValues([new SourceValue(sourceId, xpath)])
+	}
+	
+	void setSourceValue(String sourceId, Description description) {
+		setSourceValues([new SourceValue(sourceId, description.XPath)])
 	}
 	
 	DoubleRange getRange() {
@@ -304,8 +341,11 @@ class PMFParameter extends Parameter implements SBMLReplacement {
 		})
 		if(!this.constant) {
 			try {
-				if(!sourceValues)
-					messages << new ConformityMessage("$prefix: parameter $id does not contain a source value descriptor (Specification 13)")
+				if(!sourceValues) {
+					if(pmf.dataSets)
+						messages << new ConformityMessage(level: Level.WARN, 
+							message: "$prefix: parameter $id does not contain a source value descriptor (Specification 13)")
+				}
 				else
 					try {
 						getValueInstances(pmf)

@@ -32,10 +32,12 @@ class PMFWriter {
 	
 	def write(PMFDocument doc, def streamable) {
 		streamable.withOutputStream { stream ->
-			ZipOutputStream out = new ZipOutputStream(stream)
-			toStrings(doc).each { name, xmlDoc ->
-				out.putNextEntry(new ZipEntry(name))
-				out << xmlDoc.getBytes(Charset.forName('utf-8'))
+			new ZipOutputStream(stream).withStream { zipStream ->
+				toStrings(doc).each { name, xmlDoc ->
+					zipStream.putNextEntry(new ZipEntry(name))
+					zipStream << xmlDoc.getBytes(Charset.forName('utf-8'))
+					zipStream.closeEntry()
+				}
 			}
 		}
 		streamable
@@ -43,7 +45,7 @@ class PMFWriter {
 
 	Map<String, String> toStrings(PMFDocument doc) {
 		if(doc.invalidSettings.find { it.level.isGreaterOrEqual(Level.ERROR) })
-			throw new PMFException('Invalid PMF document').with { errors = doc.invalidSettings; it }
+			throw new PMFException('Invalid PMF document').with { it.messages = doc.invalidSettings; it }
 			
 		doc.models.collectEntries { name, sbml ->
 			[(name): new SBMLAdapter().toString(sbml)]

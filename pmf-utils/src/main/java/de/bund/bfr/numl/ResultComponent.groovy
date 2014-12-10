@@ -16,6 +16,8 @@
  ******************************************************************************/
 package de.bund.bfr.numl
 
+import org.apache.log4j.Level;
+
 import groovy.transform.EqualsAndHashCode
 
 /**
@@ -33,12 +35,14 @@ class ResultComponent extends NMBase {
 	Description dimensionDescription
 
 	@Override
-	List<String> getInvalidSettings(String prefix) {
+	List<ConformityMessage> getInvalidSettings(String prefix) {
 		def invalidSettings = []
 
 		if(id && !isValidNMId(id))
 			invalidSettings << new ConformityMessage("$prefix $id is not a valid NMId")
 
+		validateData("$prefix/dimension", dimensionDescription, dimension, invalidSettings)
+			
 		invalidSettings + super.getInvalidSettings(prefix)
 	}
 
@@ -65,9 +69,34 @@ class ResultComponent extends NMBase {
 	void setDimensionDescription(Description dimensionDescription) {
 		if (dimensionDescription == null)
 			throw new NullPointerException("dimensionDescription must not be null");
-
+			
+		if(dimension)
+			validateData('', dimensionDescription, dimension)
 		this.dimensionDescription = dimensionDescription
 		dimensionDescription.parent = this
+	}
+	
+	/**
+	 * Sets the dimension to the specified value.
+	 *
+	 * @param dimension the dimension to set
+	 */
+	public void setDimension(Object dimension) {
+		if (dimension == null)
+			throw new NullPointerException("dimension must not be null");
+			
+		if(dimensionDescription)
+			validateData('', dimensionDescription, dimension)
+		this.dimension = dimension;
+	}
+	
+	void validateData(String prefix, Description dimensionDescription, Object dimension, List<ConformityMessage> messages = null) {
+		boolean validating = messages != null
+		if(messages == null)
+			messages = []
+		dimensionDescription.validateData(prefix, dimension, messages)
+		if(!validating && messages.grep { it.level.isGreaterOrEqual(Level.ERROR) })
+			throw new NuMLException("Invalid dimension description for the set data").with { it.messages = messages ; it }
 	}
 
 

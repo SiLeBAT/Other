@@ -177,7 +177,7 @@ class PMFUtil {
 	
 	static List<ConformityMessage> getInvalidSettings(SBMLDocument document, String prefix, PMFDocument pmf = null) {
 		List<ConformityMessage> invalidSettings = []
-		traverse(document, { node ->
+		traverse(wrap(document), { node ->
 			if(node instanceof SBMLReplacement)
 				invalidSettings.addAll(node.getInvalidSettings(document, prefix, pmf))
 		})

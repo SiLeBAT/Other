@@ -132,6 +132,13 @@ trait SourceAnnotation extends SBMLReplacement {
 }
 
 trait SBMLReplacement {
+	void initLevelAndVersion() {		
+		if(getLevel() == -1)
+			setLevel(3)
+		if(getVersion() == -1)
+			setVersion(1)
+	}
+	
 	void replace(SBase sbmlElement) {
 		this.setParent(null)
 		SBase newParent = sbmlElement.parent

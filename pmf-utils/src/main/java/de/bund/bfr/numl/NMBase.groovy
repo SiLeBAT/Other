@@ -119,6 +119,18 @@ class NMBase {
 		this.metaId = metaId
 	}
 	
+	void setParent(NMBase parent) {
+		if (parent == null)
+			throw new NullPointerException("parent must not be null");
+
+		this.parent = parent
+		ancestoryChanged()
+	}
+	
+	protected void ancestoryChanged() {
+		children*.ancestoryChanged()
+	}
+	
 	void checkParamNMId(String id, String name) {
 		if(id == null)
 			throw new NullPointerException("$name must not be null")
@@ -139,7 +151,7 @@ class NMBase {
 		
 		def requiredProps = properties.grep { it.field?.field?.getAnnotation(Required) }
 		def invalidSettings = requiredProps.grep { it.getProperty(this) == null }.collect { 
-			new ConformityMessage("$prefix Required value $it.name not set for $elementName (id=$id, parent $parent?.elementName $parent?.id)")
+			new ConformityMessage("$prefix Required value $it.name not set for $elementName (id=$id, parent ${parent?.elementName} ${parent?.id})")
 		}
 		
 		if(metaId && !isValidNMId(metaId))
@@ -148,6 +160,12 @@ class NMBase {
 		def subTypes = properties.collect { it.getProperty(this) }.flatten().grep { it instanceof NMBase }
 		def subInvalidSettings = subTypes.collect { it.getInvalidSettings("$prefix/$elementName") } 
 		invalidSettings + subInvalidSettings.flatten()
+	}
+	
+	String getXPath() {
+		def parentXPath = parent?.XPath ?: ''
+		def thisSelector = hasProperty('id') && id ? "[id='$id']" : ''
+		"$parentXPath/$elementName$thisSelector"
 	}
 		
 	String toString() {		
