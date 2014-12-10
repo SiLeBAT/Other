@@ -16,15 +16,12 @@
  ******************************************************************************/
 package de.bund.bfr.pmf
 
-import groovy.xml.MarkupBuilder
-import groovy.xml.NamespaceBuilder
-
 import java.nio.charset.Charset
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-import de.bund.bfr.numl.NuMLDocument
-import de.bund.bfr.numl.NuMLException
+import org.apache.log4j.Level
+
 import de.bund.bfr.numl.NuMLWriter
 
 /**
@@ -45,14 +42,14 @@ class PMFWriter {
 	}
 
 	Map<String, String> toStrings(PMFDocument doc) {
-		if(doc.invalidSettings)
-			throw new PMFException("Invalid PMF document").with { errors = doc.invalidSettings; it }
+		if(doc.invalidSettings.find { it.level.isGreaterOrEqual(Level.ERROR) })
+			throw new PMFException('Invalid PMF document').with { errors = doc.invalidSettings; it }
 			
 		doc.models.collectEntries { name, sbml ->
 			[(name): new SBMLAdapter().toString(sbml)]
 		} +
 		doc.dataSets.collectEntries { name, sbml ->
-			[(name): new NuMLWriter().toString(sbml)]
+			[(name): new NuMLWriter(namespaces: [xlink: PMFUtil.XLINK_NS]).toString(sbml)]
 		}
 	}
 

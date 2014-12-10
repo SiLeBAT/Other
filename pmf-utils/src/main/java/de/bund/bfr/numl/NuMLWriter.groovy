@@ -17,17 +17,9 @@
  ******************************************************************************/
 package de.bund.bfr.numl
 
-import java.io.File;
-import java.io.InputStream;
-import java.io.Reader;
-import java.util.HashMap;
-import java.util.Map;
+import groovy.xml.NamespaceBuilder
 
-import org.xml.sax.InputSource;
-
-import groovy.util.Node;
-import groovy.xml.MarkupBuilder;
-import groovy.xml.NamespaceBuilder;
+import org.apache.log4j.Level
 
 /**
  * Writes a {@link NuMLDocument} to a writable source (file, stream, writer). 
@@ -48,7 +40,7 @@ class NuMLWriter {
 	}
 
 	def write(NuMLDocument doc, Writer writer) {
-		if(doc.invalidSettings)
+		if(doc.invalidSettings.find { it.level.isGreaterOrEqual(Level.ERROR) })
 			throw new NuMLException("Invalid NuML document").with { errors = doc.invalidSettings; it }
 
 		def builder = NodeBuilder.newInstance()

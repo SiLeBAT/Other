@@ -23,6 +23,7 @@ import javax.xml.xpath.XPathFactory;
 
 import org.sbml.jsbml.SBMLDocument
 
+import de.bund.bfr.numl.ConformityMessage;
 import de.bund.bfr.numl.NuMLDocument
 import de.bund.bfr.numl.NuMLWriter
 
@@ -100,7 +101,7 @@ class PMFDocument {
 	 * Returns all invalid settings of this PMF document. <br/>
 	 * The invalid settings can be either detected in the underlying model, in the data files, or with the additional set of PMF specification rules.
 	 */
-	List<String> getInvalidSettings(String prefix = 'pmf') {
+	List<ConformityMessage> getInvalidSettings(String prefix = 'pmf') {
 		def messages = dataSets.collect { name, numl -> numl.getInvalidSettings("$prefix/$name") }.flatten()
 		messages += models.collect { name, sbml -> PMFUtil.getInvalidSettings(sbml, "$prefix/$name", this) }.flatten()
 		ValidationRule.values()*.validate(this, messages)

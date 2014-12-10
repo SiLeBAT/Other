@@ -119,7 +119,7 @@ class NuMLDocument extends NMBase {
 	/* (non-Javadoc)
 	 * @see de.bund.bfr.numl.NMBase#getInvalidSettings()
 	 */
-	List<String> getInvalidSettings(String prefix = '') {
+	List<ConformityMessage> getInvalidSettings(String prefix = '') {
 		def invalidSettings = []
 		
 		if(!ontologyTerms)

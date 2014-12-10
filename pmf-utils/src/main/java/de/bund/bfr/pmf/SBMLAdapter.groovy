@@ -74,7 +74,9 @@ class SBMLAdapter {
 	}
 	
 	String toString(SBMLDocument document) {
-		new SBMLWriter().writeSBMLToString(document)
+		def nsDocument = document.clone()
+		nsDocument.addDeclaredNamespace('xlink', PMFUtil.XLINK_NS) 
+		new SBMLWriter().writeSBMLToString(nsDocument)
 	}
 	
 	List<ConformityMessage> getParseMessages(Level level = Level.WARN) {

@@ -107,15 +107,11 @@ class PMFOntologyTerm extends OntologyTerm implements PMFNuMLMetadataContainer {
 
 		def doc = new SBMLDocument(document?.level ?: 3, document?.version ?: 1)
 		doc.model = sbml
-		def baos = new ByteArrayOutputStream().withStream { stream ->
-			new SBMLWriter().write(doc, stream)
-			stream
-		}
-		def bais = new ByteArrayInputStream(baos.toByteArray()).withStream { input ->
-			def node = new XmlParser().parse(input)
-			['listOfUnitDefinitions', 'listOfCompartments', 'listOfSpecies'].each { elem ->
-				setAnnotationNode(elem, PMFUtil.SBML_NS, node.model."$elem"[0])
-			}
+		doc.addDeclaredNamespace('xmlns', PMFUtil.XLINK_NS)
+		def xmlString = new SBMLAdapter().toString(doc)
+		def node = new XmlParser().parseText(xmlString)
+		['listOfUnitDefinitions', 'listOfCompartments', 'listOfSpecies'].each { elem ->
+			setAnnotationNode(elem, PMFUtil.SBML_NS, node.model."$elem"[0])
 		}
 		this.sbml = sbml
 		this.sbmlReader = null
