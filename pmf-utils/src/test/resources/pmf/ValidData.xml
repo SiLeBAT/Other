@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<numl level="1" version="1" xmlns="http://www.numl.org/numl/level1/version1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.numl.org/numl/level1/version1 https://numl.googlecode.com/svn/trunk/NUMLSchema.xsd"
+	xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/"
+	xmlns:pmf="http://sourceforge.net/projects/microbialmodelingexchange/files/PMF-ML" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<ontologyTerms>
+		<ontologyTerm id="salmonellaTerm" term="concentration" sourceTermId="SBO:0000196"
+			ontologyURI="http://www.ebi.ac.uk/sbo/">
+			<annotation>
+				<pmf:metadata xmlns="http://www.sbml.org/sbml/level3/version1/core">
+					<unitDefinition id="pmf_log10_cfu_g" name="log10(cfu/g)">
+						<listOfUnits>
+							<annotation>
+								<pmf:transformation name="log10"
+									xlink:href="http://sourceforge.net/projects/microbialmodelingexchange/files/PMF-ML" />
+							</annotation>
+							<unit kind="item" exponent="1" scale="1" multiplier="1" />
+							<unit kind="gram" exponent="-1" scale="1" multiplier="1" />
+						</listOfUnits>
+					</unitDefinition>
+					<listOfCompartments>
+						<compartment id="culture_broth_broth_culture_culture_medium" name="culture broth, broth culture, culture medium" />
+					</listOfCompartments>
+					<listOfSpecies>
+						<species id="salmonella_spp" name="salmonella spp" compartment="culture_broth_broth_culture_culture_medium" />
+					</listOfSpecies>
+				</pmf:metadata>
+			</annotation>
+		</ontologyTerm>
+		<ontologyTerm id="timeTerm" term="time" sourceTermId="SBO:0000345" ontologyURI="http://www.ebi.ac.uk/sbo/" />
+	</ontologyTerms>
+	<resultComponent id="resultComponent1">
+		<annotation>
+			<pmf:metadata>
+				<dc:identifier>salm25_salmonella_spp_culture_broth_broth_culture_culture_medium_Huang_Model_primary_Huang_2008_2013_iPMP_Full_Growth_Models_Eq_5
+				</dc:identifier>
+				<dc:title>Salmonella experiments</dc:title>
+				<dc:description>Raw data of paper</dc:description>
+				<dc:type>Primary model</dc:type>
+				<dc:creator>Huang</dc:creator>
+				<dcterms:created>2014</dcterms:created>
+				<dc:language>en</dc:language>
+				<dc:hasVersion>V1.0</dc:hasVersion>
+			</pmf:metadata>
+		</annotation>
+
+		<dimensionDescription>
+			<compositeDescription indexType="string" name="Time">
+				<tupleDescription>
+					<atomicDescription name="concentration" valueType="double" ontologyTerm="concentrationTerm"/>
+					<atomicDescription name="time" valueType="double" ontologyTerm="timeTerm"/>
+				</tupleDescription>
+			</compositeDescription>
+		</dimensionDescription>
+		<dimension>
+			<compositeValue indexValue="t0">
+				<tuple>
+					<atomicValue>2.67</atomicValue>
+					<atomicValue>0.0</atomicValue>
+				</tuple>
+			</compositeValue>
+			<compositeValue indexValue="t1">
+				<tuple>
+					<atomicValue>2.91</atomicValue>
+					<atomicValue>50.882</atomicValue>
+				</tuple>
+			</compositeValue>
+			<compositeValue indexValue="t2">
+				<tuple>
+					<atomicValue>2.8699999999999997</atomicValue>
+					<atomicValue>73.018</atomicValue>
+				</tuple>
+			</compositeValue>
+			<compositeValue indexValue="t3">
+				<tuple>
+					<atomicValue>3.69</atomicValue>
+					<atomicValue>103.965</atomicValue>
+				</tuple>
+			</compositeValue>
+		</dimension>
+	</resultComponent>
+</numl>
