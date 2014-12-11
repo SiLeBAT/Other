@@ -16,7 +16,10 @@
  ******************************************************************************/
 package de.bund.bfr.pmf
 
+import java.util.Map;
+
 import groovy.transform.InheritConstructors
+import groovy.util.Node;
 
 import javax.xml.namespace.QName
 
@@ -98,7 +101,7 @@ class PMFOntologyTerm extends OntologyTerm implements PMFNuMLMetadataContainer {
 	private transient Model sbml
 	
 	final static sbmlTemplate = """
-		<sbml xmlns='http://www.sbml.org/sbml/level3/version1/core' level='3' version='1'>
+		<sbml xmlns='http://www.sbml.org/sbml/level3/version1/core' level='3' version='1' %s>
 			%s
 		</sbml>
 	"""
@@ -120,28 +123,36 @@ class PMFOntologyTerm extends OntologyTerm implements PMFNuMLMetadataContainer {
 	}
 	
 	protected Model getSbml() {
-		this.sbml ?: getSbmlReader()?.document?.model
+		if(!this.sbml)
+			this.sbml = getSbmlReader()?.document?.model
+		this.sbml
 	}
 	
 	protected SBMLAdapter getSbmlReader() {
 		if(this.sbmlReader)
 			return sbmlReader
 			
-		def sbmlMetaData = getAnnotationNode('metadata', PMFUtil.PMF_NS)
+		def sbmlMetaData = PMFUtil.getPMFAnnotation(this, 'metadata')
 		def sbmlXml = new StringWriter()
 		if(sbmlMetaData) {
 			sbmlMetaData = sbmlMetaData.clone()
-			sbmlMetaData.name = new QName('model', PMFUtil.SBML_NS)
+			PMFUtil.addStandardPrefixes(sbmlMetaData)
+			sbmlMetaData.name = new groovy.xml.QName(PMFUtil.SBML_NS, 'model')
 			
 			sbmlXml.withPrintWriter { writer ->
 				new XmlNodePrinter(writer).print(sbmlMetaData)
 			}
 		}
-		def sbmlMockup = String.format(sbmlTemplate, sbmlXml.toString())
+		def sbmlMockup = String.format(sbmlTemplate, PMFUtil.standardPrefixesDeclarations, sbmlXml.toString())
 		
 		sbmlReader = new SBMLAdapter(validating: true)
 		sbmlReader.parseText(sbmlMockup)
 		sbmlReader
+	}
+	
+	@Override
+	Map<String, Object> getPropertyValues() {
+		super.getPropertyValues(OntologyTerm.class.metaClass)
 	}
 	
 	/**
@@ -157,6 +168,13 @@ class PMFOntologyTerm extends OntologyTerm implements PMFNuMLMetadataContainer {
 		sbml.listOfUnitDefinitions.clear()
 		sbml.listOfUnitDefinitions.add(unit)
 		this.setSbml(sbml)
+	}
+	
+	@Override
+	void setOriginalNode(Node originalNode) {
+		super.setOriginalNode(originalNode)
+		this.sbml = null
+		this.sbmlReader = null
 	}
 	
 	/**
@@ -243,37 +261,33 @@ class PMFOntologyTerm extends OntologyTerm implements PMFNuMLMetadataContainer {
 	List<ConformityMessage> getInvalidSettings(String prefix) {
 		def messages = []
 		
+		def subPrefix = "$prefix/ontologyTerms/ontologyTerm/annotation"
 		if(unitDefinition)
-			messages.addAll(unitDefinition.getInvalidSettings(getSbmlReader().document, "$prefix/unitDefinition", null))
+			messages.addAll(unitDefinition.getInvalidSettings(getSbmlReader().document, "$subPrefix", null))
 		
 		if(species)
-			messages.addAll(species.getInvalidSettings(getSbmlReader().document, "$prefix/species", null))
+			messages.addAll(species.getInvalidSettings(getSbmlReader().document, "$subPrefix", null))
 		else if(unitDefinition?.isVariantOfSubstancePerVolume())		
 			messages << new ConformityMessage(level: Level.WARN,
-				message: "$prefix: ontology term ${id ?: term} seem to denote a concentration and should have a species annotation (Specification 13)")
+				message: "$subPrefix: ontology term ${id ?: term} seem to denote a concentration and should have a species annotation (Specification 13)")
 			
-		if((species == null) == (unitDefinition == null))
-			messages << new ConformityMessage("$prefix: ontology term ${id ?: term} must have either a unitDefinition or a species annotation (Specification 13)")
+		if(!species && !unitDefinition)
+			messages << new ConformityMessage("$prefix: ontology term ${id ?: term} must have a unitDefinition or a species annotation (Specification 13)")
 			
 		if(compartment)
-			messages.addAll(compartment.getInvalidSettings(getSbmlReader().document, "$prefix/compartment", null))
+			messages.addAll(compartment.getInvalidSettings(getSbmlReader().document, "$subPrefix/compartment", null))
 			
 		messages
 	}
 	
 	void replace(OntologyTerm ontologyTerm) {
-		def newParent = ontologyTerm.parent
-		switch(newParent.class) {
-		case ResultComponent:
-			newParent.dimensionDescription = this
-			break
-		case CompositeDescription:		
-			newParent.description = this
-			break
-		case TupleDescription:		
-			def index = newParent.descriptions.findIndexOf { it.is(description) }
-			newParent.descriptions.set(index, this)
-			break
+		def index = this.document.ontologyTerms.findIndexOf { it.is(ontologyTerm) }
+		this.document.ontologyTerms.set(index, this)
+		this.document.resultComponents.each { rc ->
+			PMFUtil.traverse(rc.dimensionDescription) { desc ->
+				if(ontologyTerm.is(desc.ontologyTerm))
+					desc.ontologyTerm = this
+			}
 		}
 	}
 }

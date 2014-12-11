@@ -36,10 +36,14 @@
 			</pmf:metadata>
 		</annotation>
 		<listOfUnitDefinitions>
-			<unitDefinition id="item_g">
+			<unitDefinition id="pmf_log10_cfu_g" name="log10(cfu/g)">
+				<annotation>
+					<pmf:transformation name="log10"
+						xlink:href="http://sourceforge.net/projects/microbialmodelingexchange/files/PMF-ML" />
+				</annotation>
 				<listOfUnits>
-					<unit kind="item" />
-					<unit exponent="-1" kind="gram" />
+					<unit kind="item" exponent="1" scale="1" multiplier="1" />
+					<unit kind="gram" exponent="-1" scale="1" multiplier="1" />
 				</listOfUnits>
 			</unitDefinition>
 			<unitDefinition id="h">
@@ -58,23 +62,20 @@
 			</compartment>
 		</listOfCompartments>
 		<listOfSpecies>
-			<species id="salmonella_spp" name="salmonella spp" compartment="culture_broth_broth_culture_culture_medium">
+			<species id="salmonella_spp" name="salmonella spp" compartment="culture_broth_broth_culture_culture_medium"
+				substanceUnits="pmf_log10_cfu_g" hasOnlySubstanceUnits="false">
 				<annotation>
 					<pmf:metadata>
 						<dc:source>http://identifiers.org/ncim/C0036111</dc:source>
 					</pmf:metadata>
-				</annotation>
-			</species>
-		</listOfSpecies>
-		<listOfParameters>
-			<parameter id="Value" constant="false" value="0" units="item_g">
-				<annotation>
 					<pmf:sourceValues>
 						<pmf:sourceValue source="source1"
 							descriptor="//numl:ResultComponent[@id='resultComponent1']//numl:atomicDescription[@name='mass']" />
 					</pmf:sourceValues>
 				</annotation>
-			</parameter>
+			</species>
+		</listOfSpecies>
+		<listOfParameters>
 			<parameter id="lambda" constant="true" value="42.15624402963166" />
 			<parameter id="mu_max" constant="true" value="0.0335496792126201" />
 			<parameter id="Ymax" constant="true" value="19.81060444197425" />
@@ -89,7 +90,7 @@
 			</parameter>
 		</listOfParameters>
 		<listOfRules>
-			<assignmentRule variable="Value">
+			<assignmentRule variable="salmonella_spp">
 				<math xmlns="http://www.w3.org/1998/Math/MathML">
 					<apply>
 						<minus />

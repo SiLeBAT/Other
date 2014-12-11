@@ -16,20 +16,23 @@
  ******************************************************************************/
 package de.bund.bfr.pmf
 
+import groovy.transform.EqualsAndHashCode
+import groovy.transform.ToString
+
 import java.nio.charset.Charset
 import java.nio.file.Paths
 
-import javax.xml.xpath.XPathFactory;
-
 import org.sbml.jsbml.SBMLDocument
 
-import de.bund.bfr.numl.ConformityMessage;
+import de.bund.bfr.numl.ConformityMessage
 import de.bund.bfr.numl.NuMLDocument
 import de.bund.bfr.numl.NuMLWriter
 
 /**
  * The base {@link PMFDocument} consisting of several NuML data files and 1 SBML model (for now).
  */
+@EqualsAndHashCode(includes = ['models', 'dataSets'])
+@ToString(includes = ['models', 'dataSets'])
 class PMFDocument {
 	Map<String, SBMLDocument> models = new ObservableMap()
 	Map<String, NuMLDocument> dataSets = new ObservableMap()
@@ -119,5 +122,5 @@ class PMFDocument {
 
 		this.models.clear()
 		this.models.putAll(models)
-	}
+	}	
 }

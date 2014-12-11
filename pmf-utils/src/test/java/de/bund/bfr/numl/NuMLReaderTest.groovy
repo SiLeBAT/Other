@@ -44,8 +44,8 @@ public class NuMLReaderTest {
 		def parser = new NuMLReader(validating: true)
 		def doc = parser.read(resourceFile)
 		assertNotNull(doc);
-		assertEquals(5, doc.invalidSettings.size())
-		assertEquals(10, parser.parseMessages.size())
+		assertEquals(4, doc.invalidSettings.size())
+		assertEquals(9, parser.parseMessages.size())
 	}
 
 }

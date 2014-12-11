@@ -16,6 +16,9 @@
  ******************************************************************************/
 package de.bund.bfr.numl
 
+import java.util.List;
+import java.util.Map;
+
 import org.apache.log4j.Level;
 
 import groovy.transform.EqualsAndHashCode
@@ -45,16 +48,14 @@ class ResultComponent extends NMBase {
 			
 		invalidSettings + super.getInvalidSettings(prefix)
 	}
-
+	
 	@Override
-	protected Map<String, Object> getAttributeValues() {
-		def attributeValues = super.getAttributeValues()
-		attributeValues.remove('dimension')
-		attributeValues
+	protected List<String> getIgnoredProperties() {
+		super.getIgnoredProperties() + 'dimension'
 	}
 
 	@Override
-	public void writeBody(BuilderSupport builder, Map subTypes) {
+	void writeBody(BuilderSupport builder) {
 		builder.dimensionDescription { dimensionDescription.write(builder) }
 		builder.dimension {
 			dimensionDescription.writeData(builder, this.dimension)

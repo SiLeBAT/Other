@@ -72,8 +72,8 @@ class PMFSpecies extends Species implements SourceAnnotation, SBMLReplacement {
 	List<ConformityMessage> getInvalidSettings(SBMLDocument document, String prefix, PMFDocument pmf) {
 		def messages = SourceAnnotation.super.getInvalidSettings(document, prefix, pmf)
 		
-		if(!this.units)
-			messages << new ConformityMessage("$prefix: species $id must have a unit annotation")
+		if(!this.substanceUnits)
+			messages << new ConformityMessage("$prefix: species $id must have substanceUnits")
 		
 		messages
 	}

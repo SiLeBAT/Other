@@ -18,11 +18,10 @@ package de.bund.bfr.numl;
 
 import groovy.transform.EqualsAndHashCode
 
-import java.awt.PageAttributes.OriginType;
-import java.text.DecimalFormat;
-import java.text.NumberFormat
-import java.text.ParseException
-import javax.management.InstanceOfQueryExp;
+import java.text.*
+import java.util.List;
+import java.util.Map;
+
 import javax.xml.xpath.XPathFactory
 
 
@@ -68,7 +67,14 @@ abstract class Description extends NMBase {
 			attributeValues['ontologyTerm'] = this.ontologyTerm.id
 		attributeValues
 	}
-
+	
+	@Override
+	Map<String, NMBase> getNamedChildren() {
+		def children = super.getNamedChildren()
+		children.remove('ontologyTerm')
+		children
+	}
+	
 	@Override
 	List<ConformityMessage> getInvalidSettings(String prefix) {
 		// if the ontology term is not registered in document, we cannot really check other values
@@ -115,7 +121,7 @@ enum DataType {
 	String("string") {
 		def parseData(String value) { value	}
 		void writeData(BuilderSupport builder, Object value) { builder.atomicValue(value) }
-		boolean isValid(Object value) { value instanceof String }
+		boolean isValid(Object value) { value instanceof String }		
 	},
 	XPath("xpath") {
 		javax.xml.xpath.XPath xpath = XPathFactory.newInstance().newXPath()
@@ -125,22 +131,21 @@ enum DataType {
 		boolean isValid(Object value) { value instanceof String }
 	},
 	Float("float") {
-		def format = NumberFormat.getNumberInstance(Locale.US)
-		def parseData(String value) { format.parse(value) as Float }
+		def format = new DecimalFormat('0.#######E0', DecimalFormatSymbols.getInstance(Locale.US))
+		def parseData(String value) { java.lang.Float.valueOf(value) }
 		void writeData(BuilderSupport builder, Object value) { builder.atomicValue(format.format(value)) }
 		boolean isValid(Object value) { value instanceof Number }
 	},
 	Double("double") {
-		def format = NumberFormat.getNumberInstance(Locale.US)
-		def parseData(String value) { format.parse(value) as Double }
+		def format = new DecimalFormat('0.###############E0', DecimalFormatSymbols.getInstance(Locale.US))
+		def parseData(String value) { java.lang.Double.valueOf(value) }
 		void writeData(BuilderSupport builder, Object value) { builder.atomicValue(format.format(value)) }
 		boolean isValid(Object value) { value instanceof Number }
 	},
 	Integer("integer") {
-		def format = NumberFormat.getIntegerInstance(Locale.US)
-		def parseData(String value) { format.parse(value) }
-		void writeData(BuilderSupport builder, Object value) { builder.atomicValue(format.format(value)) }
-		boolean isValid(Object value) { value instanceof Number }
+		def parseData(String value) { new BigInteger(value) }
+		void writeData(BuilderSupport builder, Object value) { builder.atomicValue(value) }
+		boolean isValid(Object value) { value instanceof Number && value.class in [java.lang.Integer, Long, BigInteger] }
 	};
 
 	java.lang.String numlName
@@ -214,7 +219,7 @@ class CompositeDescription extends Description {
 			if(child.'@indexValue') {
 				try {
 					values[indexType.parseData(child.'@indexValue')] = description.parseData(child)
-				} catch(ParseException e) {
+				} catch(NumberFormatException e) {
 					parseDataErrors << new ConformityMessage(
 						"Unable to parse index value ${child.'@indexValue'} of expected type $indexType in $name " + e)
 				}
@@ -293,7 +298,7 @@ class TupleDescription extends Description {
 
 	@Override
 	void writeData(BuilderSupport builder, Object data) {
-		builder.tupleValue() {
+		builder.tuple() {
 			descriptions.eachWithIndex { description, index ->
 				description.writeData(builder, data[index])
 			}

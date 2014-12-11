@@ -43,6 +43,17 @@ class PMFUtil {
 	static String XLINK_NS = 'http://www.w3.org/1999/xlink'
 	static String DCTERMS_NS = 'http://purl.org/dc/terms/'
 	static String PMML_NS = 'http://www.dmg.org/PMML-4_2'
+	
+	static Map<String, String> standardPrefixes = [pmf: PMF_NS,
+			sbml: SBML_NS,
+			numl: NUML_NS,
+			comp: COMP_NS,
+			dc: DC_NS,
+			xlink: XLINK_NS,
+			dcterms: DCTERMS_NS,
+			pmml: PMML_NS,
+		]
+	
 
 	static Map<String, List<String>> BaseAnnotations = [DC_NS: [
 			'identifier',
@@ -143,7 +154,7 @@ class PMFUtil {
 		pmfAnnotation
 	}
 	
-	static SBMLReplacements = [PMFModel, PMFCompartment, PMFSpecies, PMFParameter].collectEntries { [(it.superclass): it] }
+	static SBMLReplacements = [PMFModel, PMFCompartment, PMFUnitDefinition, PMFSpecies, PMFParameter].collectEntries { [(it.superclass): it] }
 	static SBMLDocument wrap(SBMLDocument doc) {
 		traverse(doc, { node ->			
 			def replaceNodeType = SBMLReplacements[node.class]
@@ -153,7 +164,7 @@ class PMFUtil {
 		doc
 	}
 	
-	static void traverse(SBMLDocument doc, Closure callback) {
+	static void traverse(SBase doc, Closure callback) {
 		def nodeStack = new LinkedList<SBase>([doc])
 		while(nodeStack) {
 			def node = nodeStack.pop()
@@ -163,16 +174,46 @@ class PMFUtil {
 	}
 	
 	static NuMLReplacements = [PMFResultComponent, PMFOntologyTerm].collectEntries { [(it.superclass): it] }
-	static NuMLDocument wrap(NuMLDocument doc) {		
-		def nodeStack = new LinkedList<NMBase>([doc])
-		while(nodeStack) {
-			def node = nodeStack.pop()
+	static NuMLDocument wrap(NuMLDocument doc) {	
+		traverse(doc, { node ->			
 			def replaceNodeType = NuMLReplacements[node.class]
 			if(replaceNodeType)
 				replaceNodeType.newInstance(node).replace(node)
+		})
+		doc
+	}
+	
+	static void addStandardPrefixes(Node node) {
+		node.name = addStandardPrefixes(node.name())
+		def attributes = node.attributes()
+		attributes*.key.each { key ->			
+			if(key instanceof groovy.xml.QName && !key.prefix) {
+				def prefixedKey = addStandardPrefixes(key)
+				if(prefixedKey.prefix) {
+					def value = attributes[key]
+					attributes.remove(key)
+					attributes[prefixedKey] = value
+				}
+			}
+		}
+		node.children().each { child ->
+			if(child instanceof Node)
+				addStandardPrefixes(child) 
+		}
+	}
+	
+	static groovy.xml.QName addStandardPrefixes(groovy.xml.QName name) {
+		def nsEntry = PMFUtil.standardPrefixes.find { it.value == name.namespaceURI }
+		nsEntry ? new groovy.xml.QName(nsEntry.value, name.localPart, nsEntry.key) : name
+	}
+	
+	static void traverse(NMBase doc, Closure callback) {
+		def nodeStack = new LinkedList<NMBase>([doc])
+		while(nodeStack) {
+			def node = nodeStack.pop()
+			callback(node)
 			node.children.each { nodeStack.push(it) }
 		}
-		doc
 	}
 	
 	static List<ConformityMessage> getInvalidSettings(SBMLDocument document, String prefix, PMFDocument pmf = null) {
@@ -182,5 +223,9 @@ class PMFUtil {
 				invalidSettings.addAll(node.getInvalidSettings(document, prefix, pmf))
 		})
 		invalidSettings
+	}
+	
+	static String getStandardPrefixesDeclarations() {
+		standardPrefixes.collect { prefix, url -> "xmlns:$prefix='$url'"}.join(' ')
 	}
 }

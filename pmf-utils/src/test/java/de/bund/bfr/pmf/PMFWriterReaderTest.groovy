@@ -16,28 +16,40 @@
  ******************************************************************************/
 package de.bund.bfr.pmf;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.*
 
-import org.junit.Test;
+import org.junit.Test
 
-import de.bund.bfr.numl.NuMLDocument;
-import de.bund.bfr.numl.NuMLReader;
-import de.bund.bfr.numl.NuMLWriter;
+import de.bund.bfr.numl.NuMLDocument
 
 /**
  * 
  */
-class PMFWriterReaderTest extends PMFWriterTest {
+class PMFWriterReaderTest extends PMFWriterTestBase {
 	@Test
-	void testReadWriteRead() throws Exception {
-		String resourceFile =
-			NuMLReaderTest.class.getResource("/numl/TimeConcentration.xml").toURI().toString();
-		NuMLDocument doc = new NuMLReader().read(resourceFile)
+	void shouldReadWriteRead() throws Exception {
+		def resourceFile = PMFWriterReaderTest.getResource('/pmf/Valid.zip')
+		PMFDocument doc = new PMFReader().read(resourceFile)
 		
-		def writtenXml = new NuMLWriter().toString(doc)		
+		def writtenZip = new PMFWriter().toBytes(doc)		
 		
-		NuMLDocument doc2 = new NuMLReader().parseText(writtenXml)
+		PMFDocument doc2 = new PMFReader().read(writtenZip)
 		
 		assertEquals(doc, doc2)
 	}
+	
+	@Test
+	void shouldWriteRead() {
+		def dataset = createPMFNuml()
+		def model = createPMFSBML()
+		PMFModel pmfModel = model.model
+		pmfModel.setDataSource('data', 'concentrations.xml')
+		timeParameter.setSourceValue('data', timeDescription)
+		def doc = new PMFDocument(dataSets: ['concentrations.xml': dataset], models: ['salModel.xml': model])
+		
+		new PMFWriter().write(doc, finalFile)
+		PMFDocument doc2 = new PMFReader().read(finalFile)
+		assertEquals(doc, doc2)
+	}
+	
 }

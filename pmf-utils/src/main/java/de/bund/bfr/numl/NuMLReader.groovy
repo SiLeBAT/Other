@@ -16,14 +16,16 @@
  ******************************************************************************/
 package de.bund.bfr.numl
 
-import javax.xml.XMLConstants;
+import groovy.xml.XmlUtil
 
-import groovy.xml.XmlUtil;
+import java.nio.file.Path
 
-import org.apache.log4j.Level;
-import org.xml.sax.ErrorHandler;
+import javax.xml.XMLConstants
+
+import org.apache.log4j.Level
+import org.xml.sax.ErrorHandler
 import org.xml.sax.InputSource
-import org.xml.sax.SAXParseException;
+import org.xml.sax.SAXParseException
 
 /**
  * Reads a NuML file from various sources.<br/> 
@@ -46,6 +48,10 @@ class NuMLReader {
 	NuMLDocument read(File file) {
 		parser.errorHandler.messages.clear()
 		parseNode(parser.parse(file))
+	}
+
+	NuMLDocument read(Path file) {
+		read(file.toFile())
 	}
 
 	NuMLDocument read(InputSource input) {

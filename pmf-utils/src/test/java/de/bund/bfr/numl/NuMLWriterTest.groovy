@@ -52,5 +52,6 @@ class NuMLWriterTest {
 		]
 		
 		def doc = new NuMLDocument(resultComponents: [resultComponent])
+		new NuMLWriter()
 	}
 }
