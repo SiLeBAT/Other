@@ -26,7 +26,6 @@ import groovy.xml.NamespaceBuilderSupport
 /**
  * The root element of every NuML document. It contains a list of {@link OntologyTerm}s and {@link ResultComponent}s.
  */
-@EqualsAndHashCode(callSuper = true)
 class NuMLDocument extends NMBase {
 	@Required
 	int level = 1, version = 1

@@ -21,6 +21,13 @@ import static org.junit.Assert.*
 import org.apache.log4j.Level
 import org.junit.Test
 
+import de.bund.bfr.pmf.numl.PMFOntologyTerm
+import de.bund.bfr.pmf.numl.PMFResultComponent
+import de.bund.bfr.pmf.sbml.PMFCompartment
+import de.bund.bfr.pmf.sbml.PMFModel
+import de.bund.bfr.pmf.sbml.PMFParameter
+import de.bund.bfr.pmf.sbml.PMFSpecies
+
 /**
  * 
  */
@@ -38,7 +45,7 @@ class PMFReaderTest {
 		assertEquals(1, doc.dataSets.size())
 		
 		// however, we also expect several errors
-		assertEquals(27, reader.parseMessages.size())
+		assertNotEquals(0, reader.parseMessages.size())
 	}
 	
 	@Test
@@ -52,7 +59,7 @@ class PMFReaderTest {
 		assertEquals(1, doc.dataSets.size())
 		
 		// however, we also expect several errors
-		assertEquals(27, reader.parseMessages.size())
+		assertNotEquals(0, reader.parseMessages.size())
 	}
 	
 	@Test
@@ -66,13 +73,14 @@ class PMFReaderTest {
 		assertEquals(1, doc.models.size())
 		assertEquals(1, doc.dataSets.size())
 		
+		println reader.getParseMessages(Level.ERROR).join('\n')
 		assertEquals(0, reader.getParseMessages(Level.ERROR).size())
 		
 		// check parsed values for correctness
 		def dimension = doc.dataSets[dataFile as String].resultComponents[0].dimension
 		assertEquals(4, dimension.size())
-		assertNotNull(dimension['t3'])
-		assertEquals(103.965, dimension['t3'][1], 0.01)
+		assertNotNull(dimension[73.018d])
+		assertEquals(2.1, dimension[73.018d][1], 0.0001)
 	}
 	
 	@Test
@@ -90,13 +98,13 @@ class PMFReaderTest {
 		// check parsed values for correctness
 		def dimension = doc.dataSets*.value.first().resultComponents[0].dimension
 		assertEquals(4, dimension.size())
-		assertNotNull(dimension['t3'])
-		assertEquals(103.965, dimension['t3'][1], 0.01)
+		assertNotNull(dimension[73.018d])
+		assertEquals(2.1, dimension[73.018d][1], 0.0001)
 	}
 	
 	@Test
 	void shouldSuccessfullyParseValidZip() {
-		def file = PMFReaderTest.getResource('/pmf/Valid.pmf')
+		def file = PMFReaderTest.getResource('/pmf/Valid.zip')
 		def reader = new PMFReader(validating: true)
 		def doc = reader.read(file)
 				
@@ -109,8 +117,8 @@ class PMFReaderTest {
 		// check parsed values for correctness
 		def dimension = doc.dataSets*.value.first().resultComponents[0].dimension
 		assertEquals(4, dimension.size())
-		assertNotNull(dimension['t3'])
-		assertEquals(103.965, dimension['t3'][1], 0.01)
+		assertNotNull(dimension[73.018d])
+		assertEquals(2.1, dimension[73.018d][1], 0.0001)
 	}
 	
 	@Test
@@ -131,7 +139,7 @@ class PMFReaderTest {
 		assertEquals(PMFModel, model.class)
 		assertEquals(PMFCompartment, model.listOfCompartments[0].class)
 		assertEquals(PMFSpecies, model.listOfSpecies[0].class)
-		assertEquals([PMFParameter] * 6, model.listOfParameters*.class)
+		assertEquals([PMFParameter] * 5, model.listOfParameters*.class)
 	}
 	
 	@Test
@@ -151,6 +159,6 @@ class PMFReaderTest {
 		def dataset = doc.dataSets[dataFile as String]
 		def rc = dataset.resultComponents[0]
 		assertEquals(PMFResultComponent, rc.class)
-		assertEquals([PMFOntologyTerm] * 2, dataset.ontologyTerms*.class)
+		assertEquals([PMFOntologyTerm] * 3, dataset.ontologyTerms*.class)
 	}
 }

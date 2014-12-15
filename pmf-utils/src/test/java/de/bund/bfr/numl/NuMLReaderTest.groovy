@@ -16,12 +16,10 @@
  ******************************************************************************/
 package de.bund.bfr.numl;
 
-import static org.junit.Assert.*
+import java.net.URISyntaxException;
 
-import org.junit.Test
-
-import de.bund.bfr.numl.NuMLDocument;
-import de.bund.bfr.numl.NuMLReader;
+import org.junit.Test;
+import static org.junit.Assert.*;
 
 public class NuMLReaderTest {
 	
@@ -44,8 +42,8 @@ public class NuMLReaderTest {
 		def parser = new NuMLReader(validating: true)
 		def doc = parser.read(resourceFile)
 		assertNotNull(doc);
-		assertEquals(5, doc.invalidSettings.size())
-		assertEquals(10, parser.parseMessages.size())
+		assertEquals(4, doc.invalidSettings.size())
+		assertEquals(9, parser.parseMessages.size())
 	}
 
 }

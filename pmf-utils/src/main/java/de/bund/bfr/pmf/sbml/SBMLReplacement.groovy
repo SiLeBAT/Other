@@ -14,27 +14,43 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package de.bund.bfr.pmf
+package de.bund.bfr.pmf.sbml;
 
-import groovy.transform.InheritConstructors
-
-import org.apache.log4j.Level
+import org.sbml.jsbml.ListOf
+import org.sbml.jsbml.SBMLDocument
+import org.sbml.jsbml.SBase
 
 import de.bund.bfr.numl.ConformityMessage
+import de.bund.bfr.pmf.PMFDocument
 
-/**
- * An exception indicating invalid settings in a {@link PMFDocument} while parsing or writing the document.
- */
-@InheritConstructors
-class PMFException extends RuntimeException {
-	List<ConformityMessage> messages = []
+import org.sbml.jsbml.util.StringTools
 
-	List<ConformityMessage> getErrors() {
-		messages.findAll { it.level.isGreaterOrEqual(Level.ERROR) }
+trait SBMLReplacement {
+	void initLevelAndVersion() {
+		if(getLevel() == -1)
+			setLevel(3)
+		if(getVersion() == -1)
+			setVersion(1)
 	}
-	
-	@Override
-	String getMessage() {
-		"${super.getMessage()}:\n${messages.join('\n')}"
+
+	void replace(SBase sbmlElement) {
+		this.setParent(null)
+		SBase newParent = sbmlElement.parent
+		if(newParent instanceof ListOf) {
+			// bug SBML does not automatically unregister old elements
+			newParent.unregisterChild(sbmlElement)
+			newParent.set(newParent.indexOf(sbmlElement), this)
+		}
+		else
+			newParent."$sbmlElement.elementName" = this
+	}
+
+	String getElementName() {
+		StringTools.firstLetterLowerCase(getClass().superclass.simpleName)
+	}
+
+	List<ConformityMessage> getInvalidSettings(SBMLDocument document, String prefix, PMFDocument pmf) { 
+		[]		
 	}
 }
+

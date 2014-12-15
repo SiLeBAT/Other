@@ -16,8 +16,7 @@
  ******************************************************************************/
 package de.bund.bfr.numl
 
-import groovy.transform.EqualsAndHashCode
-import groovy.xml.QName;
+import groovy.xml.QName
 
 /**
  * Base class for NuML types according to NuML specification.
@@ -67,43 +66,51 @@ class NMBase {
 	/**
 	 * Returns all NuML children.
 	 */
+	Map<String, NMBase> getNamedChildren() {
+		def propertyValues = this.propertyValues
+		def nonNull = propertyValues.findAll { 
+			it.value instanceof NMBase || (it.value instanceof Collection && it.value[0] instanceof NMBase )
+		}
+	}
+	
 	List<NMBase> getChildren() {
-		def propertyValues = this.attributeValues
-		def nonNull = propertyValues*.value.findAll{ it }.findAll { 
-			it instanceof NMBase || (it instanceof Collection && it[0] instanceof NMBase )
-		}.flatten()
+		this.namedChildren*.value.flatten()
 	}
 	
 	NuMLDocument getDocument() {
 		parent?.document
 	}
 	
-	protected Map<String, Object> getAttributeValues() {		
-		def ignoredProperties = ['document', 'parent', 'originalNode', 'notes', 'annotation']
-		def properties = this.metaClass.properties.grep { !(it.name in ignoredProperties)  && it.setter }
+	protected List<String> getIgnoredProperties() {
+		['document', 'parent', 'originalNode', 'notes', 'annotation']
+	}
+	
+	protected Map<String, Object> getPropertyValues(MetaClass metaClass = this.metaClass) {
+		def ignoredProperties = this.ignoredProperties
+		def properties = metaClass.properties.grep { !(it.name in ignoredProperties)  && it.setter }
 		properties.collectEntries { [(it.name): it.getProperty(this)] }
+	}
+		
+	protected Map<String, Object> getAttributeValues() {		
+		this.propertyValues - namedChildren
 	}
 	
 	/**
 	 * Writes the element using the provided builder.
 	 */
-	def write(BuilderSupport builder) {
-		def propertyValues = this.attributeValues
-		def nonNull = propertyValues.findAll { it.value }
-		def children = nonNull.findAll { it.value instanceof NMBase || (it.value instanceof Collection && it.value[0] instanceof NMBase ) }
-		def attributes = nonNull - children
-		
-		builder.invokeMethod(this.elementName, [attributes, {
-			if(this.notes?.value)
+	def write(BuilderSupport builder) {		
+		builder.invokeMethod(this.elementName, [attributeValues.findAll { it.value }, {
+			if(this.notes?.value())
 				builder.current.append(this.notes)
-			if(this.annotation?.value)
+			if(this.annotation?.value()) {
 				builder.current.append(this.annotation)
-			writeBody(builder, children)
+			}
+			writeBody(builder)
 		}])
 	}
 	
-	void writeBody(BuilderSupport builder, Map children) {
-		children.each { key, value ->
+	void writeBody(BuilderSupport builder) {
+		namedChildren.each { key, value ->
 			value*.write(builder)
 		}
 	}
@@ -117,6 +124,18 @@ class NMBase {
 		checkParamNMId(metaId, 'metaId')
 
 		this.metaId = metaId
+	}
+	
+	void setParent(NMBase parent) {
+		if (parent == null)
+			throw new NullPointerException("parent must not be null");
+
+		if(!this.parent.is(this.parent = parent))
+			ancestoryChanged()
+	}
+	
+	protected void ancestoryChanged() {
+		children*.ancestoryChanged()
 	}
 	
 	void checkParamNMId(String id, String name) {
@@ -139,21 +158,30 @@ class NMBase {
 		
 		def requiredProps = properties.grep { it.field?.field?.getAnnotation(Required) }
 		def invalidSettings = requiredProps.grep { it.getProperty(this) == null }.collect { 
-			new ConformityMessage("$prefix Required value $it.name not set for $elementName (id=$id, parent $parent?.elementName $parent?.id)")
+			new ConformityMessage("$prefix Required value $it.name not set for $localXPath (parent ${parent?.localXPath})")
 		}
 		
 		if(metaId && !isValidNMId(metaId))
 			invalidSettings << new ConformityMessage("$prefix metaId $metaId is not a valid NMId")
 		
-		def subTypes = properties.collect { it.getProperty(this) }.flatten().grep { it instanceof NMBase }
-		def subInvalidSettings = subTypes.collect { it.getInvalidSettings("$prefix/$elementName") } 
+		def subInvalidSettings = this.children.collect { 
+			it.getInvalidSettings("$prefix/$elementName") 
+		} 
 		invalidSettings + subInvalidSettings.flatten()
+	}
+	
+	String getLocalXPath() {		
+		def thisSelector = hasProperty('id') && id ? "[id='$id']" : ''
+		"$elementName$thisSelector"
+	}
+	
+	String getXPath() {
+		def parentXPath = parent?.XPath ?: ''
+		"$parentXPath/$localXPath"
 	}
 		
 	String toString() {		
-		def ignoredProperties = ['parent', 'document', 'originalNode']
-		def properties = this.metaClass.properties.grep { !(it.name in ignoredProperties)  && it.setter }
-		def propertyValues = properties.collectEntries { [(it.name): it.getProperty(this)] }
+		def propertyValues = this.propertyValues
 		def nonNull = propertyValues.findAll { it.value }.collectEntries { key, value ->
 			[(key): value instanceof ObservableList ? value as ArrayList : value]
 		}
@@ -163,26 +191,46 @@ class NMBase {
 	@Override
 	public int hashCode() {
 		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((annotation == null) ? 0 : annotation.hashCode());
-		result = prime * result + ((metaId == null) ? 0 : metaId.hashCode());
-		result = prime * result + ((notes == null) ? 0 : notes.hashCode());
-		return result;
+		def properties = [notes: notes, annotation: annotation] + this.propertyValues
+		properties.inject(prime) { result, property -> 
+			prime * result + (property.value?.hashCode() ?: 0)
+		}
 	}
 
+	public Map<String, Object> getMismatchedProperties(Object obj) {
+		if (!getClass().is(obj.getClass()))
+			throw new IllegalArgumentException()
+			
+		def thisProperties = this.propertyValues 
+		def thatProperties = obj.propertyValues
+		
+		def mismatchedProperties = thisProperties.findAll { name, value ->
+			thatProperties[name] != value
+		}.collectEntries { name, value ->
+			[(name): [value, thatProperties[name]]]
+		}
+		
+		if(!NodeUtil.isEqual(this.notes, obj.notes))
+			mismatchedProperties['notes'] = [this.notes, obj.notes]
+			
+		if(!NodeUtil.isEqual(this.annotation, obj.annotation))
+			mismatchedProperties['annotation'] = [this.annotation, obj.annotation]
+			
+		mismatchedProperties
+	}
 	/* (non-Javadoc)
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
-	public boolean equals(Object obj) {
+	public final boolean equals(Object obj) {
 		if (this.is(obj))
 			return true;
 		if (obj.is(null))
 			return false;
 		if (!getClass().is(obj.getClass()))
 			return false;
-		NMBase other = (NMBase) obj;
-		metaId == other.metaId && NodeUtil.isEqual(notes, other.notes) && NodeUtil.isEqual(annotation, other.annotation)
+		def mismatched = getMismatchedProperties(obj)
+		!mismatched
 	}
 	
 	

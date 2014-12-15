@@ -16,14 +16,8 @@
  ******************************************************************************/
 package de.bund.bfr.numl;
 
-import static org.junit.Assert.*
-
-import org.junit.Test
-
-import de.bund.bfr.numl.AtomicDescription;
-import de.bund.bfr.numl.CompositeDescription;
-import de.bund.bfr.numl.DataType;
-import de.bund.bfr.numl.TupleDescription;
+import org.junit.Test;
+import static org.junit.Assert.*;
 
 /**
  * 

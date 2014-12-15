@@ -18,14 +18,13 @@ package de.bund.bfr.numl;
 
 import groovy.transform.EqualsAndHashCode
 
-import java.awt.PageAttributes.OriginType;
-import java.text.DecimalFormat;
-import java.text.NumberFormat
-import java.text.ParseException
+import java.text.*
+import java.util.List;
+import java.util.Map;
+
 import javax.xml.xpath.XPathFactory
 
 
-@EqualsAndHashCode(callSuper = true, includes = ['ontologyTerm', 'id'])
 abstract class Description extends NMBase {
 	OntologyTerm ontologyTerm
 
@@ -34,7 +33,9 @@ abstract class Description extends NMBase {
 	protected parseDataErrors = []
 
 	abstract void writeData(BuilderSupport builder, Object data)
-
+	
+	abstract void validateData(String prefix, Object data, List<ConformityMessage> messages)
+	
 	abstract Object parseData(Node node)
 
 	final static NodeMapping = [
@@ -65,9 +66,16 @@ abstract class Description extends NMBase {
 			attributeValues['ontologyTerm'] = this.ontologyTerm.id
 		attributeValues
 	}
-
+	
 	@Override
-	List<String> getInvalidSettings(String prefix) {
+	Map<String, NMBase> getNamedChildren() {
+		def children = super.getNamedChildren()
+		children.remove('ontologyTerm')
+		children
+	}
+	
+	@Override
+	List<ConformityMessage> getInvalidSettings(String prefix) {
 		// if the ontology term is not registered in document, we cannot really check other values
 		if((ontologyTerm || this.originalNode?.'@ontologyTerm') && document && !(ontologyTerm in document.ontologyTerms))
 			return [new ConformityMessage(
@@ -87,10 +95,10 @@ abstract class Description extends NMBase {
 	}
 	
 	@Override
-	public void setParent(NMBase parent) {
-		super.setParent(parent)
+	protected void ancestoryChanged() {
 		if(ontologyTerm)
 			document?.addOntologyTerm(ontologyTerm)
+		super.ancestoryChanged()
 	}
 
 	void setOntologyTerm(OntologyTerm ontologyTerm) {
@@ -110,31 +118,44 @@ abstract class Description extends NMBase {
 
 enum DataType {
 	String("string") {
-		def parseData(String value) {
-			value
-		}
+		def parseData(String value) { value	}
+		void writeData(BuilderSupport builder, Object value) { builder.atomicValue(value) }
+		boolean isValid(Object value) { value instanceof String }		
 	},
 	XPath("xpath") {
 		javax.xml.xpath.XPath xpath = XPathFactory.newInstance().newXPath()
 		// we valid the xpath expression, but still return the string, because XPathExpression is not human-readable anymore
 		def parseData(String value) { xpath.compile(value) ; value }
+		void writeData(BuilderSupport builder, Object value) { builder.atomicValue(value) }
+		boolean isValid(Object value) { value instanceof String }
 	},
 	Float("float") {
-		def format = NumberFormat.getNumberInstance(Locale.US)
-		def parseData(String value) { format.parse(value) as Float }
+//		def format = new DecimalFormat('0.#######E0', DecimalFormatSymbols.getInstance(Locale.US))
+//		void writeData(BuilderSupport builder, Object value) { builder.atomicValue(format.format(value)) }
+		def parseData(String value) { java.lang.Float.valueOf(value) }
+		void writeData(BuilderSupport builder, Object value) { builder.atomicValue(value.floatValue()) }
+		boolean isValid(Object value) { value instanceof Number }
 	},
 	Double("double") {
-		def format = NumberFormat.getNumberInstance(Locale.US)
-		def parseData(String value) { format.parse(value) as Double }
+//		def format = new DecimalFormat('0.###############E0', DecimalFormatSymbols.getInstance(Locale.US))
+//		void writeData(BuilderSupport builder, Object value) { builder.atomicValue(format.format(value)) }
+		def parseData(String value) { java.lang.Double.valueOf(value) }
+		void writeData(BuilderSupport builder, Object value) { builder.atomicValue(value.doubleValue()) }
+		boolean isValid(Object value) { value instanceof Number }
 	},
 	Integer("integer") {
-		def format = NumberFormat.getIntegerInstance(Locale.US)
-		def parseData(String value) { format.parse(value) }
+		def parseData(String value) { new BigInteger(value) }
+		void writeData(BuilderSupport builder, Object value) { builder.atomicValue(value) }
+		boolean isValid(Object value) { value instanceof Number && value.class in [java.lang.Integer, Long, BigInteger] }
 	};
 
 	java.lang.String numlName
 
 	abstract Object parseData(String value);
+	
+	abstract void writeData(BuilderSupport builder, Object value);
+	
+	abstract boolean isValid(Object value);
 
 	def DataType(java.lang.String numlName) {
 		this.numlName = numlName
@@ -149,7 +170,6 @@ enum DataType {
 	}
 }
 
-@EqualsAndHashCode(callSuper = true)
 class AtomicDescription extends Description {
 	@Required
 	String name
@@ -167,7 +187,12 @@ class AtomicDescription extends Description {
 
 	@Override
 	void writeData(BuilderSupport builder, Object data) {
-		builder.atomicValue(data)
+		valueType.writeData(builder, data)
+	}
+	
+	void validateData(String prefix, Object data, List<ConformityMessage> messages) {
+		if(data.is(null) || !valueType.isValid(data))
+			messages << new ConformityMessage("$prefix/$name: invalid data ${data} of type $data?.class to expected type $valueType in $name")
 	}
 
 	@Override
@@ -179,7 +204,6 @@ class AtomicDescription extends Description {
 	}
 }
 
-@EqualsAndHashCode(callSuper = true)
 class CompositeDescription extends Description {
 	@Required
 	String name
@@ -194,7 +218,7 @@ class CompositeDescription extends Description {
 			if(child.'@indexValue') {
 				try {
 					values[indexType.parseData(child.'@indexValue')] = description.parseData(child)
-				} catch(ParseException e) {
+				} catch(NumberFormatException e) {
 					parseDataErrors << new ConformityMessage(
 						"Unable to parse index value ${child.'@indexValue'} of expected type $indexType in $name " + e)
 				}
@@ -225,6 +249,15 @@ class CompositeDescription extends Description {
 		}))
 	}
 	
+	void validateData(String prefix, Object data, List<ConformityMessage> messages) {
+		if(data.is(null) || !(data instanceof Map))
+			messages << new ConformityMessage("$prefix/$name: invalid data ${data} of type $data?.class to expected type Map in $name")
+		else 
+			data.each { key, value ->
+				description.validateData("$prefix/$key", value, messages)
+			}
+	}
+	
 	/**
 	 * Sets the description to the specified value.
 	 *
@@ -239,7 +272,6 @@ class CompositeDescription extends Description {
 	}
 }
 
-@EqualsAndHashCode(callSuper = true)
 class TupleDescription extends Description {
 	String name
 
@@ -264,8 +296,19 @@ class TupleDescription extends Description {
 
 	@Override
 	void writeData(BuilderSupport builder, Object data) {
-		data.eachWithIndex { value, index ->
-			descriptions[index].writeData(builder, value)
+		builder.tuple() {
+			descriptions.eachWithIndex { description, index ->
+				description.writeData(builder, data[index])
+			}
+		}
+	}
+	
+	void validateData(String prefix, Object data, List<ConformityMessage> messages) {		
+		if(descriptions.size() != data.size())
+			messages << new ConformityMessage("$prefix: Expected ${descriptions.size()} children in tuple with parent ${parent?.elementName} ${parent?.id}, but encountered ${data.size()}")
+		
+		(0..<Math.min(descriptions.size(), data.size())).each { index ->
+			descriptions[index].validateData("$prefix/tupleValue", data[index], messages)
 		}
 	}
 	

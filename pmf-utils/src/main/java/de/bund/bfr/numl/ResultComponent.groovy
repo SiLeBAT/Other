@@ -16,12 +16,16 @@
  ******************************************************************************/
 package de.bund.bfr.numl
 
+import java.util.List;
+import java.util.Map;
+
+import org.apache.log4j.Level;
+
 import groovy.transform.EqualsAndHashCode
 
 /**
  * The actual numerical result. The structure is described in {@link #dimensionDescription} and the values are stored in {@link #dimension}.
  */
-@EqualsAndHashCode(callSuper = true)
 class ResultComponent extends NMBase {
 	@Required
 	String id
@@ -33,24 +37,24 @@ class ResultComponent extends NMBase {
 	Description dimensionDescription
 
 	@Override
-	List<String> getInvalidSettings(String prefix) {
+	List<ConformityMessage> getInvalidSettings(String prefix) {
 		def invalidSettings = []
 
 		if(id && !isValidNMId(id))
 			invalidSettings << new ConformityMessage("$prefix $id is not a valid NMId")
 
+		validateData("$prefix/dimension", dimensionDescription, dimension, invalidSettings)
+			
 		invalidSettings + super.getInvalidSettings(prefix)
 	}
-
+	
 	@Override
-	protected Map<String, Object> getAttributeValues() {
-		def attributeValues = super.getAttributeValues()
-		attributeValues.remove('dimension')
-		attributeValues
+	protected List<String> getIgnoredProperties() {
+		super.getIgnoredProperties() + 'dimension'
 	}
 
 	@Override
-	public void writeBody(BuilderSupport builder, Map subTypes) {
+	void writeBody(BuilderSupport builder) {
 		builder.dimensionDescription { dimensionDescription.write(builder) }
 		builder.dimension {
 			dimensionDescription.writeData(builder, this.dimension)
@@ -65,9 +69,34 @@ class ResultComponent extends NMBase {
 	void setDimensionDescription(Description dimensionDescription) {
 		if (dimensionDescription == null)
 			throw new NullPointerException("dimensionDescription must not be null");
-
+			
+		if(dimension)
+			validateData('', dimensionDescription, dimension)
 		this.dimensionDescription = dimensionDescription
 		dimensionDescription.parent = this
+	}
+	
+	/**
+	 * Sets the dimension to the specified value.
+	 *
+	 * @param dimension the dimension to set
+	 */
+	public void setDimension(Object dimension) {
+		if (dimension == null)
+			throw new NullPointerException("dimension must not be null");
+			
+		if(dimensionDescription)
+			validateData('', dimensionDescription, dimension)
+		this.dimension = dimension;
+	}
+	
+	void validateData(String prefix, Description dimensionDescription, Object dimension, List<ConformityMessage> messages = null) {
+		boolean validating = messages != null
+		if(messages == null)
+			messages = []
+		dimensionDescription.validateData(prefix, dimension, messages)
+		if(!validating && messages.grep { it.level.isGreaterOrEqual(Level.ERROR) })
+			throw new NuMLException("Invalid dimension description for the set data").with { it.messages = messages ; it }
 	}
 
 
@@ -87,4 +116,7 @@ class ResultComponent extends NMBase {
 				this.dimension = dimensionDescription.parseData(originalNode.dimension?.first())
 		}
 	}
+
+	
+	
 }

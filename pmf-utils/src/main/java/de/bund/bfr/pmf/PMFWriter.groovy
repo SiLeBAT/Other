@@ -23,6 +23,7 @@ import java.util.zip.ZipOutputStream
 import org.apache.log4j.Level
 
 import de.bund.bfr.numl.NuMLWriter
+import de.bund.bfr.pmf.sbml.SBMLAdapter;
 
 /**
  * 
@@ -30,26 +31,43 @@ import de.bund.bfr.numl.NuMLWriter
 class PMFWriter {
 	Map<String, String> namespaces = [:]
 	
-	def write(PMFDocument doc, def streamable) {
-		streamable.withOutputStream { stream ->
-			ZipOutputStream out = new ZipOutputStream(stream)
-			toStrings(doc).each { name, xmlDoc ->
-				out.putNextEntry(new ZipEntry(name))
-				out << xmlDoc.getBytes(Charset.forName('utf-8'))
+	def write(PMFDocument doc, OutputStream out) {
+		def docStrings = toStrings(doc)
+		out.withStream { stream ->
+			new ZipOutputStream(stream).withStream { zipStream ->
+				docStrings.each { name, xmlDoc ->
+					zipStream.putNextEntry(new ZipEntry(name))
+					zipStream << xmlDoc.getBytes(Charset.forName('utf-8'))
+					zipStream.closeEntry()
+				}
 			}
 		}
+		out
+	}
+	
+	def write(PMFDocument doc, def streamable) {
+		streamable.withOutputStream { stream ->
+			write(doc, stream)
+		}
 		streamable
+	}
+	
+	byte[] toBytes(PMFDocument doc) {
+		new ByteArrayOutputStream().withStream { stream ->
+			write(doc, stream)
+		}.toByteArray()
 	}
 
 	Map<String, String> toStrings(PMFDocument doc) {
 		if(doc.invalidSettings.find { it.level.isGreaterOrEqual(Level.ERROR) })
-			throw new PMFException('Invalid PMF document').with { errors = doc.invalidSettings; it }
+			throw new PMFException('Invalid PMF document').with { it.messages = doc.invalidSettings; it }
 			
 		doc.models.collectEntries { name, sbml ->
 			[(name): new SBMLAdapter().toString(sbml)]
 		} +
-		doc.dataSets.collectEntries { name, sbml ->
-			[(name): new NuMLWriter(namespaces: [xlink: PMFUtil.XLINK_NS]).toString(sbml)]
+		doc.dataSets.collectEntries { name, numl ->
+			PMFUtil.addStandardPrefixes(numl)
+			[(name): new NuMLWriter(namespaces: PMFUtil.standardPrefixes.clone()).toString(numl)]
 		}
 	}
 

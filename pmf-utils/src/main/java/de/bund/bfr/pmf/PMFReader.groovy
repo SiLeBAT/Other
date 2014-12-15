@@ -16,20 +16,16 @@
  ******************************************************************************/
 package de.bund.bfr.pmf
 
+import java.nio.file.Path
 import java.util.zip.ZipFile
 
-import org.apache.log4j.AppenderSkeleton
 import org.apache.log4j.Level
-import org.apache.log4j.Logger
-import org.apache.log4j.spi.LoggingEvent
 import org.sbml.jsbml.SBMLDocument
-import org.sbml.jsbml.SBMLException
-import org.sbml.jsbml.SBMLReader
-import org.sbml.jsbml.validator.SBMLValidator;
 
 import de.bund.bfr.numl.ConformityMessage
 import de.bund.bfr.numl.NuMLDocument
 import de.bund.bfr.numl.NuMLReader
+import de.bund.bfr.pmf.sbml.SBMLAdapter;
 
 /**
  * 
@@ -48,6 +44,10 @@ class PMFReader {
 	
 	PMFDocument read(File zip) {
 		read(new ZipFile(zip))
+	}
+	
+	PMFDocument read(Path zip) {
+		read(zip.toFile())
 	}
 
 	PMFDocument read(InputStream zipStream) {
@@ -75,6 +75,12 @@ class PMFReader {
 	PMFDocument readFileSet(File... files) {
 		readNamedStreams(files.collectEntries { file ->
 			[(file.name): { new FileInputStream(file) }]
+		})
+	}
+	
+	PMFDocument readFileSet(Map<String, String> namedStrings) {
+		readNamedStreams(namedStrings.collectEntries { name, string ->
+			[(name): { new ByteArrayInputStream(string.getBytes('utf-8')) }]
 		})
 	}
 	
@@ -121,12 +127,20 @@ class PMFReader {
 		this.document = null
 		
 		streamFactories.each { name, streamFactory ->
-			def fileExtension = (name =~ /.*?(?:\.(.*))?$/)[0][1].toLowerCase()
-			def validReader = fileTypeReaders[fileExtension]*.newInstance(validating: validating)?.find() { reader ->
+			def fileExtension = (name =~ /.*\.(.*)|(.*)$/)[0]?.getAt(1)?.toLowerCase()
+			def readerTypes = fileTypeReaders[fileExtension]
+			// in case of several readerTypes, validate to find a suitable parser
+			def validReader = readerTypes*.newInstance(validating: validating || readerTypes.size() > 1)?.find { reader ->
 				def stream = streamFactory()
 				reader.read(stream)
 			}
 			if(validReader) {
+				// if validating mode has been changed in favor of finding a suitable parser, repeat parsing
+				if(validReader.validating != validating) {
+					validReader.validating = validating
+					validReader.read(streamFactory())
+				}
+				
 				readDocuments[name] = validReader.document
 				documentStreamFactories[validReader.document] = streamFactory
 				messages.addAll(validReader.parseMessages.collect { it.message = "$name: " + it.message; it })

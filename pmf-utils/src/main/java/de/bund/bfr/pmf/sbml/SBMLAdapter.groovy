@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package de.bund.bfr.pmf
+package de.bund.bfr.pmf.sbml
 
 import org.apache.log4j.AppenderSkeleton
 import org.apache.log4j.Level
@@ -27,77 +27,58 @@ import org.sbml.jsbml.SBMLWriter
 import org.sbml.jsbml.validator.SBMLValidator
 
 import de.bund.bfr.numl.ConformityMessage
+import de.bund.bfr.pmf.PMFUtil
 
 
 class SBMLAdapter {
 	SBMLReader reader = new SBMLReader()
 	SBMLDocument document
-	static logAdapter
 	boolean validating = false
 	def messages
-	
-	static {
-		logAdapter = Logger.getLogger(SBMLReader).hierarchy.currentLoggers.findResult { it.allAppenders.find { it } }
-	}
-	
+		
 	SBMLDocument read(InputStream stream) {		
 		parseText(stream.text)
 	}
 	
 	SBMLDocument parseText(String xmlString) {
-		this.messages = logAdapter.messages = []
+		this.messages = []
+		this.document = null
 		
 		try {
 			document = reader.readSBMLFromString(xmlString)
-			logAdapter.messages = []
 			if(document.level == -1)
 				document = null
-			if(!validating) {
-				def messages = this.getParseMessages(Level.ERROR)
-				if(messages)
-					throw new SBMLException("Invalid SBML document ${messages.join('\n')}")
-			} else { // try additional validation
-				def errorLog = SBMLValidator.checkConsistency(xmlString)
-				this.messages += errorLog.validationErrors.collect { error -> 
-					new ConformityMessage(level: error.severity as Level, message: error.message)
-				}
-			}
-		} catch(e) {		
+		} catch(e) {
+			// ignore exception for now; we use validator for more fine-grain descriptions		
+			this.messages += e.message
+		}
+		
+		// validate in case of error
+		if(validating || !document) {				
 			def errorLog = SBMLValidator.checkConsistency(xmlString)
 			this.messages += errorLog.validationErrors.collect { error ->
 				new ConformityMessage(level: error.severity as Level, message: error.message)
 			}
-			if(!validating)
-				throw new SBMLException("Invalid SBML document ${messages.join('\n')}", e)
 		}
+			
+		if(!validating) {
+			def messages = this.getParseMessages(Level.ERROR)
+			if(messages)
+				throw new SBMLException("Invalid SBML document ${messages.join('\n')}")
+		} 
 		document
 	}
 	
 	String toString(SBMLDocument document) {
-		def nsDocument = document.clone()
-		nsDocument.addDeclaredNamespace('xlink', PMFUtil.XLINK_NS) 
+		SBMLDocument nsDocument = PMFUtil.wrap(document.clone())
+		PMFUtil.standardPrefixes.each { prefix, uri ->
+			nsDocument.addDeclaredNamespace("xmlns:$prefix", uri)
+		}		 
+		PMFUtil.addStandardPrefixes(nsDocument)
 		new SBMLWriter().writeSBMLToString(nsDocument)
 	}
 	
 	List<ConformityMessage> getParseMessages(Level level = Level.WARN) {
 		messages.grep { it.level.isGreaterOrEqual(level) }
 	}
-}
-
-class SBMLLogAdapater extends AppenderSkeleton {
-	List<ConformityMessage> messages = []
-	
-	@Override
-	public void close() {
-	}
-
-	@Override
-	public boolean requiresLayout() {
-		return false;
-	}
-
-	@Override
-	protected void append(LoggingEvent event) {
-		messages << new ConformityMessage(level: event.level, message: event.message)
-	}	
 }

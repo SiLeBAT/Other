@@ -39,7 +39,8 @@ enum ValidationRule {
 	Num_Models() {
 		def validate(PMFDocument document, List<ConformityMessage> messages) {
 			document.models.each { name, SBMLDocument modelDoc ->
-				messages << new ConformityMessage('$name: Each PMF model document describes exactly one model (Specification 2)')
+				if(!modelDoc.model)
+					messages << new ConformityMessage("$name: Each PMF model document describes exactly one model (Specification 2)")
 			}
 		}
 	},
