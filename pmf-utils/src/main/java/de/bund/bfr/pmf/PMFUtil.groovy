@@ -19,7 +19,6 @@ package de.bund.bfr.pmf
 import groovy.xml.QName
 
 import org.sbml.jsbml.AbstractSBase
-import org.sbml.jsbml.Annotation
 import org.sbml.jsbml.SBMLDocument
 import org.sbml.jsbml.SBase
 import org.sbml.jsbml.xml.XMLAttributes
@@ -30,6 +29,15 @@ import org.sbml.jsbml.xml.XMLTriple
 import de.bund.bfr.numl.ConformityMessage
 import de.bund.bfr.numl.NMBase
 import de.bund.bfr.numl.NuMLDocument
+import de.bund.bfr.pmf.numl.PMFOntologyTerm
+import de.bund.bfr.pmf.numl.PMFResultComponent
+import de.bund.bfr.pmf.sbml.PMFAnnotation
+import de.bund.bfr.pmf.sbml.PMFCompartment
+import de.bund.bfr.pmf.sbml.PMFModel
+import de.bund.bfr.pmf.sbml.PMFParameter
+import de.bund.bfr.pmf.sbml.PMFSpecies
+import de.bund.bfr.pmf.sbml.PMFUnitDefinition
+import de.bund.bfr.pmf.sbml.SBMLReplacement
 
 /**
  * 
@@ -55,7 +63,7 @@ class PMFUtil {
 		]
 	
 
-	static Map<String, List<String>> BaseAnnotations = [DC_NS: [
+	static Map<String, List<String>> BaseAnnotations = [(DC_NS): [
 			'identifier',
 			'source',
 			'title',
@@ -69,39 +77,16 @@ class PMFUtil {
 			'description',
 			'format'
 		],
-		DCTERMS_NS: [
+		(DCTERMS_NS): [
 			'coverage',
 			'references',
 			'created',
 			'modified',
 			'hasVersion'
 		]],
-		ModelAnnotations = BaseAnnotations + [PMML_NS: ['modelquality']], 
+		ModelAnnotations = BaseAnnotations + [(PMML_NS): ['modelquality'], (PMF_NS): ['datasources']], 
 		DataSetAnnotations = BaseAnnotations
 		
-	static XMLNode getPMFAnnotation(AbstractSBase node, String annotationName) {
-		if(!node.annotation)
-			return null
-
-		node.annotation.nonRDFannotation.find {
-			it.triple.name == annotationName && it.triple.namespaceURI == PMF_NS
-		}
-	}
-	
-	static Node getPMFAnnotation(NMBase node, String annotationName) {
-		if(!node.annotation)
-			return null
-			
-		node.annotation."$PMF_NS:$annotationName"[0]
-	}
-	
-	static void setPMFAnnotation(NMBase node, String annotationName, Node annotation) {
-		def oldAnnotation = getPMFAnnotation(node, annotationName)
-		if(oldAnnotation)
-			node.annotation.remove(oldAnnotation)
-		annotation.name = new groovy.xml.QName(PMF_NS, annotationName)
-		node.annotation.append(annotation)
-	}
 
 	static javax.xml.namespace.QName toJavaQName(XMLToken token) {
 		 new javax.xml.namespace.QName(token.URI, token.name, token.prefix)
@@ -123,13 +108,6 @@ class PMFUtil {
 		new Node(null, toGroovyQName(node), attr, node.characters)
 	}
 	
-	static void setPMFAnnotation(SBase node, String annotationName, XMLNode annotationNode) {
-		def annotation = node.annotation
-		if(!annotation || !annotation.nonRDFannotation)
-			node.setAnnotation(annotation = new Annotation(nonRDFannotation: new XMLNode(new XMLTriple('annotation'))))
-		addOrReplace(annotation.nonRDFannotation, annotationNode)
-	}
-	
 	static void addOrReplace(XMLNode parent, XMLNode child) {			
 		def oldChild = parent.find {
 			it.triple.name == child.name && it.triple.namespaceURI == child.uri
@@ -139,27 +117,63 @@ class PMFUtil {
 		parent.addChild(child)
 	}
 	
-	static XMLNode ensurePMFAnnotation(SBase node, String annotationName) {		
-		XMLNode pmfAnnotation = PMFUtil.getPMFAnnotation(node, annotationName)
-		if(!pmfAnnotation) 
-			setPMFAnnotation(node, annotationName, 
-				pmfAnnotation = new XMLNode(new XMLTriple(annotationName, PMFUtil.PMF_NS, null), new XMLAttributes()))
-		pmfAnnotation
+	static XMLNode getPMFAnnotation(AbstractSBase node, String... annotationNames) {
+		(['metadata'] + (annotationNames as List)).inject(node.annotation?.nonRDFannotation) { XMLNode parent, name ->
+			parent?.getChildElement(name, PMF_NS)
+		}
 	}
 	
-	static Node ensurePMFAnnotation(NMBase node, String annotationName) {		
-		Node pmfAnnotation = PMFUtil.getPMFAnnotation(node, annotationName)
-		if(!pmfAnnotation) 
-			setPMFAnnotation(node, annotationName, pmfAnnotation = new Node(null, new QName(annotationName, PMFUtil.PMF_NS)))
-		pmfAnnotation
+	static Node getPMFAnnotation(NMBase node, String... annotationNames) {
+		(['metadata'] + (annotationNames as List)).inject(node.annotation) { Node parent, name ->
+			parent?.getAt(new groovy.xml.QName(PMF_NS, name))?.getAt(0)
+		}
 	}
 	
-	static SBMLReplacements = [PMFModel, PMFCompartment, PMFUnitDefinition, PMFSpecies, PMFParameter].collectEntries { [(it.superclass): it] }
+	static XMLNode ensurePMFAnnotation(SBase node, String... annotationNames) {	
+		def annotation = node.annotation	
+		if(!annotation.nonRDFannotation)
+			annotation.nonRDFannotation = new XMLNode(new XMLTriple('annotation'))
+		ensurePMFNodes(annotation.nonRDFannotation, ['metadata'] + (annotationNames as List))
+	}
+	
+	static XMLNode ensurePMFNodes(XMLNode node, List<String> nodeNames) {		
+		nodeNames.inject(node) { XMLNode parent, name ->
+			def child = parent.getChildElement(name, PMFUtil.PMF_NS)
+			if(!child) {
+				child = new XMLNode(new XMLTriple(name, PMFUtil.PMF_NS, null), new XMLAttributes())
+				parent.addChild(child)
+			}
+			child
+		}
+	}
+	
+	static Node ensurePMFAnnotation(NMBase node, String... annotationNames) {	
+		def annotation = node.annotation	
+		if(!annotation)
+			node.annotation = annotation = new Node(null, new groovy.xml.QName(PMFUtil.PMF_NS, 'annotation'), [:], [])
+		ensurePMFNodes(annotation, ['metadata'] + (annotationNames as List))
+	}
+	
+	static Node ensurePMFNodes(Node node, List<String> nodeNames) {		
+		nodeNames.inject(node) { Node parent, name ->
+			def child = parent.getAt(new groovy.xml.QName(PMFUtil.PMF_NS, name))?.getAt(0)
+			if(!child)
+				child = new Node(parent, new groovy.xml.QName(PMFUtil.PMF_NS, name), [:], [])
+			child
+		}
+	}
+	
+	static SBMLReplacements = [PMFModel, PMFCompartment, PMFUnitDefinition, PMFSpecies, PMFParameter, 
+		PMFAnnotation].collectEntries { [(it.superclass): it] }
 	static SBMLDocument wrap(SBMLDocument doc) {
-		traverse(doc, { node ->			
+		traverse(doc, { node ->		
 			def replaceNodeType = SBMLReplacements[node.class]
-			if(replaceNodeType)
-				replaceNodeType.newInstance(node).replace(node)
+			if(replaceNodeType) {
+				def newNode = replaceNodeType.newInstance(node)
+				newNode.replace(node)
+				return newNode
+			}			
+			node
 		})
 		doc
 	}
@@ -167,9 +181,11 @@ class PMFUtil {
 	static void traverse(SBase doc, Closure callback) {
 		def nodeStack = new LinkedList<SBase>([doc])
 		while(nodeStack) {
-			def node = nodeStack.pop()
-			callback(node)
-			(0..<(node.childCount)).each { index -> nodeStack.push(node.getChildAt(index)) }
+			def node = nodeStack.removeFirst()
+			node = callback(node) ?: node
+			(0..<(node.childCount)).each { index -> 				
+				nodeStack.push(node.getChildAt(index)) 		
+			}	
 		}
 	}
 	
@@ -177,10 +193,35 @@ class PMFUtil {
 	static NuMLDocument wrap(NuMLDocument doc) {	
 		traverse(doc, { node ->			
 			def replaceNodeType = NuMLReplacements[node.class]
-			if(replaceNodeType)
-				replaceNodeType.newInstance(node).replace(node)
+			if(replaceNodeType) {
+				def newNode = replaceNodeType.newInstance(node)
+				newNode.replace(node)
+				return newNode
+			}
 		})
 		doc
+	}
+	
+	static void addStandardPrefixes(SBase node) {
+		traverse(node, { child ->
+			if(child instanceof XMLNode) {
+				addStandardPrefixes(child)
+			}
+		})
+	}
+	
+	static void addStandardPrefixes(XMLNode node) {
+		if(!node.text) {
+			def triple = node.triple
+			def nsEntry = PMFUtil.standardPrefixes.find { it.value == triple.namespaceURI }
+			if(nsEntry && !triple.prefix)
+				node.triple = new XMLTriple(triple.name, triple.namespaceURI, triple.prefix ?: nsEntry.key)
+		}
+//		def namespaces = new XMLNamespaces()
+//		standardPrefixes.each { prefix, uri ->
+//			namespaces.add(uri, prefix)
+//		}
+//		node.namespaces = namespaces
 	}
 	
 	static void addStandardPrefixes(Node node) {
@@ -202,6 +243,13 @@ class PMFUtil {
 		}
 	}
 	
+	static void addStandardPrefixes(NMBase node) {
+		addStandardPrefixes(node.annotation)
+		node.children.each { child ->
+			addStandardPrefixes(child)
+		}
+	}
+	
 	static groovy.xml.QName addStandardPrefixes(groovy.xml.QName name) {
 		def nsEntry = PMFUtil.standardPrefixes.find { it.value == name.namespaceURI }
 		nsEntry ? new groovy.xml.QName(nsEntry.value, name.localPart, nsEntry.key) : name
@@ -210,9 +258,9 @@ class PMFUtil {
 	static void traverse(NMBase doc, Closure callback) {
 		def nodeStack = new LinkedList<NMBase>([doc])
 		while(nodeStack) {
-			def node = nodeStack.pop()
-			callback(node)
-			node.children.each { nodeStack.push(it) }
+			def node = nodeStack.removeFirst()
+			node = callback(node) ?: node
+			node.children.each { nodeStack.add(it) }
 		}
 	}
 	
@@ -221,6 +269,7 @@ class PMFUtil {
 		traverse(wrap(document), { node ->
 			if(node instanceof SBMLReplacement)
 				invalidSettings.addAll(node.getInvalidSettings(document, prefix, pmf))
+			node
 		})
 		invalidSettings
 	}

@@ -11,8 +11,10 @@
 					<listOfUnitDefinitions>
 						<unitDefinition id="pmf_log10_cfu_g" name="log10(cfu/g)">
 							<annotation>
-								<pmf:transformation name="log10"
-									xlink:href="http://sourceforge.net/projects/microbialmodelingexchange/files/PMF-ML" />
+								<pmf:metadata>
+									<pmf:transformation name="log10"
+										xlink:href="http://sourceforge.net/projects/microbialmodelingexchange/files/PMF-ML" />
+								</pmf:metadata>
 							</annotation>
 							<listOfUnits>
 								<unit kind="item" exponent="1" scale="1" multiplier="1" />
@@ -24,7 +26,7 @@
 						<compartment id="culture_broth_broth_culture_culture_medium" name="culture broth, broth culture, culture medium" />
 					</listOfCompartments>
 					<listOfSpecies>
-						<species id="salmonella_spp" name="salmonella spp" compartment="culture_broth_broth_culture_culture_medium" 
+						<species id="salmonella_spp" name="salmonella spp" compartment="culture_broth_broth_culture_culture_medium" constant="false" boundaryCondition="true"
 							substanceUnits="pmf_log10_cfu_g" hasOnlySubstanceUnits="false" />
 					</listOfSpecies>
 				</pmf:metadata>
@@ -37,8 +39,10 @@
 					<listOfUnitDefinitions>
 						<unitDefinition id="pmf_log10_cfu_g" name="log10(cfu/g)">
 							<annotation>
-								<pmf:transformation name="log10"
-									xlink:href="http://sourceforge.net/projects/microbialmodelingexchange/files/PMF-ML" />
+								<pmf:metadata>
+									<pmf:transformation name="log10"
+										xlink:href="http://sourceforge.net/projects/microbialmodelingexchange/files/PMF-ML" />
+								</pmf:metadata>
 							</annotation>
 							<listOfUnits>
 								<unit kind="item" exponent="1" scale="1" multiplier="1" />
@@ -50,7 +54,7 @@
 						<compartment id="culture_broth_broth_culture_culture_medium" name="culture broth, broth culture, culture medium" />
 					</listOfCompartments>
 					<listOfSpecies>
-						<species id="staphylococcus_aureus" name="staphylococcus aureus" compartment="culture_broth_broth_culture_culture_medium" 
+						<species id="staphylococcus_aureus" name="staphylococcus aureus" compartment="culture_broth_broth_culture_culture_medium" constant="false" boundaryCondition="true"
 							substanceUnits="pmf_log10_cfu_g" hasOnlySubstanceUnits="false"/>
 					</listOfSpecies>
 				</pmf:metadata>
@@ -80,7 +84,7 @@
 				<dc:creator>BfR</dc:creator>
 				<dcterms:created>2014</dcterms:created>
 				<dc:language>en</dc:language>
-				<dc:hasVersion>V1.0</dc:hasVersion>
+				<dcterms:hasVersion>V1.0</dcterms:hasVersion> 
 			</pmf:metadata>
 		</annotation>
 

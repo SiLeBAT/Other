@@ -22,9 +22,6 @@ import java.nio.file.Files
 
 import org.junit.Test
 
-import de.bund.bfr.pmf.PMFException
-import de.bund.bfr.pmf.PMFWriter
-
 /**
  * 
  */

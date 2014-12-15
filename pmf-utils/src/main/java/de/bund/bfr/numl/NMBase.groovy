@@ -101,9 +101,9 @@ class NMBase {
 	def write(BuilderSupport builder) {		
 		builder.invokeMethod(this.elementName, [attributeValues.findAll { it.value }, {
 			if(this.notes?.value())
-				builder.current.appendNode(this.notes)
+				builder.current.append(this.notes)
 			if(this.annotation?.value()) {
-				builder.current.appendNode(this.annotation)
+				builder.current.append(this.annotation)
 			}
 			writeBody(builder)
 		}])
@@ -164,7 +164,9 @@ class NMBase {
 		if(metaId && !isValidNMId(metaId))
 			invalidSettings << new ConformityMessage("$prefix metaId $metaId is not a valid NMId")
 		
-		def subInvalidSettings = this.children.collect { it.getInvalidSettings("$prefix/$elementName") } 
+		def subInvalidSettings = this.children.collect { 
+			it.getInvalidSettings("$prefix/$elementName") 
+		} 
 		invalidSettings + subInvalidSettings.flatten()
 	}
 	
@@ -189,26 +191,46 @@ class NMBase {
 	@Override
 	public int hashCode() {
 		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((annotation == null) ? 0 : annotation.hashCode());
-		result = prime * result + ((metaId == null) ? 0 : metaId.hashCode());
-		result = prime * result + ((notes == null) ? 0 : notes.hashCode());
-		return result;
+		def properties = [notes: notes, annotation: annotation] + this.propertyValues
+		properties.inject(prime) { result, property -> 
+			prime * result + (property.value?.hashCode() ?: 0)
+		}
 	}
 
+	public Map<String, Object> getMismatchedProperties(Object obj) {
+		if (!getClass().is(obj.getClass()))
+			throw new IllegalArgumentException()
+			
+		def thisProperties = this.propertyValues 
+		def thatProperties = obj.propertyValues
+		
+		def mismatchedProperties = thisProperties.findAll { name, value ->
+			thatProperties[name] != value
+		}.collectEntries { name, value ->
+			[(name): [value, thatProperties[name]]]
+		}
+		
+		if(!NodeUtil.isEqual(this.notes, obj.notes))
+			mismatchedProperties['notes'] = [this.notes, obj.notes]
+			
+		if(!NodeUtil.isEqual(this.annotation, obj.annotation))
+			mismatchedProperties['annotation'] = [this.annotation, obj.annotation]
+			
+		mismatchedProperties
+	}
 	/* (non-Javadoc)
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
-	public boolean equals(Object obj) {
+	public final boolean equals(Object obj) {
 		if (this.is(obj))
 			return true;
 		if (obj.is(null))
 			return false;
 		if (!getClass().is(obj.getClass()))
 			return false;
-		NMBase other = (NMBase) obj;
-		metaId == other.metaId && NodeUtil.isEqual(notes, other.notes) && NodeUtil.isEqual(annotation, other.annotation)
+		def mismatched = getMismatchedProperties(obj)
+		!mismatched
 	}
 	
 	

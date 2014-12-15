@@ -26,7 +26,6 @@ import groovy.transform.EqualsAndHashCode
 /**
  * The actual numerical result. The structure is described in {@link #dimensionDescription} and the values are stored in {@link #dimension}.
  */
-@EqualsAndHashCode(callSuper = true)
 class ResultComponent extends NMBase {
 	@Required
 	String id
@@ -117,4 +116,7 @@ class ResultComponent extends NMBase {
 				this.dimension = dimensionDescription.parseData(originalNode.dimension?.first())
 		}
 	}
+
+	
+	
 }

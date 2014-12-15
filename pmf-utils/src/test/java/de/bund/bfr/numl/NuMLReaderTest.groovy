@@ -16,12 +16,10 @@
  ******************************************************************************/
 package de.bund.bfr.numl;
 
-import static org.junit.Assert.*
+import java.net.URISyntaxException;
 
-import org.junit.Test
-
-import de.bund.bfr.numl.NuMLDocument;
-import de.bund.bfr.numl.NuMLReader;
+import org.junit.Test;
+import static org.junit.Assert.*;
 
 public class NuMLReaderTest {
 	

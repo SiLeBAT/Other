@@ -13,23 +13,21 @@
 		metaid="Meta_salm25_salmonella_spp_culture_broth_broth_culture_culture_medium_Huang_Model_primary_Huang_2008_2013_iPMP_Full_Growth_Models_Eq_5">
 		<annotation>
 			<pmf:metadata>
-				<dc:identifier>salm25_salmonella_spp_culture_broth_broth_culture_culture_medium_Huang_Model_primary_Huang_2008_2013_iPMP_Full_Growth_Models_Eq_5
-				</dc:identifier>
+				<dc:identifier>salm25_salmonella_spp_culture_broth_broth_culture_culture_medium_Huang_Model_primary_Huang_2008_2013_iPMP_Full_Growth_Models_Eq_5</dc:identifier>
 				<dc:title>Salm25 Salmonella Spp Culture Broth Broth Culture Culture
 					Medium Huang Model Primary
 					Huang 2008 2013 Ipmp Full Growth Models
-					Eq 5
-				</dc:title>
-				<dc:description>Description
-				</dc:description>
+					Eq 5</dc:title>
+				<dc:description>Growth model of Salmonella Spp</dc:description>
 				<dc:type>Primary model</dc:type>
-				<dc:creator>Huang</dc:creator>
-				<dcterms:created>2014</dcterms:created>
-				<dc:language>en</dc:language>
-				<dc:hasVersion>V1.0</dc:hasVersion>
-				<dc:format>JSBML v0.8</dc:format>
-				<pmml:ModelQuality targetField="Value" dataName="MyData" dataUsage="training"
-					r-squared="0.9511" rootMeanSquaredError="0.0208" />
+				<dc:creator>Max Mustermann</dc:creator>
+				<dcterms:created>15/07/2013</dcterms:created>
+				<dc:language>es</dc:language>
+				<dcterms:hasVersion>V1.0</dcterms:hasVersion> 
+				<dc:format>MicroHibro</dc:format>
+				<pmml:modelquality targetField="salmonella_spp" dataName="MyData" 
+                          dataUsage="training" r-squared="0.9511"
+                          rootMeanSquaredError="0.0208"/>
 				<pmf:dataSources>
 					<pmf:dataSource id="source1" xlink:href="ValidData.xml" />
 				</pmf:dataSources>
@@ -38,22 +36,39 @@
 		<listOfUnitDefinitions>
 			<unitDefinition id="pmf_log10_cfu_g" name="log10(cfu/g)">
 				<annotation>
-					<pmf:transformation name="log10"
-						xlink:href="http://sourceforge.net/projects/microbialmodelingexchange/files/PMF-ML" />
+					<pmf:metadata>
+						<pmf:transformation name="log10"
+							xlink:href="http://sourceforge.net/projects/microbialmodelingexchange/files/PMF-ML" />
+					</pmf:metadata>
 				</annotation>
 				<listOfUnits>
 					<unit kind="item" exponent="1" scale="1" multiplier="1" />
 					<unit kind="gram" exponent="-1" scale="1" multiplier="1" />
 				</listOfUnits>
 			</unitDefinition>
+
+			<unitDefinition id="pmf_rate_log10_cfu_g_h" name="log10(cfu/g)/h">
+				<annotation>
+					<pmf:metadata>
+						<pmf:transformation name="log10"
+							xlink:href="http://sourceforge.net/projects/microbialmodelingexchange/files/PMF-ML" />
+					</pmf:metadata>
+				</annotation>
+				<listOfUnits>
+					<unit kind="item" exponent="1" scale="1" multiplier="1" />
+					<unit kind="gram" exponent="-1" scale="1" multiplier="1" />
+					<unit kind="second" exponent="-1" scale="1" multiplier="3600" />
+				</listOfUnits> 
+			</unitDefinition>   
+
 			<unitDefinition id="h">
 				<listOfUnits>
-					<unit multiplier="3600" kind="second" />
+					<unit kind="second" exponent="1" scale="1" multiplier="3600" />
 				</listOfUnits>
 			</unitDefinition>
 		</listOfUnitDefinitions>
 		<listOfCompartments>
-			<compartment id="culture_broth_broth_culture_culture_medium" name="culture broth, broth culture, culture medium">
+			<compartment id="culture_broth_broth_culture_culture_medium" name="culture broth, broth culture, culture medium" constant="true">
 				<annotation>
 					<pmf:metadata>
 						<dc:source>http://identifiers.org/ncim/C0452849</dc:source>
@@ -62,30 +77,32 @@
 			</compartment>
 		</listOfCompartments>
 		<listOfSpecies>
-			<species id="salmonella_spp" name="salmonella spp" compartment="culture_broth_broth_culture_culture_medium"
+			<species id="salmonella_spp" name="salmonella spp" compartment="culture_broth_broth_culture_culture_medium" constant="false" boundaryCondition="true"
 				substanceUnits="pmf_log10_cfu_g" hasOnlySubstanceUnits="false">
 				<annotation>
 					<pmf:metadata>
 						<dc:source>http://identifiers.org/ncim/C0036111</dc:source>
+						<pmf:sourceValues>
+							<pmf:sourceValue source="source1"
+								descriptor="//numl:ResultComponent[@id='resultComponent1']//numl:atomicDescription[@name='mass']" />
+						</pmf:sourceValues>
 					</pmf:metadata>
-					<pmf:sourceValues>
-						<pmf:sourceValue source="source1"
-							descriptor="//numl:ResultComponent[@id='resultComponent1']//numl:atomicDescription[@name='mass']" />
-					</pmf:sourceValues>
 				</annotation>
 			</species>
 		</listOfSpecies>
 		<listOfParameters>
 			<parameter id="lambda" constant="true" value="42.15624402963166" />
-			<parameter id="mu_max" constant="true" value="0.0335496792126201" />
-			<parameter id="Ymax" constant="true" value="19.81060444197425" />
-			<parameter id="Y0" constant="true" value="6.147902198294101" />
+			<parameter id="mu_max" constant="true" value="0.0335496792126201" units="pmf_rate_log10_cfu_g_h" />
+			<parameter id="Ymax" constant="true" value="19.81060444197425" units="pmf_log10_cfu_g" />
+			<parameter id="Y0" constant="false" value="6.147902198294101" units="pmf_log10_cfu_g" />
 			<parameter id="time" constant="false" value="0" units="h">
 				<annotation>
-					<pmf:sourceValues>
-						<pmf:sourceValue source="source1"
-							descriptor="//numl:ResultComponent[@id='resultComponent1']//numl:atomicDescription[@name='time']" />
-					</pmf:sourceValues>
+					<pmf:metadata>
+						<pmf:sourceValues>
+							<pmf:sourceValue source="source1"
+								descriptor="//numl:ResultComponent[@id='resultComponent1']//numl:atomicDescription[@name='time']" />
+						</pmf:sourceValues>
+					</pmf:metadata>
 				</annotation>
 			</parameter>
 		</listOfParameters>

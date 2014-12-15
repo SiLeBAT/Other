@@ -17,26 +17,13 @@
  ******************************************************************************/
 package de.bund.bfr.pmf
 
-import static org.junit.Assert.*
-
 import java.nio.file.Files
-import java.nio.file.Path
 import java.util.zip.ZipFile
 
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
-import org.sbml.jsbml.ASTNode
-import org.sbml.jsbml.AssignmentRule
-import org.sbml.jsbml.SBMLDocument
-import org.sbml.jsbml.Unit
+import static org.junit.Assert.*;
 
-import de.bund.bfr.numl.AtomicDescription
-import de.bund.bfr.numl.CompositeDescription
-import de.bund.bfr.numl.DataType
-import de.bund.bfr.numl.Description
-import de.bund.bfr.numl.NuMLDocument
-import de.bund.bfr.numl.TupleDescription
+import de.bund.bfr.pmf.sbml.PMFModel
 
 /**
  * Test {@link PMFWriter}.
@@ -100,7 +87,7 @@ class PMFWriterTest extends PMFWriterTestBase {
 			new PMFWriter().write(doc, finalFile)
 			fail('Should not succeed')
 		} catch(PMFException e) {
-			assertEquals(2, e.errors.size())
+			assertNotEquals(0, e.errors.size())
 		}
 	}
 	
@@ -117,7 +104,6 @@ class PMFWriterTest extends PMFWriterTestBase {
 			new PMFWriter().write(doc, finalFile)
 			fail('Should not succeed')
 		} catch(PMFException e) {
-		println e.errors
 			assertEquals(2, e.errors.size())
 		}
 		assertEquals(0, Files.size(finalFile))

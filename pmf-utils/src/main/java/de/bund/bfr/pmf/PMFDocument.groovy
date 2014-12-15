@@ -27,6 +27,7 @@ import org.sbml.jsbml.SBMLDocument
 import de.bund.bfr.numl.ConformityMessage
 import de.bund.bfr.numl.NuMLDocument
 import de.bund.bfr.numl.NuMLWriter
+import de.bund.bfr.pmf.sbml.SBMLAdapter;
 
 /**
  * The base {@link PMFDocument} consisting of several NuML data files and 1 SBML model (for now).
@@ -57,13 +58,16 @@ class PMFDocument {
 	 * Returns the input stream for a {@link SBMLDocument} or {@link NuMLDocument}
 	 */
 	InputStream getInputStream(Object doc) {
-		documentStreamFactories[doc]() ?: createFallbackInputStream(doc)
+		documentStreamFactories[doc] ? documentStreamFactories[doc]() : createFallbackInputStream(doc)
 	}
 
-	static final fileTypeWriters = [SBMLDocument: SBMLAdapter, NuMLDocument: NuMLWriter]
+	static final fileTypeWriters = [(SBMLDocument): SBMLAdapter, (NuMLDocument): NuMLWriter]
 
 	def createFallbackInputStream(Object doc) {
-		def xmlString = fileTypeWriters[doc.class].newInstance().toString(doc)
+		def fileTypeWriter = fileTypeWriters[doc.class]
+		if(!fileTypeWriter)
+			throw new IllegalArgumentException("Unknown document type ${doc?.class}")
+		def xmlString = fileTypeWriter.newInstance().toString(doc)
 		new ByteArrayInputStream(xmlString.getBytes(Charset.forName("utf-8")))
 	}
 
@@ -123,4 +127,41 @@ class PMFDocument {
 		this.models.clear()
 		this.models.putAll(models)
 	}	
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((dataSets == null) ? 0 : dataSets.hashCode());
+		result = prime * result + ((models == null) ? 0 : models.hashCode());
+		return result;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		PMFDocument other = (PMFDocument) obj;
+		if (dataSets == null) {
+			if (other.dataSets != null)
+				return false;
+		} else if (!dataSets.equals(other.dataSets))
+			return false;
+		if (models == null) {
+			if (other.models != null)
+				return false;
+		} else if (!models.equals(other.models))
+			return false;
+		return true;
+	}
+	
+	
 }

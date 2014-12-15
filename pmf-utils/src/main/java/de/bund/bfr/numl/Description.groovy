@@ -25,7 +25,6 @@ import java.util.Map;
 import javax.xml.xpath.XPathFactory
 
 
-@EqualsAndHashCode(callSuper = true, includes = ['ontologyTerm', 'id'])
 abstract class Description extends NMBase {
 	OntologyTerm ontologyTerm
 
@@ -131,15 +130,17 @@ enum DataType {
 		boolean isValid(Object value) { value instanceof String }
 	},
 	Float("float") {
-		def format = new DecimalFormat('0.#######E0', DecimalFormatSymbols.getInstance(Locale.US))
+//		def format = new DecimalFormat('0.#######E0', DecimalFormatSymbols.getInstance(Locale.US))
+//		void writeData(BuilderSupport builder, Object value) { builder.atomicValue(format.format(value)) }
 		def parseData(String value) { java.lang.Float.valueOf(value) }
-		void writeData(BuilderSupport builder, Object value) { builder.atomicValue(format.format(value)) }
+		void writeData(BuilderSupport builder, Object value) { builder.atomicValue(value.floatValue()) }
 		boolean isValid(Object value) { value instanceof Number }
 	},
 	Double("double") {
-		def format = new DecimalFormat('0.###############E0', DecimalFormatSymbols.getInstance(Locale.US))
+//		def format = new DecimalFormat('0.###############E0', DecimalFormatSymbols.getInstance(Locale.US))
+//		void writeData(BuilderSupport builder, Object value) { builder.atomicValue(format.format(value)) }
 		def parseData(String value) { java.lang.Double.valueOf(value) }
-		void writeData(BuilderSupport builder, Object value) { builder.atomicValue(format.format(value)) }
+		void writeData(BuilderSupport builder, Object value) { builder.atomicValue(value.doubleValue()) }
 		boolean isValid(Object value) { value instanceof Number }
 	},
 	Integer("integer") {
@@ -169,7 +170,6 @@ enum DataType {
 	}
 }
 
-@EqualsAndHashCode(callSuper = true)
 class AtomicDescription extends Description {
 	@Required
 	String name
@@ -204,7 +204,6 @@ class AtomicDescription extends Description {
 	}
 }
 
-@EqualsAndHashCode(callSuper = true)
 class CompositeDescription extends Description {
 	@Required
 	String name
@@ -273,7 +272,6 @@ class CompositeDescription extends Description {
 	}
 }
 
-@EqualsAndHashCode(callSuper = true)
 class TupleDescription extends Description {
 	String name
 

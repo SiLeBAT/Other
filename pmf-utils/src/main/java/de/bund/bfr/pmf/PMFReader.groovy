@@ -25,6 +25,7 @@ import org.sbml.jsbml.SBMLDocument
 import de.bund.bfr.numl.ConformityMessage
 import de.bund.bfr.numl.NuMLDocument
 import de.bund.bfr.numl.NuMLReader
+import de.bund.bfr.pmf.sbml.SBMLAdapter;
 
 /**
  * 
@@ -77,6 +78,12 @@ class PMFReader {
 		})
 	}
 	
+	PMFDocument readFileSet(Map<String, String> namedStrings) {
+		readNamedStreams(namedStrings.collectEntries { name, string ->
+			[(name): { new ByteArrayInputStream(string.getBytes('utf-8')) }]
+		})
+	}
+	
 	PMFDocument readFileSet(... fileUrls) {
 		readNamedStreams(fileUrls.collect { toURL(it) }.collectEntries { fileUrl ->
 			[(fileUrl): { fileUrl.openStream() }]
@@ -120,10 +127,10 @@ class PMFReader {
 		this.document = null
 		
 		streamFactories.each { name, streamFactory ->
-			def fileExtension = (name =~ /.*?(?:\.(.*))?$/)[0][1].toLowerCase()
+			def fileExtension = (name =~ /.*\.(.*)|(.*)$/)[0]?.getAt(1)?.toLowerCase()
 			def readerTypes = fileTypeReaders[fileExtension]
 			// in case of several readerTypes, validate to find a suitable parser
-			def validReader = readerTypes*.newInstance(validating: validating || readerTypes.size() > 1)?.find() { reader ->
+			def validReader = readerTypes*.newInstance(validating: validating || readerTypes.size() > 1)?.find { reader ->
 				def stream = streamFactory()
 				reader.read(stream)
 			}

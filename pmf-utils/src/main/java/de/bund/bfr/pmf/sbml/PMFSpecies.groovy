@@ -14,33 +14,35 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package de.bund.bfr.numl
+package de.bund.bfr.pmf.sbml
 
-import groovy.util.Node
+import groovy.transform.InheritConstructors;
+
+import java.util.List;
+
+import org.sbml.jsbml.SBMLDocument;
+import org.sbml.jsbml.Species;
+
+import de.bund.bfr.numl.ConformityMessage;
+import de.bund.bfr.pmf.PMFDocument;
+
 
 /**
- * 
+ * Wrapper for PMF species (Specification 7 � SBML component species).
  */
-class NodeUtil {
-	/**
-	 * Compares the two nodes and their children for equal name and attributes.
-	 */
-	static boolean isEqual(Node n1, Node n2) {
-		if(n1 == null)
-			return n2 == null
-		if(n2 == null)
-			return false
+@InheritConstructors
+class PMFSpecies extends Species implements SourceAnnotation, SBMLReplacement {
+	{
+		initLevelAndVersion()
+		this.hasOnlySubstanceUnits = false
+	}
+	
+	List<ConformityMessage> getInvalidSettings(SBMLDocument document, String prefix, PMFDocument pmf) {
+		def messages = SourceAnnotation.super.getInvalidSettings(document, prefix, pmf)
 		
-		def nodes1 = n1.depthFirst()
-		def nodes2 = n2.depthFirst()
+		if(!this.substanceUnits)
+			messages << new ConformityMessage("$prefix: species $id must have substanceUnits")
 		
-		def size = nodes1.size()
-		if(size != nodes2.size() || n1.localText() != n2.localText())
-			return false
-						
-		def mismatch = (0..<size).find { index ->
-			nodes1[index].name() != nodes2[index].name() || nodes1[index].attributes() != nodes2[index].attributes()
-		}
-		!mismatch
+		messages
 	}
 }

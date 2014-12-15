@@ -25,6 +25,7 @@ import org.sbml.jsbml.ASTNode
 import org.sbml.jsbml.AssignmentRule
 import org.sbml.jsbml.SBMLDocument
 import org.sbml.jsbml.Unit
+import org.sbml.jsbml.UnitDefinition;
 
 import de.bund.bfr.numl.AtomicDescription
 import de.bund.bfr.numl.CompositeDescription
@@ -32,6 +33,13 @@ import de.bund.bfr.numl.DataType
 import de.bund.bfr.numl.Description
 import de.bund.bfr.numl.NuMLDocument
 import de.bund.bfr.numl.TupleDescription
+import de.bund.bfr.pmf.numl.PMFOntologyTerm
+import de.bund.bfr.pmf.numl.PMFResultComponent
+import de.bund.bfr.pmf.sbml.PMFCompartment
+import de.bund.bfr.pmf.sbml.PMFModel
+import de.bund.bfr.pmf.sbml.PMFParameter
+import de.bund.bfr.pmf.sbml.PMFSpecies
+import de.bund.bfr.pmf.sbml.PMFUnitDefinition
 
 /**
  * 
@@ -42,7 +50,7 @@ class PMFWriterTestBase {
 	PMFSpecies salmonelle, staphylococcus
 	Unit seconds
 	PMFOntologyTerm time, salConcentration, staphConcentration
-	PMFUnitDefinition logPU
+	PMFUnitDefinition logPU, logPUh
 	AssignmentRule salmonellaGrowth
 	PMFParameter timeParameter
 	Description timeDescription, salDescription
@@ -54,24 +62,29 @@ class PMFWriterTestBase {
 		logPU = new PMFUnitDefinition(level: 3, version: 1, id: "pmf_log10_cfu_g", name: "log10(cfu/g)", transformation: 'log10')
 		logPU.addUnit(new Unit(Unit.Kind.ITEM, 3, 1))
 		logPU.addUnit(new Unit(Unit.Kind.GRAM, -1d, 3, 1))
+		logPUh = new PMFUnitDefinition(level: 3, version: 1, id: "pmf_log10_cfu_g_h", name: "log10(cfu/g)/h", transformation: 'log10')
+		logPUh.addUnit(new Unit(Unit.Kind.ITEM, 3, 1))
+		logPUh.addUnit(new Unit(Unit.Kind.GRAM, -1d, 3, 1))
+		logPUh.addUnit(new Unit(3600, 1, Unit.Kind.SECOND, -1d, 3, 1))
 		
 		matrix = new PMFCompartment(id: 'culture_broth', name: 'culture broth',
 			source: new URI('http://identifiers.org/ncim/C0452849'))
 		salmonelle = new PMFSpecies(id: 'salmonella_spp', name: 'salmonella spp',
-			source: new URI('http://identifiers.org/ncim/C0036111'), compartment: matrix.id, units: logPU)
+			source: new URI('http://identifiers.org/ncim/C0036111'), compartment: matrix.id, units: logPU.id)
 		staphylococcus = new PMFSpecies(id: 'staphylococcus_aureus', name: 'staphylococcus aureus',
-			source: new URI('http://identifiers.org/ncim/C0036111'), compartment: matrix.id, units: logPU)
+			source: new URI('http://identifiers.org/ncim/C0036111'), compartment: matrix.id, units: logPU.id)
 		
 		time = new PMFOntologyTerm(term: 'time', sourceTermId: 'SBO:0000345',
 			ontologyURI: new URI('http://www.ebi.ac.uk/sbo/'), unit: seconds)
 		salConcentration = new PMFOntologyTerm(term: 'concentration', sourceTermId: 'SBO:0000196',
-			ontologyURI: new URI('http://www.ebi.ac.uk/sbo/'), species: salmonelle)
+			ontologyURI: new URI('http://www.ebi.ac.uk/sbo/'), unitDefinition: logPU.clone(), species: salmonelle)
 		staphConcentration = new PMFOntologyTerm(term: 'concentration', sourceTermId: 'SBO:0000196',
-			ontologyURI: new URI('http://www.ebi.ac.uk/sbo/'), species: staphylococcus)
+			ontologyURI: new URI('http://www.ebi.ac.uk/sbo/'), unitDefinition: logPU.clone(), species: staphylococcus)
 		
 		salmonellaGrowth = new AssignmentRule(salmonelle,
 			ASTNode.parseFormula("Y0+YMax-ln(e^Y0 + (e^Y0-e^YMax)*e^(-mu_max * lambda * time))"))
-		timeParameter = new PMFParameter(id: 'time', constant: false, units: seconds)
+		timeParameter = new PMFParameter(id: 'time', constant: false)
+		timeParameter.setUnits(seconds)
 		finalFile = Files.createTempFile('pmfTest', null)
 	}
 	
@@ -88,16 +101,16 @@ class PMFWriterTestBase {
 				]))
 		def resultComponent = new PMFResultComponent(id: 'experiment1', dimensionDescription: timeDescription)
 		resultComponent.dimension = [
-			(0): [0.11d, 0.12d],
-			(3600): [0.13d, 0.11d],
-			(7200): [0.14d, 0.10d],
-			(10800): [0.15d, 0.11d],
+			(0g): [0.11d, 0.12d],
+			(3600g): [0.13d, 0.11d],
+			(7200g): [0.14d, 0.10d],
+			(10800g): [0.15d, 0.11d],
 		]
 		resultComponent.setAnnotation('author', PMFUtil.DC_NS, 'testCase')
 		
 		if(!valid) {
 			// manipulate some values to make it invalid
-			resultComponent.dimension[3600][1] = 'a'
+			resultComponent.dimension[3600g][1] = 'a'
 			salDescription.name = null
 		}
 		
@@ -109,8 +122,15 @@ class PMFWriterTestBase {
 		model.listOfCompartments.add(matrix.clone())
 		model.listOfSpecies.add(salmonelle.clone())
 		model.listOfUnitDefinitions.add(logPU.clone())
-		[lambda: 42.15624402963166, mu_max: 0.0335496792126201, Ymax: 19.81060444197425, Y0: 6.147902198294101].each { constant, value ->
-			model.listOfParameters.add(new PMFParameter(id: constant, constant: true, value: value))
+		model.listOfUnitDefinitions.add(logPUh.clone())
+		def paramNames = ['lambda', 'mu_max', 'Ymax', 'Y0']
+		def initialValues = [42.15624402963166, 0.0335496792126201, 19.81060444197425, 6.147902198294101]
+		def units = ['dimensionless', logPUh, logPU, logPU]
+		paramNames.eachWithIndex { constant, index ->
+			def param = new PMFParameter(id: constant, constant: true, value: initialValues[index])
+			param.setUnits(units[index]) 
+			model.listOfParameters.add(param)
+			
 		}
 		model.listOfParameters.add(timeParameter)
 		model.listOfRules.add(salmonellaGrowth)

@@ -16,11 +16,15 @@
  ******************************************************************************/
 package de.bund.bfr.pmf;
 
-import static org.junit.Assert.*
-
+import org.junit.Ignore;
 import org.junit.Test
+import org.sbml.jsbml.Annotation;
+import org.sbml.jsbml.SBMLDocument;
+import org.sbml.jsbml.xml.XMLNode;
 
-import de.bund.bfr.numl.NuMLDocument
+import static org.junit.Assert.*;
+
+import de.bund.bfr.pmf.sbml.PMFModel
 
 /**
  * 
@@ -35,21 +39,74 @@ class PMFWriterReaderTest extends PMFWriterTestBase {
 		
 		PMFDocument doc2 = new PMFReader().read(writtenZip)
 		
+		exchangeExtraNamespaces(doc, doc2)
 		assertEquals(doc, doc2)
+	}
+	
+	@Test
+	void shouldReadWriteReadAsString() throws Exception {
+		def resourceFile = PMFWriterReaderTest.getResource('/pmf/Valid.zip')
+		PMFDocument doc = new PMFReader().read(resourceFile)
+		
+		def namedStrings = new PMFWriter().toStrings(doc)		
+		
+		PMFDocument doc2 = new PMFReader().readFileSet(namedStrings)
+		
+		exchangeExtraNamespaces(doc, doc2)
+		assertEquals(doc, doc2)
+	}
+	
+	void exchangeExtraNamespaces(PMFDocument doc, PMFDocument doc2) {
+		doc2.models.each { name, model2 ->
+			def model1 = doc.models[name]
+			if(model1) {
+				model1.declaredNamespaces.each { prefix, uri ->
+					if(!model2.declaredNamespaces[prefix])
+						model2.addDeclaredNamespace(prefix, uri)
+				}
+				model2.declaredNamespaces.each { prefix, uri ->
+					if(!model1.declaredNamespaces[prefix])
+						model1.addDeclaredNamespace(prefix, uri)
+				}
+			}
+		}
 	}
 	
 	@Test
 	void shouldWriteRead() {
 		def dataset = createPMFNuml()
-		def model = createPMFSBML()
+		SBMLDocument model = createPMFSBML()
 		PMFModel pmfModel = model.model
 		pmfModel.setDataSource('data', 'concentrations.xml')
 		timeParameter.setSourceValue('data', timeDescription)
 		def doc = new PMFDocument(dataSets: ['concentrations.xml': dataset], models: ['salModel.xml': model])
 		
-		new PMFWriter().write(doc, finalFile)
-		PMFDocument doc2 = new PMFReader().read(finalFile)
+		removeWhitespaceChildren(doc)
+		def namedStrings = new PMFWriter().toStrings(doc)
+		PMFDocument doc2 = new PMFReader().readFileSet(namedStrings)
+		def namedStrings2 = new PMFWriter().toStrings(doc2)
+		removeWhitespaceChildren(doc2)
+		exchangeExtraNamespaces(doc, doc2)
 		assertEquals(doc, doc2)
 	}
 	
+	void removeWhitespaceChildren(PMFDocument doc) {
+		doc.models.each { name, model ->
+			PMFUtil.traverse(model, { node ->
+				if(node instanceof Annotation) 
+					removeWhitespaceChildren(node.nonRDFannotation)
+				node
+			})
+		}
+	}
+	
+	void removeWhitespaceChildren(XMLNode node) {
+		def index = node.childCount - 1
+		while(index >= 0)
+			removeWhitespaceChildren(node.getChildAt(index--))
+		
+		if((node.text && node.characters.trim().empty) ||
+			(!node.text && node.attributes.length == 0 && node.childCount == 0)) 
+			node.parent.removeChild(node)
+	}
 }

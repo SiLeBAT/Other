@@ -23,6 +23,7 @@ import java.util.zip.ZipOutputStream
 import org.apache.log4j.Level
 
 import de.bund.bfr.numl.NuMLWriter
+import de.bund.bfr.pmf.sbml.SBMLAdapter;
 
 /**
  * 
@@ -64,8 +65,9 @@ class PMFWriter {
 		doc.models.collectEntries { name, sbml ->
 			[(name): new SBMLAdapter().toString(sbml)]
 		} +
-		doc.dataSets.collectEntries { name, sbml ->
-			[(name): new NuMLWriter(namespaces: [xlink: PMFUtil.XLINK_NS]).toString(sbml)]
+		doc.dataSets.collectEntries { name, numl ->
+			PMFUtil.addStandardPrefixes(numl)
+			[(name): new NuMLWriter(namespaces: PMFUtil.standardPrefixes.clone()).toString(numl)]
 		}
 	}
 

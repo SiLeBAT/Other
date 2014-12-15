@@ -22,7 +22,6 @@ import groovy.transform.EqualsAndHashCode
 /**
  * Vocabulary/term from standard ontology source to describe various types of data associated with the model
  */
-@EqualsAndHashCode(callSuper = true)
 @AutoClone
 class OntologyTerm extends NMBase {
 	@Required
