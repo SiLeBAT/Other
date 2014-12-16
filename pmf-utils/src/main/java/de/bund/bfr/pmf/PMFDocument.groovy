@@ -67,7 +67,9 @@ class PMFDocument {
 		def fileTypeWriter = fileTypeWriters[doc.class]
 		if(!fileTypeWriter)
 			throw new IllegalArgumentException("Unknown document type ${doc?.class}")
-		def xmlString = fileTypeWriter.newInstance().toString(doc)
+		def nsDoc = doc instanceof Cloneable ? doc.clone() : doc
+		PMFUtil.addStandardPrefixes(nsDoc)
+		def xmlString = fileTypeWriter.newInstance().toString(nsDoc)
 		new ByteArrayInputStream(xmlString.getBytes(Charset.forName("utf-8")))
 	}
 

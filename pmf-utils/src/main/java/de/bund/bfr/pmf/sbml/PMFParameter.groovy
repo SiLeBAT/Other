@@ -127,7 +127,7 @@ class PMFParameter extends Parameter implements SBMLReplacement {
 					try {
 						getValueInstances(pmf)
 					} catch(e) {
-						messages << new ConformityMessage("$prefix: $e.message")
+						messages << new ConformityMessage("$prefix: $e")
 					}
 			} catch(e) {
 				messages << new ConformityMessage("$prefix: invalid source value because of $e.message: $e.cause (Specification 13)")

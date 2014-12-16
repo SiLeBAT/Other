@@ -72,10 +72,11 @@ class SBMLAdapter {
 	String toString(SBMLDocument document) {
 		SBMLDocument nsDocument = PMFUtil.wrap(document.clone())
 		PMFUtil.standardPrefixes.each { prefix, uri ->
-			nsDocument.addDeclaredNamespace("xmlns:$prefix", uri)
+			nsDocument.addDeclaredNamespace("$prefix", uri)
 		}		 
 		PMFUtil.addStandardPrefixes(nsDocument)
-		new SBMLWriter().writeSBMLToString(nsDocument)
+		def xmlString = new SBMLWriter().writeSBMLToString(nsDocument)
+		xmlString
 	}
 	
 	List<ConformityMessage> getParseMessages(Level level = Level.WARN) {

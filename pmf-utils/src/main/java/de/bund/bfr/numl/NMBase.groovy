@@ -16,6 +16,7 @@
  ******************************************************************************/
 package de.bund.bfr.numl
 
+import groovy.transform.AutoClone;
 import groovy.xml.QName
 
 /**

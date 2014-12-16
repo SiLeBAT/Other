@@ -19,6 +19,7 @@ package de.bund.bfr.pmf
 import groovy.xml.QName
 
 import org.sbml.jsbml.AbstractSBase
+import org.sbml.jsbml.Annotation
 import org.sbml.jsbml.SBMLDocument
 import org.sbml.jsbml.SBase
 import org.sbml.jsbml.xml.XMLAttributes
@@ -132,7 +133,7 @@ class PMFUtil {
 	static XMLNode ensurePMFAnnotation(SBase node, String... annotationNames) {	
 		def annotation = node.annotation	
 		if(!annotation.nonRDFannotation)
-			annotation.nonRDFannotation = new XMLNode(new XMLTriple('annotation'))
+			annotation.nonRDFannotation = new XMLNode(new XMLTriple('annotation', PMFUtil.SBML_NS, null))
 		ensurePMFNodes(annotation.nonRDFannotation, ['metadata'] + (annotationNames as List))
 	}
 	
@@ -150,7 +151,7 @@ class PMFUtil {
 	static Node ensurePMFAnnotation(NMBase node, String... annotationNames) {	
 		def annotation = node.annotation	
 		if(!annotation)
-			node.annotation = annotation = new Node(null, new groovy.xml.QName(PMFUtil.PMF_NS, 'annotation'), [:], [])
+			node.annotation = annotation = new Node(null, new groovy.xml.QName(PMFUtil.NUML_NS, 'annotation'), [:], [])
 		ensurePMFNodes(annotation, ['metadata'] + (annotationNames as List))
 	}
 	
@@ -204,8 +205,8 @@ class PMFUtil {
 	
 	static void addStandardPrefixes(SBase node) {
 		traverse(node, { child ->
-			if(child instanceof XMLNode) {
-				addStandardPrefixes(child)
+			if(child instanceof Annotation) {
+				addStandardPrefixes(child.nonRDFannotation)
 			}
 		})
 	}
@@ -217,6 +218,9 @@ class PMFUtil {
 			if(nsEntry && !triple.prefix)
 				node.triple = new XMLTriple(triple.name, triple.namespaceURI, triple.prefix ?: nsEntry.key)
 		}
+		(0..<(node.childCount)).each { index -> 				
+			addStandardPrefixes(node.getChildAt(index)) 		
+		}	
 //		def namespaces = new XMLNamespaces()
 //		standardPrefixes.each { prefix, uri ->
 //			namespaces.add(uri, prefix)
