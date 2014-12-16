@@ -20,12 +20,12 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 import org.junit.After
+import org.junit.Assert
 import org.junit.Before
 import org.sbml.jsbml.ASTNode
 import org.sbml.jsbml.AssignmentRule
 import org.sbml.jsbml.SBMLDocument
 import org.sbml.jsbml.Unit
-import org.sbml.jsbml.UnitDefinition;
 
 import de.bund.bfr.numl.AtomicDescription
 import de.bund.bfr.numl.CompositeDescription
@@ -35,11 +35,13 @@ import de.bund.bfr.numl.NuMLDocument
 import de.bund.bfr.numl.TupleDescription
 import de.bund.bfr.pmf.numl.PMFOntologyTerm
 import de.bund.bfr.pmf.numl.PMFResultComponent
+import de.bund.bfr.pmf.sbml.DoubleRange
 import de.bund.bfr.pmf.sbml.PMFCompartment
 import de.bund.bfr.pmf.sbml.PMFModel
 import de.bund.bfr.pmf.sbml.PMFParameter
 import de.bund.bfr.pmf.sbml.PMFSpecies
 import de.bund.bfr.pmf.sbml.PMFUnitDefinition
+import de.bund.bfr.pmf.sbml.SBMLAdapter
 
 /**
  * 
@@ -81,10 +83,16 @@ class PMFWriterTestBase {
 		staphConcentration = new PMFOntologyTerm(term: 'concentration', sourceTermId: 'SBO:0000196',
 			ontologyURI: new URI('http://www.ebi.ac.uk/sbo/'), unitDefinition: logPU.clone(), species: staphylococcus)
 		
-		salmonellaGrowth = new AssignmentRule(salmonelle,
-			ASTNode.parseFormula("Y0+YMax-ln(e^Y0 + (e^Y0-e^YMax)*e^(-mu_max * lambda * time))"))
 		timeParameter = new PMFParameter(id: 'time', constant: false)
 		timeParameter.setUnits(seconds)
+				
+		salmonellaGrowth = new AssignmentRule(salmonelle,
+			ASTNode.parseFormula("Y0+YMax-ln(e^Y0 + (e^Y0-e^YMax)*e^(-mu_max * lambda * time))"))
+		def doc = new SBMLDocument(3, 1)
+		doc.createModel().listOfRules.add(salmonellaGrowth)
+		def xmlString = new SBMLAdapter().toString(doc)
+		salmonellaGrowth = new SBMLAdapter().parseText(xmlString).model.listOfRules.get(0)
+		
 		finalFile = Files.createTempFile('pmfTest', null)
 	}
 	
@@ -136,6 +144,8 @@ class PMFWriterTestBase {
 		model.listOfRules.add(salmonellaGrowth)
 		model.setAnnotation('author', PMFUtil.DC_NS, 'testCase')
 		
+		timeParameter.range = new DoubleRange(0, 18000)
+		Assert.assertEquals(new DoubleRange(0, 18000), timeParameter.range)
 		if(!valid) {
 			model.listOfSpecies.get(0).units = null
 			model.listOfUnitDefinitions.get(0).annotation.nonRDFannotation = null

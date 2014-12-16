@@ -16,6 +16,8 @@
  ******************************************************************************/
 package de.bund.bfr.pmf
 
+import javax.swing.tree.TreeNode;
+
 import groovy.xml.QName
 
 import org.sbml.jsbml.AbstractSBase
@@ -179,8 +181,8 @@ class PMFUtil {
 		doc
 	}
 	
-	static void traverse(SBase doc, Closure callback) {
-		def nodeStack = new LinkedList<SBase>([doc])
+	static void traverse(TreeNode root, Closure callback) {
+		def nodeStack = new LinkedList<SBase>([root])
 		while(nodeStack) {
 			def node = nodeStack.removeFirst()
 			node = callback(node) ?: node

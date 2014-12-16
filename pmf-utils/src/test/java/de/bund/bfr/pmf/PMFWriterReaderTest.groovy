@@ -16,13 +16,13 @@
  ******************************************************************************/
 package de.bund.bfr.pmf;
 
-import org.junit.Ignore;
-import org.junit.Test
-import org.sbml.jsbml.Annotation;
-import org.sbml.jsbml.SBMLDocument;
-import org.sbml.jsbml.xml.XMLNode;
+import static org.junit.Assert.*
 
-import static org.junit.Assert.*;
+import org.junit.Test
+import org.sbml.jsbml.Annotation
+import org.sbml.jsbml.SBMLDocument
+import org.sbml.jsbml.SBase
+import org.sbml.jsbml.xml.XMLNode
 
 import de.bund.bfr.pmf.sbml.PMFModel
 
@@ -56,17 +56,32 @@ class PMFWriterReaderTest extends PMFWriterTestBase {
 		assertEquals(doc, doc2)
 	}
 	
+	void exchangeExtraNamespaces(SBase base1, SBase base2) {		
+		base1.declaredNamespaces.each { prefix, uri ->
+			if(!base2.declaredNamespaces.containsKey(prefix))
+				base2.addDeclaredNamespace(prefix, uri)
+		}
+		base2.declaredNamespaces.each { prefix, uri ->
+			if(!base1.declaredNamespaces.containsKey(prefix))
+				base1.addDeclaredNamespace(prefix, uri)
+		}
+	}
+	
 	void exchangeExtraNamespaces(PMFDocument doc, PMFDocument doc2) {
 		doc2.models.each { name, model2 ->
 			def model1 = doc.models[name]
 			if(model1) {
-				model1.declaredNamespaces.each { prefix, uri ->
-					if(!model2.declaredNamespaces[prefix])
-						model2.addDeclaredNamespace(prefix, uri)
+				exchangeExtraNamespaces(model1, model2)
+				model1.model.listOfConstraints.eachWithIndex { c, index ->
+					exchangeExtraNamespaces(c, model2.model.listOfConstraints[index])
 				}
-				model2.declaredNamespaces.each { prefix, uri ->
-					if(!model1.declaredNamespaces[prefix])
-						model1.addDeclaredNamespace(prefix, uri)
+				model1.SBMLDocumentAttributes.each { key, value ->
+					if(!model2.SBMLDocumentAttributes.containsKey(key))
+						model2.SBMLDocumentAttributes[key] = value
+				}
+				model2.SBMLDocumentAttributes.each { key, value ->
+					if(!model1.SBMLDocumentAttributes.containsKey(key))
+						model1.SBMLDocumentAttributes[key] = value
 				}
 			}
 		}
@@ -84,10 +99,10 @@ class PMFWriterReaderTest extends PMFWriterTestBase {
 		removeWhitespaceChildren(doc)
 		def namedStrings = new PMFWriter().toStrings(doc)
 		PMFDocument doc2 = new PMFReader().readFileSet(namedStrings)
-		def namedStrings2 = new PMFWriter().toStrings(doc2)
 		removeWhitespaceChildren(doc2)
 		exchangeExtraNamespaces(doc, doc2)
 		assertEquals(doc, doc2)
+		assertEquals(timeParameter.range, doc2.models['salModel.xml'].model.listOfParameters.find { it.id == 'time' }?.range)
 	}
 	
 	void removeWhitespaceChildren(PMFDocument doc) {
@@ -106,7 +121,9 @@ class PMFWriterReaderTest extends PMFWriterTestBase {
 			removeWhitespaceChildren(node.getChildAt(index--))
 		
 		if((node.text && node.characters.trim().empty) ||
-			(!node.text && node.attributes.length == 0 && node.childCount == 0)) 
-			node.parent.removeChild(node)
+			(!node.text && node.attributes.length == 0 && node.childCount == 0)) {
+			def parentIndex = (0..<node.parent.childCount).find { node.parent.getChildAt(it).is (node) }
+			node.parent.removeChild(parentIndex)
+		}
 	}
 }

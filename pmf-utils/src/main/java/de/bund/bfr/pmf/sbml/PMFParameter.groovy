@@ -5,10 +5,13 @@ import groovy.transform.InheritConstructors
 import groovy.transform.ToString
 
 import org.apache.log4j.Level
+import org.sbml.jsbml.ASTNode
+import org.sbml.jsbml.ASTNode.Type;
 import org.sbml.jsbml.Constraint
 import org.sbml.jsbml.Parameter
 import org.sbml.jsbml.SBMLDocument
 import org.sbml.jsbml.Unit
+import org.sbml.jsbml.UnitDefinition;
 import org.sbml.jsbml.xml.XMLAttributes
 import org.sbml.jsbml.xml.XMLNode
 import org.sbml.jsbml.xml.XMLTriple
@@ -67,43 +70,78 @@ class PMFParameter extends Parameter implements SBMLReplacement {
 	}
 	
 	DoubleRange getRange() {
-		def constraint = this.constraint
-		// TODO:
+		def constraint = this.rangeConstraint
+		if(!constraint)
+			return null
+			
+		double lower = Double.NEGATIVE_INFINITY, higher = Double.POSITIVE_INFINITY
+		ASTNode math = constraint.math
+		PMFUtil.traverse(math, { ASTNode node ->
+			if(node.relational) {
+				int varPos = (0..<(node.childCount)).find { node.getChildAt(it).variable }
+				if(varPos == -1)
+					return
+					
+				boolean isLess = node.type == Type.RELATIONAL_LEQ
+				String unitRef = node.getChildAt(1 - varPos).units
+				if(unitRef != this.units)
+					throw new UnsupportedOperationException('Cannot transform units')
+				double number = node.getChildAt(1 - varPos).getReal()
+				if((varPos == 1) == isLess) 
+					lower = number
+				else higher = number
+			}
+			node
+		})
+		new DoubleRange(lower, higher)
 	}
 	
-	Constraint getConstaint() {		
-		PMFModel model = this.root.model
-		model.listOfConstraints.find {
-			// TODO:
+	Constraint getRangeConstraint() {		
+		PMFModel model = this.getModel()
+		model?.listOfConstraints?.find { constraint ->
+			def matches = false
+			PMFUtil.traverse(constraint.math, { ASTNode node ->
+				if(node.type == Type.NAME && node.getVariable() == this) 
+					matches = true
+				node
+			})
+			matches
 		}
 	}
-	
-//	final static rangeTemplate = """
-//		<constraint>
-//			<math xmlns="http://www.w3.org/1998/Math/MathML">
-//				<apply>
-//					<and/>
-//					<apply>
-//						<lt/>
-//						<cn sbml:units="mole"> 1 </cn>
-//						<ci> S1 </ci>
-//					</apply>
-//					<apply>
-//						<lt/>
-//						<ci> S1 </ci>
-//						<cn sbml:units="mole"> 100 </cn>
-//					</apply>
-//				</apply>
-//			</math>
-//			<message xmlns="http://www.w3.org/1999/xhtml">
-//			</message>
-//		</constraint>"""
-	
+		
 	void setRange(DoubleRange range) {
-		PMFModel model = this.root.getChildElement('model')
-		def oldConstraint = model.listOfConstraints.find { 
-			// TODO:
+		PMFModel model = this.getModel()
+		if(model == null)
+			throw new IllegalStateException('Can only set the range after parameter has been added to model')
+		
+		def oldConstraint = this.rangeConstraint
+		if(oldConstraint)
+			model.listOfConstraints.remove(model.listOfConstraints.findIndex { it.is(oldConstraint) })
+			
+		def newConstraint = new Constraint()
+		def id = new ASTNode(type: Type.NAME, name: this.id)
+		def unit = this.units
+		def lowerPart = range.from != Double.NEGATIVE_INFINITY ? newAST(Type.RELATIONAL_LEQ, range.from, id) : null
+		def upperPart = range.to != Double.POSITIVE_INFINITY ? newAST(Type.RELATIONAL_LEQ, id, range.to) : null
+		if(!lowerPart && !upperPart)
+			return
+			
+		if(lowerPart && upperPart) {
+			newConstraint.math = newAST(Type.LOGICAL_AND, lowerPart, upperPart)
+		} else
+			newConstraint.math = lowerPart ?: upperPart
+			
+		model.listOfConstraints.add(newConstraint)
+	}
+	
+	private newAST(Type type, Object... parameters) {
+		def node = new ASTNode(type)
+		parameters.each { parameter ->
+			def child = parameter instanceof Number ? 
+				new ASTNode(value: parameter.doubleValue(), units: this.unitsID) : parameter
+			node.addChild(child)
 		}
+		node
 	}
 	
 	@Override
