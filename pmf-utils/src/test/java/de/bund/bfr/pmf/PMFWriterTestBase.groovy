@@ -141,7 +141,7 @@ class PMFWriterTestBase {
 			
 		}
 		model.listOfParameters.add(timeParameter)
-		model.listOfRules.add(salmonellaGrowth)
+		model.listOfRules.add(salmonellaGrowth.clone())
 		model.setAnnotation('author', PMFUtil.DC_NS, 'testCase')
 		
 		timeParameter.range = new DoubleRange(0, 18000)

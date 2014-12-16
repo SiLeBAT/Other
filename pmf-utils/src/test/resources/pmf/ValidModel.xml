@@ -203,5 +203,24 @@
 				</math>
 			</assignmentRule>
 		</listOfRules>
+		<listOfConstraints>
+			<constraint>
+				<math xmlns="http://www.w3.org/1998/Math/MathML" xmlns:sbml="http://www.sbml.org/sbml/level3/version1/core">        
+					<apply>
+						<and/>
+						<apply>
+							<leq/>
+							<cn  sbml:units="h"> 0 </cn>
+							<ci> time </ci>
+						</apply>
+						<apply>
+							<leq/>
+							<ci> time </ci>
+							<cn  sbml:units="h"> 18000 </cn>
+						</apply>
+					</apply>
+				</math>
+			</constraint>
+		</listOfConstraints>
 	</model>
 </sbml>
