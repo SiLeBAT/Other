@@ -35,50 +35,53 @@ class SBMLAdapter {
 	SBMLDocument document
 	boolean validating = false
 	def messages
-		
-	SBMLDocument read(InputStream stream) {		
+
+	SBMLDocument read(InputStream stream) {
 		parseText(stream.text)
 	}
-	
+
 	SBMLDocument parseText(String xmlString) {
 		this.messages = []
 		this.document = null
-		
+
 		try {
 			document = reader.readSBMLFromString(xmlString)
 			if(document.level == -1)
 				document = null
 		} catch(e) {
-			// ignore exception for now; we use validator for more fine-grain descriptions		
+			// ignore exception for now; we use validator for more fine-grain descriptions
 			this.messages += e.message
 		}
-		
+
 		// validate in case of error
-		if(validating || !document) {				
-			def errorLog = SBMLValidator.checkConsistency(xmlString)
-			this.messages += errorLog.validationErrors.collect { error ->
-				new ConformityMessage(level: error.severity as Level, message: error.message)
-			}
+		if(validating || !document) {
+			def errorLog = SBMLValidator.checkConsistency(xmlString, [:])
+			if(errorLog == null)
+				this.messages += new ConformityMessage(level: Level.WARN, message: 'Cannot use validation service. If you are behind a proxy configure it with http://docs.oracle.com/javase/6/docs/technotes/guides/net/proxies.html')
+			else
+				this.messages += errorLog.validationErrors.collect { error ->
+					new ConformityMessage(level: error.severity as Level, message: error.message)
+				}
 		}
-			
+
 		if(!validating) {
 			def messages = this.getParseMessages(Level.ERROR)
 			if(messages)
 				throw new SBMLException("Invalid SBML document ${messages.join('\n')}")
-		} 
+		}
 		document
 	}
-	
+
 	String toString(SBMLDocument document) {
 		SBMLDocument nsDocument = PMFUtil.wrap(document.clone())
 		PMFUtil.standardPrefixes.each { prefix, uri ->
 			nsDocument.addDeclaredNamespace("$prefix", uri)
-		}		 
+		}
 		PMFUtil.addStandardPrefixes(nsDocument)
 		def xmlString = new SBMLWriter().writeSBMLToString(nsDocument)
 		xmlString
 	}
-	
+
 	List<ConformityMessage> getParseMessages(Level level = Level.WARN) {
 		messages.grep { it.level.isGreaterOrEqual(level) }
 	}
