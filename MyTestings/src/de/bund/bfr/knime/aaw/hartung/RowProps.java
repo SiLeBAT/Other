@@ -85,13 +85,14 @@ public class RowProps {
 	}
 	public boolean equals(RowProps nextRP) {
 		if (nextRP == null) return false;
-		if ((nextRP.getSourceA() == null || nextRP.getSourceA().equals(SourceA)) &&
-				(nextRP.getSourceB() == null || nextRP.getSourceB().equals(SourceB)) && 
-				(nextRP.getSourceC() == null || nextRP.getSourceC().equals(SourceC)) && 
-				(nextRP.getMethode() == null || nextRP.getMethode().equals(Methode)) && 
-				(nextRP.getGrund() == null || nextRP.getGrund().equals(Grund)) && 
-				(nextRP.getEbene() == null || nextRP.getEbene().equals(Ebene)) && 
-				(nextRP.getAmount() == null || Amount != null && nextRP.getAmount().intValue() == Amount.intValue()))
+		boolean eq = (nextRP.getSourceA() == null && SourceA == null || nextRP.getSourceA() != null && nextRP.getSourceA().equals(SourceA)) &&
+					(nextRP.getSourceB() == null && SourceB == null || nextRP.getSourceB() != null && nextRP.getSourceB().equals(SourceB)) && 
+					(nextRP.getSourceC() == null && SourceC == null || nextRP.getSourceC() != null && nextRP.getSourceC().equals(SourceC)) && 
+					(nextRP.getMethode() == null && Methode == null || nextRP.getMethode() != null && nextRP.getMethode().equals(Methode)) && 
+					(nextRP.getGrund() == null && Grund == null || nextRP.getGrund() != null && nextRP.getGrund().equals(Grund)) && 
+					(nextRP.getEbene() == null && Ebene == null || nextRP.getEbene() != null && nextRP.getEbene().equals(Ebene)) && 
+					(nextRP.getAmount() == null && Amount == null || nextRP.getAmount() != null && Amount != null && nextRP.getAmount().intValue() == Amount.intValue());
+		if (eq)
 			return true;
 		return false;
 	}

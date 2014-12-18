@@ -124,7 +124,6 @@ public class MyImporterNodeModel extends NodeModel {
 		                    	cell = row.getCell(14); // Spalte O
 		                    	str = getStrVal(cell);
 		                    	if (str != null && str.trim().length() > 2) bl = str.substring(2).trim();
-		                    	if (bl == null) continue; // kann evtl. auch weg
 
 		                    	// Ansprechpartner, Labname, AnsprechpartnerMail, Akkreditiert, Staat, Saison, Agents
 		                    	String staat = null;
@@ -181,7 +180,8 @@ public class MyImporterNodeModel extends NodeModel {
 			                    	for (int j=7;j<19;j++) {
 				                    	cell = row.getCell(j); // Spalte H-S
 				                    	str = getStrVal(cell);
-				                    	if (anzahlFound || str != null && (str.trim().equals("Anzahl") || str.trim().equals("Zahl"))) {
+				                    	boolean strZahl = (str != null && (str.trim().equals("Anzahl") || str.trim().equals("Zahl")));
+				                    	if (anzahlFound || strZahl) {
 				                    		if (!anzahlFin) tests = new LinkedHashMap<Integer, Testings>();
 				                    		anzahlFound = true; anzahlFin = true;
 				                    		boolean starFound = false;
@@ -214,11 +214,16 @@ public class MyImporterNodeModel extends NodeModel {
 						                    		}
 						                    	}
 				                    		}
+					                    	if (filename.equals("C:\\Users\\Armin\\Desktop\\Hartung\\2011\\xls\\BY-LGL-Balsliemke_ZOFORM_Fragebogen_2011.XLS") && namename.equals("05.21")) {
+					                    		System.err.print("");
+					                    	}
 				                    		if (starFound || kbeFound) tests.put(j, tst);
+				                    		/*
 				                    		else if (endStarFound && !kbeFound) {
 				                    			tests.put(j, null);
 				                    		}
-				                    		else if (!starFound && (j+1) % 2 == 0) { // Spalten H, J, L, N, P
+				                    		*/
+				                    		else if (!starFound && strZahl) { //(j+1) % 2 == 0 Spalten H, J, L, N, P
 				                    			tests.put(j, null);
 				                    		}
 				                    		row = sheet.getRow(rowIndex + plusIndex);
@@ -226,6 +231,8 @@ public class MyImporterNodeModel extends NodeModel {
 			                    	}			                    	
 		                    	}
 		                    	
+		                    	if (bl == null) continue; // kann evtl. auch weg
+
 		                    	if (firstDataRow == 0) {
 		                    		System.err.println("firstDataRow = 0...");
 		                    		continue;
@@ -277,7 +284,11 @@ public class MyImporterNodeModel extends NodeModel {
 						                    	if (str != null && str.trim().length() > 0) {
 						                    		if (sumPositive == null) sumPositive = 0;
 						                    		String pos = str.trim();
-					                    			int posi = Integer.parseInt(pos);
+						                    		int posi = Integer.parseInt(pos);
+							                    	if (filename.equals("C:\\Users\\Armin\\Desktop\\Hartung\\2011\\xls\\hb.Kopie von ZOFORM.Frageboegen.f.2011Lua.XLS") && (rowIndex + plusIndex > 1850)) {
+							                    		System.err.print("");
+							                    		//System.err.println((rowIndex + plusIndex) + "\t" + rowProps.getAmount() + "\t" + posi + "\t" + repeat);
+							                    	}
 						                    		if (tst == null) { // self-defined agent
 								                    	cell = row.getCell(j - 1);
 								                    	str = getStrVal(cell);
@@ -386,12 +397,12 @@ public class MyImporterNodeModel extends NodeModel {
 						        				cells[34] = (tst.getAgent() == null ? DataType.getMissingCell() : new StringCell(tst.getAgent()));
 						        				cells[35] = DataType.getMissingCell();
 						        				boolean isGruppe = rowProps.getSourceC() != null && (rowProps.getSourceC().equals("Herden/Gehöfte") || rowProps.getSourceC().equals("Herden") || rowProps.getSourceC().equals("Gewicht (in T)"));
-						        				boolean isIndividual = rowProps.getSourceC() != null && (rowProps.getSourceC().equals("Einzeltiere") || rowProps.getSourceC().equals("Sendungen") || rowProps.getSourceC().equals("Probenzahl"));
+						        				boolean isIndividual = rowProps.getSourceC() != null && (rowProps.getSourceC().equals("Einzeltiere") || rowProps.getSourceC().equals("Gehöft") || rowProps.getSourceC().equals("Sendungen") || rowProps.getSourceC().equals("Probenzahl"));
 						        				cells[36] = (!isGruppe ? DataType.getMissingCell() : new StringCell(rowProps.getSourceC()));
 						        				cells[37] = DataType.getMissingCell();
 						        				cells[38] = (!isGruppe || rowProps.getAmount() == null ? DataType.getMissingCell() : new StringCell(rowProps.getAmount()+""));
 						        				
-						                    	if (rowProps.getAmount() == 90 && namename.equals("01.21b")) {
+						                    	if (rowProps.getAmount() != null && rowProps.getAmount() == 90 && namename.equals("01.21b")) {
 						                    		System.err.print("");
 						                    	}
 
@@ -470,6 +481,7 @@ public class MyImporterNodeModel extends NodeModel {
         return new BufferedDataTable[]{buf.getTable()};
     }
     private RowProps getA2G(HSSFRow row, RowProps oldRowProps, String defSourceC) {
+    	if (row == null) return null;
     	RowProps result = new RowProps();
     	if (oldRowProps != null) result = oldRowProps.clone();
     	
@@ -511,7 +523,8 @@ public class MyImporterNodeModel extends NodeModel {
     	str = getStrVal(cell);
     	if (str != null && str.trim().length() > 0) Anzahl = str.trim();
 		if (Anzahl == null || Integer.parseInt(Anzahl) == 0) return null;
-		result.setAmount(Integer.parseInt(Anzahl));
+		//if (Anzahl == null || Integer.parseInt(Anzahl) == 0) result.setAmount(null);
+		else result.setAmount(Integer.parseInt(Anzahl));
 		
 		return result;
     }
