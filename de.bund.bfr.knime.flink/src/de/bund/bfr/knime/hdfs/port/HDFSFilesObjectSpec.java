@@ -16,6 +16,9 @@
  ******************************************************************************/
 package de.bund.bfr.knime.hdfs.port;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.swing.JComponent;
 
 import org.knime.core.node.port.PortObjectSpec;
@@ -27,16 +30,16 @@ import de.bund.bfr.knime.hdfs.HDFSFile;
  * submission, we send a completely independent request. However, this special port allows users to keep their Flink
  * configuration at one place through the {@link de.bund.bfr.knime.flink.jm.FlinkJobManagerConnectionNodeModel}.
  */
-public class HDFSFileObjectSpec implements PortObjectSpec {
-	private HDFSFile settings = new HDFSFile();
+public class HDFSFilesObjectSpec implements PortObjectSpec {
+	private Set<HDFSFile> files = new HashSet<>();
 
 	/**
-	 * Returns the settings.
+	 * Returns the files.
 	 * 
-	 * @return the settings
+	 * @return the files
 	 */
-	public HDFSFile getFile() {
-		return this.settings;
+	public Set<HDFSFile> getFiles() {
+		return this.files;
 	}
 
 	/*
@@ -45,23 +48,23 @@ public class HDFSFileObjectSpec implements PortObjectSpec {
 	 */
 	@Override
 	public JComponent[] getViews() {
-		return new JComponent[] { new HDFSFileObjectView(this.settings) };
+		return new JComponent[] { new HDFSFilesObjectView(this.files) };
 	}
 
 	/**
-	 * Sets the settings to the specified value.
+	 * Sets the files to the specified value.
 	 * 
-	 * @param settings
-	 *        the settings to set
+	 * @param files
+	 *        the files to set
 	 */
-	public void setFile(HDFSFile settings) {
-		if (settings == null)
-			throw new NullPointerException("settings must not be null");
+	public void setFiles(Set<HDFSFile> files) {
+		if (files == null)
+			throw new NullPointerException("files must not be null");
 
-		this.settings = settings;
+		this.files = files;
 	}
 
-	public static PortObjectSpecSerializer<HDFSFileObjectSpec> getPortObjectSpecSerializer() {
+	public static PortObjectSpecSerializer<HDFSFilesObjectSpec> getPortObjectSpecSerializer() {
 		return new HDFSFileObjectSpecSerializer();
 	}
 }

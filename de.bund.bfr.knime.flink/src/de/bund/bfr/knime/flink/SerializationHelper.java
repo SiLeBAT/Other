@@ -60,7 +60,7 @@ public class SerializationHelper {
 			writeObject(bos, serializable);
 			bos.close();
 			settings.addByteArray(key, bos.toByteArray());
-		} catch (IOException e) {
+		} catch (Exception e) {
 			throw new IllegalStateException("Cannot serialize the object locally.", e);
 		}
 	}

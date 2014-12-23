@@ -81,7 +81,7 @@ public class HDFSConnectionObject implements PortObject {
 	 */
 	@Override
 	public String getSummary() {
-		return String.format("Job manager connection @ %s", this.settings.getAddress());
+		return String.format("Job manager connection @ %s", this.settings.getConfiguration().get("fs.default.name"));
 	}
 
 	/*

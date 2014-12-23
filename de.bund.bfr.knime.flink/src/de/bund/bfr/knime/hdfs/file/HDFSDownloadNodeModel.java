@@ -2,12 +2,12 @@ package de.bund.bfr.knime.hdfs.file;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.knime.core.data.DataTableSpec;
+import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
@@ -21,21 +21,20 @@ import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
 import de.bund.bfr.knime.hdfs.HDFSFile;
 import de.bund.bfr.knime.hdfs.port.HDFSConnectionObject;
-import de.bund.bfr.knime.hdfs.port.HDFSConnectionObjectSpec;
 import de.bund.bfr.knime.hdfs.port.HDFSFilesObject;
-import de.bund.bfr.knime.hdfs.port.HDFSFilesObjectSpec;
 
 /**
- * This is the model implementation of HDFSUpload.
- * Transfers a file to HDFS.
- * 
+ * This is the model implementation of HDFSDownload.
+ * Downloads an HDFS file from a remote HDFS namenode to the local filesystem.
+ *
  * @author Arvid Heise
  */
-public class HDFSUploadNodeModel extends NodeModel {
+public class HDFSDownloadNodeModel extends NodeModel {
 	private SettingsModelString source = createSourceModel(), target = createTargetModel();
 
 	private SettingsModelBoolean override = createOverrideModel();
@@ -55,8 +54,8 @@ public class HDFSUploadNodeModel extends NodeModel {
 	/**
 	 * Constructor for the node model.
 	 */
-	protected HDFSUploadNodeModel() {
-		super(new PortType[] { HDFSConnectionObject.TYPE }, new PortType[] { HDFSFilesObject.TYPE });
+	protected HDFSDownloadNodeModel() {
+		super(new PortType[] { HDFSFilesObject.TYPE }, new PortType[] { });
 	}
 
 	/*
@@ -66,17 +65,11 @@ public class HDFSUploadNodeModel extends NodeModel {
 	 */
 	@Override
 	protected PortObject[] execute(PortObject[] inObjects, ExecutionContext exec) throws Exception {
-		HDFSConnectionObject connection = (HDFSConnectionObject) inObjects[0];
-		FileSystem hdfs = FileSystem.get(connection.getSettings().getConfiguration());
-		hdfs.copyFromLocalFile(new Path(this.source.getStringValue()), new Path(this.target.getStringValue()));
-		
-		HDFSFile file = new HDFSFile();
-		file.setHdfsSettings(connection.getSettings());
-		file.setLocation(new URL(this.target.getStringValue()));
-
-		HDFSFilesObject hdfsFileObject = new HDFSFilesObject();
-		hdfsFileObject.setFiles(Sets.newHashSet(file));
-		return new PortObject[] { hdfsFileObject };
+		HDFSFilesObject files = (HDFSFilesObject) inObjects[0];
+		HDFSFile file = Iterables.getFirst(files.getFiles(), null);
+		FileSystem hdfs = FileSystem.get(file.getHdfsSettings().getConfiguration());
+		hdfs.copyToLocalFile(new Path(this.source.getStringValue()), new Path(this.target.getStringValue()));
+		return new PortObject[] { };
 	}
 
 	/**
@@ -85,24 +78,14 @@ public class HDFSUploadNodeModel extends NodeModel {
 	@Override
 	protected void reset() {
 	}
-	
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.knime.core.node.NodeModel#configure(org.knime.core.node.port.PortObjectSpec[])
+	 */
 	@Override
 	protected PortObjectSpec[] configure(PortObjectSpec[] inSpecs) throws InvalidSettingsException {
-		try {
-			HDFSConnectionObjectSpec connection = (HDFSConnectionObjectSpec) inSpecs[0];
-			FileSystem hdfs = FileSystem.get(connection.getSettings().getConfiguration());
-			hdfs.copyFromLocalFile(new Path(this.source.getStringValue()), new Path(this.target.getStringValue()));
-			
-			HDFSFile file = new HDFSFile();
-			file.setHdfsSettings(connection.getSettings());
-			file.setLocation(new URL(this.target.getStringValue()));
-
-			HDFSFilesObjectSpec hdfsFileObject = new HDFSFilesObjectSpec();
-			hdfsFileObject.setFiles(Sets.newHashSet(file));
-			return new PortObjectSpec[] { hdfsFileObject };
-		}  catch (IOException e) {
-			throw new InvalidSettingsException(e);
-		}
+		return super.configure(inSpecs);
 	}
 
 	/**
@@ -152,3 +135,4 @@ public class HDFSUploadNodeModel extends NodeModel {
 	}
 
 }
+

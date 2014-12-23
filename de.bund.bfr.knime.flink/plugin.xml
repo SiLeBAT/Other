@@ -20,6 +20,7 @@
 <node category-path="/flink" factory-class="de.bund.bfr.knime.flink.program.FlinkProgramLoaderNodeFactory" id="de.bund.bfr.knime.flink.program.FlinkProgramLoaderNodeFactory"/>
 <node category-path="/hdfs" factory-class="de.bund.bfr.knime.hdfs.file.HDFSUploadNodeFactory" id="de.bund.bfr.knime.hdfs.file.HDFSUploadNodeFactory"/>
 <node category-path="/hdfs" factory-class="de.bund.bfr.knime.hdfs.connection.HDFSConnectionNodeFactory" id="de.bund.bfr.knime.hdfs.connection.HDFSConnectionNodeFactory"/>
+<node category-path="/" factory-class="de.bund.bfr.knime.hdfs.file.HDFSDownloadNodeFactory" id="de.bund.bfr.knime.hdfs.file.HDFSDownloadNodeFactory"/>
 </extension>
    <extension point="org.knime.workbench.repository.categories">
       <category description="Flink connector" icon="src/de/bund/bfr/knime/flink/flink.png" level-id="flink" locked="true" name="Flink connector" path="/">

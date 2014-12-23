@@ -2,8 +2,9 @@ package de.bund.bfr.knime.hdfs.connection;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
@@ -24,7 +25,7 @@ import de.bund.bfr.knime.hdfs.port.HDFSConnectionObjectSpec;
 /**
  * This is the model implementation of HDFSConnection.
  * Connects to a local or remote HDFS server.
- *
+ * 
  * @author Arvid Heise
  */
 public class HDFSConnectionNodeModel extends NodeModel {
@@ -34,9 +35,10 @@ public class HDFSConnectionNodeModel extends NodeModel {
 	 * the dialog).
 	 */
 	private static final String CFGKEY_JM_PORT = "Namenode port",
-			CFGKEY_JM_ADDRESS = "Namenode address";
+			CFGKEY_JM_ADDRESS = "Namenode address",
+			CFGKEY_JM_PROTOCOL = "Namenode protocol";
 
-	private static final String DEFAULT_JM_ADDRESS = "localhost";
+	private static final String DEFAULT_JM_ADDRESS = "localhost", DEFAULT_JM_PROTOCOL = "webhdfs";
 
 	/** initial default count value. */
 	private static final int DEFAULT_JM_PORT = 50070;
@@ -44,6 +46,8 @@ public class HDFSConnectionNodeModel extends NodeModel {
 	private final SettingsModelString namenodeAddress = createAddressModel();
 
 	private final SettingsModelIntegerBounded namenodePort = createPortModel();
+
+	private final SettingsModelString namenodeProtocol = createProtocolModel();
 
 	/**
 	 * Constructor for the node model.
@@ -63,7 +67,9 @@ public class HDFSConnectionNodeModel extends NodeModel {
 
 		HDFSConnectionObjectSpec connection = new HDFSConnectionObjectSpec();
 		HDFSSettings settings = connection.getSettings();
-		settings.setAddress(new InetSocketAddress(this.namenodeAddress.getStringValue(),
+		settings.getConfiguration().set("fs.default.name", String.format("%s://%s:%d",
+			this.namenodeProtocol.getStringValue(),
+			this.namenodeAddress.getStringValue(),
 			this.namenodePort.getIntValue()));
 		return new PortObjectSpec[] { connection };
 	}
@@ -77,8 +83,12 @@ public class HDFSConnectionNodeModel extends NodeModel {
 	protected PortObject[] execute(PortObject[] inObjects, ExecutionContext exec) throws Exception {
 		HDFSConnectionObject connection = new HDFSConnectionObject();
 		HDFSSettings settings = connection.getSettings();
-		settings.setAddress(new InetSocketAddress(this.namenodeAddress.getStringValue(),
+		settings.getConfiguration().set("fs.default.name", String.format("%s://%s:%d",
+			this.namenodeProtocol.getStringValue(),
+			this.namenodeAddress.getStringValue(),
 			this.namenodePort.getIntValue()));
+		// test if settings are correct
+		FileSystem.get(settings.getConfiguration()).listFiles(new Path("/"), false);
 		return new PortObject[] { connection };
 	}
 
@@ -98,7 +108,6 @@ public class HDFSConnectionNodeModel extends NodeModel {
 	protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
 			throws InvalidSettingsException {
 		this.namenodeAddress.loadSettingsFrom(settings);
-		this.namenodePort.loadSettingsFrom(settings);
 	}
 
 	/**
@@ -123,7 +132,6 @@ public class HDFSConnectionNodeModel extends NodeModel {
 	@Override
 	protected void saveSettingsTo(final NodeSettingsWO settings) {
 		this.namenodeAddress.saveSettingsTo(settings);
-		this.namenodePort.saveSettingsTo(settings);
 	}
 
 	/**
@@ -133,7 +141,6 @@ public class HDFSConnectionNodeModel extends NodeModel {
 	protected void validateSettings(final NodeSettingsRO settings)
 			throws InvalidSettingsException {
 		this.namenodeAddress.validateSettings(settings);
-		this.namenodePort.validateSettings(settings);
 	}
 
 	static SettingsModelString createAddressModel() {
@@ -143,5 +150,11 @@ public class HDFSConnectionNodeModel extends NodeModel {
 	static SettingsModelIntegerBounded createPortModel() {
 		return new SettingsModelIntegerBounded(CFGKEY_JM_PORT, DEFAULT_JM_PORT, 0, 65536);
 	}
-}
 
+	/**
+	 * @return
+	 */
+	public static SettingsModelString createProtocolModel() {
+		return new SettingsModelString(CFGKEY_JM_PROTOCOL, DEFAULT_JM_PROTOCOL);
+	}
+}

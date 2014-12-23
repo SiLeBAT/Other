@@ -37,7 +37,7 @@ final class HDFSConnectionObjectView extends JPanel {
 		buf.append("<h2>Jobmanager connection</h2>");
 		buf.append("<br/>");
 		buf.append("<strong>Address:</strong><br/>");
-		buf.append("<tt>" + settings.getAddress() + "</tt>");
+		buf.append("<tt>" + settings.getConfiguration().get("fs.default.name") + "</tt>");
 		buf.append("</body></html>");
 		final JScrollPane jsp = new JScrollPane(new JLabel(buf.toString()));
 		super.add(jsp, BorderLayout.CENTER);

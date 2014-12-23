@@ -5,6 +5,7 @@ import javax.swing.JFileChooser;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentFileChooser;
+import org.knime.core.node.defaultnodesettings.DialogComponentString;
 
 /**
  * <code>NodeDialog</code> for the "HDFSUpload" Node.
@@ -23,8 +24,7 @@ public class HDFSUploadNodeDialog extends DefaultNodeSettingsPane {
 	protected HDFSUploadNodeDialog() {
 		this.addDialogComponent(new DialogComponentFileChooser(HDFSUploadNodeModel.createSourceModel(),
 			HDFSUploadNodeDialog.class.getName(), JFileChooser.OPEN_DIALOG, false));
-		this.addDialogComponent(new DialogComponentFileChooser(HDFSUploadNodeModel.createTargetModel(),
-			HDFSUploadNodeDialog.class.getName(), JFileChooser.SAVE_DIALOG, false));
+		this.addDialogComponent(new DialogComponentString(HDFSDownloadNodeModel.createTargetModel(), "Remote path"));
 		this.addDialogComponent(new DialogComponentBoolean(HDFSUploadNodeModel.createOverrideModel(), "Override: "));
 	}
 }

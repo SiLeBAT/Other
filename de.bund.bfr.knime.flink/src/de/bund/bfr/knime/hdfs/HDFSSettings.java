@@ -16,10 +16,17 @@
  ******************************************************************************/
 package de.bund.bfr.knime.hdfs;
 
+import java.io.IOException;
 import java.io.Serializable;
-import java.net.InetSocketAddress;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.LocatedFileStatus;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.RemoteIterator;
+import org.apache.hadoop.security.UserGroupInformation;
+
+import com.google.common.collect.Lists;
 
 /**
  * Represents a connection to the HDFS. Currently, the connection is only virtual: With every file operator, we send a
@@ -31,8 +38,6 @@ public class HDFSSettings implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = -1508497214849942766L;
-
-	private InetSocketAddress address = new InetSocketAddress(0);
 
 	private Configuration configuration = new Configuration();
 
@@ -49,17 +54,9 @@ public class HDFSSettings implements Serializable {
 		if (this.getClass() != obj.getClass())
 			return false;
 		HDFSSettings other = (HDFSSettings) obj;
-		return this.address.equals(other.address) && this.configuration.equals(other.configuration);
+		return this.configuration.getValByRegex(".*").equals(other.configuration.getValByRegex(".*"));
 	}
 
-	/**
-	 * Returns the address.
-	 * 
-	 * @return the address
-	 */
-	public InetSocketAddress getAddress() {
-		return this.address;
-	}
 
 	/**
 	 * Returns the configuration.
@@ -78,22 +75,8 @@ public class HDFSSettings implements Serializable {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + this.address.hashCode();
-		result = prime * result + this.configuration.hashCode();
+		result = prime * result + this.configuration.getValByRegex(".*").hashCode();
 		return result;
-	}
-
-	/**
-	 * Sets the address to the specified value.
-	 * 
-	 * @param address
-	 *        the address to set
-	 */
-	public void setAddress(InetSocketAddress address) {
-		if (address == null)
-			throw new NullPointerException("address must not be null");
-
-		this.address = address;
 	}
 
 	/**
@@ -108,5 +91,4 @@ public class HDFSSettings implements Serializable {
 
 		this.configuration = configuration;
 	}
-
 }

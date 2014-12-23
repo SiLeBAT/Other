@@ -17,30 +17,37 @@
 package de.bund.bfr.knime.hdfs.port;
 
 import java.awt.BorderLayout;
+import java.util.Set;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
+import com.google.common.collect.Iterables;
+
 import de.bund.bfr.knime.hdfs.HDFSFile;
 
-final class HDFSFileObjectView extends JPanel {
+final class HDFSFilesObjectView extends JPanel {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 7638638767267140428L;
 
-	HDFSFileObjectView(final HDFSFile file) {
+	HDFSFilesObjectView(final Set<HDFSFile> files) {
 		super(new BorderLayout());
-		super.setName("Jobmanager connection");
+		super.setName("HDFS files");
 		StringBuilder buf = new StringBuilder("<html><body>");
-		buf.append("<h2>Flink program</h2>");
+		buf.append("<h2>HDFS files</h2>");
 		buf.append("<br/>");
-		buf.append("<strong>Location:</strong><br/>");
-		buf.append("<tt>" + file.getLocation() + "</tt>");
+		if (!files.isEmpty()) {
+			buf.append("<strong>HDFS:</strong><br/>");
+			buf.append("<tt>" +
+				Iterables.getFirst(files, null).getHdfsSettings().getConfiguration().get("fs.default.name") + "</tt>");
+			buf.append("<strong>Files:</strong><br/>");
+			for (HDFSFile file : files)
+				buf.append("<tt>" + file.getLocation() + "</tt>");
+		}
 		buf.append("<br/>");
-		buf.append("<strong>HDFS:</strong><br/>");
-		buf.append("<tt>" + file.getHdfsSettings().getAddress() + "</tt>");
 		buf.append("</body></html>");
 		final JScrollPane jsp = new JScrollPane(new JLabel(buf.toString()));
 		super.add(jsp, BorderLayout.CENTER);

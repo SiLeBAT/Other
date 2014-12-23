@@ -16,6 +16,9 @@
  ******************************************************************************/
 package de.bund.bfr.knime.hdfs.port;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.swing.JComponent;
 
 import org.knime.core.node.NodeLogger;
@@ -29,13 +32,13 @@ import de.bund.bfr.knime.hdfs.HDFSFile;
 /**
  * Represents an HDFS file location.
  */
-public class HDFSFileObject implements PortObject {
+public class HDFSFilesObject implements PortObject {
 	/** Type representing this port object. */
-	public static final PortType TYPE = new PortType(HDFSFileObject.class);
+	public static final PortType TYPE = new PortType(HDFSFilesObject.class);
 
-	private static final NodeLogger LOGGER = NodeLogger.getLogger(HDFSFileObject.class);
+	private static final NodeLogger LOGGER = NodeLogger.getLogger(HDFSFilesObject.class);
 
-	private HDFSFile file = new HDFSFile();
+	private Set<HDFSFile> files = new HashSet<>();
 
 	/*
 	 * (non-Javadoc)
@@ -49,17 +52,29 @@ public class HDFSFileObject implements PortObject {
 			return false;
 		if (this.getClass() != obj.getClass())
 			return false;
-		HDFSFileObject other = (HDFSFileObject) obj;
-		return this.file.equals(other.file);
+		HDFSFilesObject other = (HDFSFilesObject) obj;
+		return this.files.equals(other.files);
 	}
 
 	/**
-	 * Returns the file.
+	 * Returns the files.
 	 * 
-	 * @return the file
+	 * @return the files
 	 */
-	public HDFSFile getFile() {
-		return this.file;
+	public Set<HDFSFile> getFiles() {
+		return this.files;
+	}
+	
+	/**
+	 * Sets the files to the specified value.
+	 *
+	 * @param files the files to set
+	 */
+	public void setFiles(Set<HDFSFile> files) {
+		if (files == null)
+			throw new NullPointerException("files must not be null");
+
+		this.files = files;
 	}
 
 	/*
@@ -68,8 +83,8 @@ public class HDFSFileObject implements PortObject {
 	 */
 	@Override
 	public PortObjectSpec getSpec() {
-		HDFSFileObjectSpec spec = new HDFSFileObjectSpec();
-		spec.setFile(this.file);
+		HDFSFilesObjectSpec spec = new HDFSFilesObjectSpec();
+		spec.setFiles(this.files);
 		return spec;
 	}
 
@@ -79,7 +94,7 @@ public class HDFSFileObject implements PortObject {
 	 */
 	@Override
 	public String getSummary() {
-		return String.format("Flink file @ %s", this.file);
+		return String.format("Flink file @ %s", this.files);
 	}
 
 	/*
@@ -99,11 +114,11 @@ public class HDFSFileObject implements PortObject {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + this.file.hashCode();
+		result = prime * result + this.files.hashCode();
 		return result;
 	}
 
-	public static PortObjectSpecSerializer<HDFSFileObjectSpec> getPortObjectSpecSerializer() {
+	public static PortObjectSpecSerializer<HDFSFilesObjectSpec> getPortObjectSpecSerializer() {
 		return new HDFSFileObjectSpecSerializer();
 	}
 
