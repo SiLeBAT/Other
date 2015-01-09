@@ -77,7 +77,7 @@ public class MyTab21NodeModel extends NodeModel {
     			DataCell dc = row.getCell(i);
         	    if (!dc.isMissing()) {
         			if (cn[i].equalsIgnoreCase("Programm_kurz")) p.setName(((StringCell) dc).getStringValue());
-        			//else if (cn[i].equalsIgnoreCase("Kurz")) p.setKurz(((StringCell) dc).getStringValue());
+        			else if (ws.containsKey(cn[i])) ;//p.setKurz(((StringCell) dc).getStringValue());
         	    }
     		}
     		if (p.getName() != null) {
