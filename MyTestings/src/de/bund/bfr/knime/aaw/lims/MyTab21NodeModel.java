@@ -47,11 +47,6 @@ public class MyTab21NodeModel extends NodeModel {
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
-    	// dataset
-    	for (DataRow row : inData[0]) {
-    		
-    	}
-    	
     	// Wirkstoffe cutoffs
     	HashMap<String, Wirkstoff> ws = new HashMap<String, Wirkstoff>();
     	DataTableSpec dts = inData[1].getSpec();
@@ -64,13 +59,33 @@ public class MyTab21NodeModel extends NodeModel {
         			if (cn[i].equalsIgnoreCase("Gruppe")) w.setGruppe(((StringCell) dc).getStringValue());
         			else if (cn[i].equalsIgnoreCase("Name")) w.setName(((StringCell) dc).getStringValue());
         			else if (cn[i].equalsIgnoreCase("Kurz")) w.setKurz(((StringCell) dc).getStringValue());
+        			else if (cn[i].equalsIgnoreCase("cutoff")) w.setCutoff(((DoubleCell) dc).getDoubleValue());
         	    }
     		}
     		if (w.getKurz() != null) {
     			ws.put(w.getKurz(), w);
     		}
     	}
-    	    	
+
+    	// dataset
+    	HashMap<String, Programm> ps = new HashMap<String, Programm>();
+    	dts = inData[0].getSpec();
+    	cn = dts.getColumnNames();
+    	for (DataRow row : inData[0]) {
+    		Programm p = new Programm();
+    		for (int i=0;i<dts.getNumColumns();i++) {
+    			DataCell dc = row.getCell(i);
+        	    if (!dc.isMissing()) {
+        			if (cn[i].equalsIgnoreCase("Programm_kurz")) p.setName(((StringCell) dc).getStringValue());
+        			//else if (cn[i].equalsIgnoreCase("Kurz")) p.setKurz(((StringCell) dc).getStringValue());
+        	    }
+    		}
+    		if (p.getName() != null) {
+    			if (!ps.containsKey(p.getName())) ps.put(p.getName(), p);
+    			else ps.get(p.getName()).merge(p);
+    		}
+    	}
+    	    	    	
     	BufferedDataContainer buf2 = exec.createDataContainer(getSpec2());
 
 		RowKey key = RowKey.createRowKey(0);
