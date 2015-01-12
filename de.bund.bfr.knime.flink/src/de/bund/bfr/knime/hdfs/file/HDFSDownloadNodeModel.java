@@ -1,3 +1,19 @@
+/*******************************************************************************
+ * Copyright (c) 2014 Federal Institute for Risk Assessment (BfR), Germany
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************/
 package de.bund.bfr.knime.hdfs.file;
 
 import java.io.File;
@@ -20,18 +36,22 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
+import org.knime.core.node.port.flowvariable.FlowVariablePortObject;
+import org.knime.core.node.port.flowvariable.FlowVariablePortObjectSpec;
+import org.knime.core.node.workflow.FlowVariable;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
 import de.bund.bfr.knime.hdfs.HDFSFile;
 import de.bund.bfr.knime.hdfs.port.HDFSConnectionObject;
+import de.bund.bfr.knime.hdfs.port.HDFSConnectionObjectSpec;
 import de.bund.bfr.knime.hdfs.port.HDFSFilesObject;
 
 /**
  * This is the model implementation of HDFSDownload.
  * Downloads an HDFS file from a remote HDFS namenode to the local filesystem.
- *
+ * 
  * @author Arvid Heise
  */
 public class HDFSDownloadNodeModel extends NodeModel {
@@ -55,7 +75,7 @@ public class HDFSDownloadNodeModel extends NodeModel {
 	 * Constructor for the node model.
 	 */
 	protected HDFSDownloadNodeModel() {
-		super(new PortType[] { HDFSFilesObject.TYPE }, new PortType[] { });
+		super(new PortType[] { HDFSConnectionObject.TYPE }, new PortType[] { FlowVariablePortObject.TYPE });
 	}
 
 	/*
@@ -65,11 +85,10 @@ public class HDFSDownloadNodeModel extends NodeModel {
 	 */
 	@Override
 	protected PortObject[] execute(PortObject[] inObjects, ExecutionContext exec) throws Exception {
-		HDFSFilesObject files = (HDFSFilesObject) inObjects[0];
-		HDFSFile file = Iterables.getFirst(files.getFiles(), null);
-		FileSystem hdfs = FileSystem.get(file.getHdfsSettings().getConfiguration());
+		HDFSConnectionObject connection = (HDFSConnectionObject) inObjects[0];
+		FileSystem hdfs = FileSystem.get(connection.getSettings().getConfiguration());
 		hdfs.copyToLocalFile(new Path(this.source.getStringValue()), new Path(this.target.getStringValue()));
-		return new PortObject[] { };
+		return new PortObject[] { FlowVariablePortObject.INSTANCE };
 	}
 
 	/**
@@ -85,7 +104,34 @@ public class HDFSDownloadNodeModel extends NodeModel {
 	 */
 	@Override
 	protected PortObjectSpec[] configure(PortObjectSpec[] inSpecs) throws InvalidSettingsException {
-		return super.configure(inSpecs);
+		try {
+			if (this.source.getStringValue().isEmpty())
+				throw new InvalidSettingsException("Source may not be empty");
+
+			if (this.target.getStringValue().isEmpty())
+				throw new InvalidSettingsException("Target may not be empty");
+
+			HDFSConnectionObjectSpec connection = (HDFSConnectionObjectSpec) inSpecs[0];
+			FileSystem hdfs = FileSystem.get(connection.getSettings().getConfiguration());
+			FileSystem local = FileSystem.getLocal(connection.getSettings().getConfiguration());
+			final Path targetPath = new Path(this.target.getStringValue());
+			if (!this.override.getBooleanValue() && local.exists(targetPath))
+				throw new InvalidSettingsException("File already exists");
+
+			final Path sourcePath = new Path(this.source.getStringValue());
+			// test if file can be accessed
+			hdfs.open(sourcePath).close();
+			// test if target can be written
+			// try {
+			// local.create(targetPath).close();
+			// pushFlowVariableString(this.target.getStringValue(), local.resolvePath(targetPath).toUri().toString());
+			// } finally {
+			// local.delete(targetPath, true);
+			// }
+			return new PortObjectSpec[] { FlowVariablePortObjectSpec.INSTANCE };
+		} catch (IOException e) {
+			throw new InvalidSettingsException(e);
+		}
 	}
 
 	/**
@@ -135,4 +181,3 @@ public class HDFSDownloadNodeModel extends NodeModel {
 	}
 
 }
-

@@ -16,17 +16,22 @@
  ******************************************************************************/
 package de.bund.bfr.knime.hdfs.port;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.swing.JComponent;
 
+import org.knime.core.node.CanceledExecutionException;
+import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
-import org.knime.core.node.port.PortObjectSpec.PortObjectSpecSerializer;
+import org.knime.core.node.port.PortObjectZipInputStream;
+import org.knime.core.node.port.PortObjectZipOutputStream;
 import org.knime.core.node.port.PortType;
 
+import de.bund.bfr.knime.flink.SerializationHelper;
 import de.bund.bfr.knime.hdfs.HDFSFile;
 
 /**
@@ -35,6 +40,8 @@ import de.bund.bfr.knime.hdfs.HDFSFile;
 public class HDFSFilesObject implements PortObject {
 	/** Type representing this port object. */
 	public static final PortType TYPE = new PortType(HDFSFilesObject.class);
+
+	public static final PortType TYPE_OPTIONAL = new PortType(HDFSFilesObject.class, true);
 
 	private static final NodeLogger LOGGER = NodeLogger.getLogger(HDFSFilesObject.class);
 
@@ -64,11 +71,12 @@ public class HDFSFilesObject implements PortObject {
 	public Set<HDFSFile> getFiles() {
 		return this.files;
 	}
-	
+
 	/**
 	 * Sets the files to the specified value.
-	 *
-	 * @param files the files to set
+	 * 
+	 * @param files
+	 *        the files to set
 	 */
 	public void setFiles(Set<HDFSFile> files) {
 		if (files == null)
@@ -118,8 +126,22 @@ public class HDFSFilesObject implements PortObject {
 		return result;
 	}
 
-	public static PortObjectSpecSerializer<HDFSFilesObjectSpec> getPortObjectSpecSerializer() {
-		return new HDFSFileObjectSpecSerializer();
+	public static PortObjectSerializer<HDFSFilesObject> getPortObjectSerializer() {
+		return new HDFSFileObjectSerializer();
 	}
 
+	public static class HDFSFileObjectSerializer extends PortObjectSerializer<HDFSFilesObject> {
+		@Override
+		public HDFSFilesObject loadPortObject(PortObjectZipInputStream in, PortObjectSpec spec, ExecutionMonitor exec)
+				throws IOException, CanceledExecutionException {
+			final HDFSFilesObject filesObject = new HDFSFilesObject();
+			filesObject.setFiles(((HDFSFilesObjectSpec) spec).getFiles());
+			return filesObject;
+		}
+
+		@Override
+		public void savePortObject(HDFSFilesObject portObject, PortObjectZipOutputStream out, ExecutionMonitor exec)
+				throws IOException, CanceledExecutionException {
+		}
+	}
 }

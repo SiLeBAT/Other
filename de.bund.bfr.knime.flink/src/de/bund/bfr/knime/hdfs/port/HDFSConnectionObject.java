@@ -16,12 +16,18 @@
  ******************************************************************************/
 package de.bund.bfr.knime.hdfs.port;
 
+import java.io.File;
+import java.io.IOException;
+
 import javax.swing.JComponent;
 
+import org.knime.core.node.CanceledExecutionException;
+import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
-import org.knime.core.node.port.PortObjectSpec.PortObjectSpecSerializer;
+import org.knime.core.node.port.PortObjectZipInputStream;
+import org.knime.core.node.port.PortObjectZipOutputStream;
 import org.knime.core.node.port.PortType;
 
 import de.bund.bfr.knime.hdfs.HDFSSettings;
@@ -74,6 +80,18 @@ public class HDFSConnectionObject implements PortObject {
 		spec.setSettings(this.settings);
 		return spec;
 	}
+	
+	/**
+	 * Sets the settings to the specified value.
+	 *
+	 * @param settings the settings to set
+	 */
+	public void setSettings(HDFSSettings settings) {
+		if (settings == null)
+			throw new NullPointerException("settings must not be null");
+
+		this.settings = settings;
+	}
 
 	/*
 	 * (non-Javadoc)
@@ -105,8 +123,23 @@ public class HDFSConnectionObject implements PortObject {
 		return result;
 	}
 
-	public static PortObjectSpecSerializer<HDFSConnectionObjectSpec> getPortObjectSpecSerializer() {
-		return new HDFSConnectionObjectSpecSerializer();
+	public static PortObjectSerializer<HDFSConnectionObject> getPortObjectSerializer() {
+		return new HDFSConnectionObjectSerializer();
 	}
 
+	public static class HDFSConnectionObjectSerializer extends
+			PortObjectSerializer<HDFSConnectionObject> {
+		@Override
+		public HDFSConnectionObject loadPortObject(PortObjectZipInputStream in, PortObjectSpec spec,
+				ExecutionMonitor exec) throws IOException, CanceledExecutionException {
+			HDFSConnectionObject object = new HDFSConnectionObject();
+			object.setSettings(((HDFSConnectionObjectSpec) spec).getSettings());
+			return object;
+		}
+
+		@Override
+		public void savePortObject(HDFSConnectionObject portObject, PortObjectZipOutputStream out, ExecutionMonitor exec)
+				throws IOException, CanceledExecutionException {
+		}
+	}
 }

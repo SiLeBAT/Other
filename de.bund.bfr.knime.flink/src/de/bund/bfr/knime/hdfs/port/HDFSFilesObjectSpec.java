@@ -16,13 +16,18 @@
  ******************************************************************************/
 package de.bund.bfr.knime.hdfs.port;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.swing.JComponent;
 
 import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.node.port.PortObjectSpecZipInputStream;
+import org.knime.core.node.port.PortObjectSpecZipOutputStream;
+import org.knime.core.node.port.PortObjectSpec.PortObjectSpecSerializer;
 
+import de.bund.bfr.knime.flink.SerializationHelper;
 import de.bund.bfr.knime.hdfs.HDFSFile;
 
 /**
@@ -66,5 +71,20 @@ public class HDFSFilesObjectSpec implements PortObjectSpec {
 
 	public static PortObjectSpecSerializer<HDFSFilesObjectSpec> getPortObjectSpecSerializer() {
 		return new HDFSFileObjectSpecSerializer();
+	}
+	
+	public static class HDFSFileObjectSpecSerializer extends PortObjectSpecSerializer<HDFSFilesObjectSpec> {
+		@Override
+		public HDFSFilesObjectSpec loadPortObjectSpec(PortObjectSpecZipInputStream in) throws IOException {
+			HDFSFilesObjectSpec spec = new HDFSFilesObjectSpec();
+			spec.setFiles(SerializationHelper.<HashSet<HDFSFile>> readObject(in));
+			return spec;
+		}
+		
+		@Override
+		public void savePortObjectSpec(HDFSFilesObjectSpec portObjectSpec, PortObjectSpecZipOutputStream out)
+				throws IOException {
+			SerializationHelper.writeObject(out, new HashSet<>(portObjectSpec.getFiles()));
+		}
 	}
 }

@@ -19,9 +19,9 @@ package de.bund.bfr.knime.hdfs.port;
 import java.awt.BorderLayout;
 import java.util.Set;
 
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
 
 import com.google.common.collect.Iterables;
 
@@ -42,14 +42,20 @@ final class HDFSFilesObjectView extends JPanel {
 		if (!files.isEmpty()) {
 			buf.append("<strong>HDFS:</strong><br/>");
 			buf.append("<tt>" +
-				Iterables.getFirst(files, null).getHdfsSettings().getConfiguration().get("fs.default.name") + "</tt>");
+				Iterables.getFirst(files, null).getHdfsSettings().getConfiguration().get("fs.default.name") + "</tt><br/>");
 			buf.append("<strong>Files:</strong><br/>");
 			for (HDFSFile file : files)
 				buf.append("<tt>" + file.getLocation() + "</tt>");
 		}
 		buf.append("<br/>");
 		buf.append("</body></html>");
-		final JScrollPane jsp = new JScrollPane(new JLabel(buf.toString()));
+		JTextPane f = new JTextPane();
+		f.setContentType("text/html"); 
+		f.setEditable(false); 
+		f.setBackground(null); 
+		f.setBorder(null);
+		f.setText(buf.toString());
+		final JScrollPane jsp = new JScrollPane(f);
 		super.add(jsp, BorderLayout.CENTER);
 	}
 }

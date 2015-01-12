@@ -28,32 +28,4 @@ import de.bund.bfr.knime.hdfs.HDFSSettings;
 /**
  * 
  */
-public class HDFSConnectionObjectSpecSerializer extends
-		PortObjectSpecSerializer<HDFSConnectionObjectSpec> {
 
-	/*
-	 * (non-Javadoc)
-	 * @see
-	 * org.knime.core.node.port.PortObjectSpec.PortObjectSpecSerializer#loadPortObjectSpec(org.knime.core.node.port.
-	 * PortObjectSpecZipInputStream)
-	 */
-	@Override
-	public HDFSConnectionObjectSpec loadPortObjectSpec(PortObjectSpecZipInputStream in) throws IOException {
-		HDFSConnectionObjectSpec spec = new HDFSConnectionObjectSpec();
-		spec.setSettings(SerializationHelper.<HDFSSettings> readObject(in));
-		return spec;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see
-	 * org.knime.core.node.port.PortObjectSpec.PortObjectSpecSerializer#savePortObjectSpec(org.knime.core.node.port.
-	 * PortObjectSpec, org.knime.core.node.port.PortObjectSpecZipOutputStream)
-	 */
-	@Override
-	public void savePortObjectSpec(HDFSConnectionObjectSpec portObjectSpec, PortObjectSpecZipOutputStream out)
-			throws IOException {
-		SerializationHelper.writeObject(out, portObjectSpec.getSettings());
-	}
-
-}

@@ -20,13 +20,6 @@ import java.io.IOException;
 import java.io.Serializable;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.LocatedFileStatus;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.RemoteIterator;
-import org.apache.hadoop.security.UserGroupInformation;
-
-import com.google.common.collect.Lists;
 
 /**
  * Represents a connection to the HDFS. Currently, the connection is only virtual: With every file operator, we send a
@@ -39,7 +32,7 @@ public class HDFSSettings implements Serializable {
 	 */
 	private static final long serialVersionUID = -1508497214849942766L;
 
-	private Configuration configuration = new Configuration();
+	private transient Configuration configuration = new Configuration();
 
 	/*
 	 * (non-Javadoc)
@@ -57,6 +50,16 @@ public class HDFSSettings implements Serializable {
 		return this.configuration.getValByRegex(".*").equals(other.configuration.getValByRegex(".*"));
 	}
 
+	private void writeObject(java.io.ObjectOutputStream stream) throws IOException {
+		stream.defaultWriteObject();
+		this.configuration.write(stream);
+	}
+
+	private void readObject(java.io.ObjectInputStream stream) throws IOException, ClassNotFoundException {
+		stream.defaultReadObject();
+		this.configuration = new Configuration();
+		this.configuration.readFields(stream);
+	}
 
 	/**
 	 * Returns the configuration.

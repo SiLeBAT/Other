@@ -7,7 +7,7 @@
 	<classpathentry exported="true" kind="lib" path="lib/jersey-client-1.9.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/jersey-core-1.9.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/commons-collections-3.2.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/hadoop-common-2.5.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/hadoop-common-2.5.1.jar" sourcepath="C:/Users/heisea/Programme/hadoop-2.5.1-src"/>
 	<classpathentry exported="true" kind="lib" path="lib/hadoop-auth-2.5.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/commons-lang-2.6.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/commons-configuration-1.6.jar"/>

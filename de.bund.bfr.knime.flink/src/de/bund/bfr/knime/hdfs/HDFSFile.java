@@ -16,7 +16,9 @@
  ******************************************************************************/
 package de.bund.bfr.knime.hdfs;
 
+import java.io.File;
 import java.io.Serializable;
+import java.net.URI;
 import java.net.URL;
 
 /**
@@ -28,7 +30,7 @@ public class HDFSFile implements Serializable {
 	 */
 	private static final long serialVersionUID = 8509681999308041826L;
 
-	private URL location;
+	private URI location;
 
 	private HDFSSettings hdfsSettings = new HDFSSettings();
 
@@ -38,7 +40,7 @@ public class HDFSFile implements Serializable {
 	 */
 	public HDFSFile() {
 		try {
-			this.location = new URL(".").toURI().toURL();
+			this.location = new File(".").toURI();
 		} catch (Exception e) {
 			throw new IllegalStateException("Java cannot transform local file to URL", e);
 		} 
@@ -49,7 +51,7 @@ public class HDFSFile implements Serializable {
 	 * 
 	 * @return the location
 	 */
-	public URL getLocation() {
+	public URI getLocation() {
 		return this.location;
 	}
 
@@ -59,7 +61,7 @@ public class HDFSFile implements Serializable {
 	 * @param location
 	 *        the location to set
 	 */
-	public void setLocation(URL location) {
+	public void setLocation(URI location) {
 		if (location == null)
 			throw new NullPointerException("location must not be null");
 

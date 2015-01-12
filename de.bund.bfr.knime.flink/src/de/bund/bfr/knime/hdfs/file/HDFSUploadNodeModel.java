@@ -1,13 +1,26 @@
+/*******************************************************************************
+ * Copyright (c) 2014 Federal Institute for Risk Assessment (BfR), Germany
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************/
 package de.bund.bfr.knime.hdfs.file;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.knime.core.data.DataTableSpec;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
@@ -20,6 +33,8 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
+import org.knime.core.node.port.flowvariable.FlowVariablePortObject;
+import org.knime.core.node.port.flowvariable.FlowVariablePortObjectSpec;
 
 import com.google.common.collect.Sets;
 
@@ -27,7 +42,6 @@ import de.bund.bfr.knime.hdfs.HDFSFile;
 import de.bund.bfr.knime.hdfs.port.HDFSConnectionObject;
 import de.bund.bfr.knime.hdfs.port.HDFSConnectionObjectSpec;
 import de.bund.bfr.knime.hdfs.port.HDFSFilesObject;
-import de.bund.bfr.knime.hdfs.port.HDFSFilesObjectSpec;
 
 /**
  * This is the model implementation of HDFSUpload.
@@ -56,7 +70,7 @@ public class HDFSUploadNodeModel extends NodeModel {
 	 * Constructor for the node model.
 	 */
 	protected HDFSUploadNodeModel() {
-		super(new PortType[] { HDFSConnectionObject.TYPE }, new PortType[] { HDFSFilesObject.TYPE });
+		super(new PortType[] { HDFSConnectionObject.TYPE }, new PortType[] { FlowVariablePortObject.TYPE });
 	}
 
 	/*
@@ -69,14 +83,14 @@ public class HDFSUploadNodeModel extends NodeModel {
 		HDFSConnectionObject connection = (HDFSConnectionObject) inObjects[0];
 		FileSystem hdfs = FileSystem.get(connection.getSettings().getConfiguration());
 		hdfs.copyFromLocalFile(new Path(this.source.getStringValue()), new Path(this.target.getStringValue()));
-		
-		HDFSFile file = new HDFSFile();
-		file.setHdfsSettings(connection.getSettings());
-		file.setLocation(new URL(this.target.getStringValue()));
 
-		HDFSFilesObject hdfsFileObject = new HDFSFilesObject();
-		hdfsFileObject.setFiles(Sets.newHashSet(file));
-		return new PortObject[] { hdfsFileObject };
+		// HDFSFile file = new HDFSFile();
+		// file.setHdfsSettings(connection.getSettings());
+		// file.setLocation(hdfs.resolvePath(new Path(this.target.getStringValue())).toUri());
+		//
+		// HDFSFilesObject hdfsFileObject = new HDFSFilesObject();
+		// hdfsFileObject.setFiles(Sets.newHashSet(file));
+		return new PortObject[] { FlowVariablePortObject.INSTANCE };
 	}
 
 	/**
@@ -85,22 +99,37 @@ public class HDFSUploadNodeModel extends NodeModel {
 	@Override
 	protected void reset() {
 	}
-	
+
 	@Override
 	protected PortObjectSpec[] configure(PortObjectSpec[] inSpecs) throws InvalidSettingsException {
 		try {
+			if (this.source.getStringValue().isEmpty())
+				throw new InvalidSettingsException("Source may not be empty");
+
+			if (this.target.getStringValue().isEmpty())
+				throw new InvalidSettingsException("Target may not be empty");
+
 			HDFSConnectionObjectSpec connection = (HDFSConnectionObjectSpec) inSpecs[0];
 			FileSystem hdfs = FileSystem.get(connection.getSettings().getConfiguration());
-			hdfs.copyFromLocalFile(new Path(this.source.getStringValue()), new Path(this.target.getStringValue()));
-			
-			HDFSFile file = new HDFSFile();
-			file.setHdfsSettings(connection.getSettings());
-			file.setLocation(new URL(this.target.getStringValue()));
+			final Path targetPath = new Path(this.target.getStringValue());
+			if (!this.override.getBooleanValue() && hdfs.exists(targetPath))
+				throw new InvalidSettingsException("File already exists");
 
-			HDFSFilesObjectSpec hdfsFileObject = new HDFSFilesObjectSpec();
-			hdfsFileObject.setFiles(Sets.newHashSet(file));
-			return new PortObjectSpec[] { hdfsFileObject };
-		}  catch (IOException e) {
+			// HDFSFile file = new HDFSFile();
+			// file.setHdfsSettings(connection.getSettings());
+			// test if file can be created
+			try {
+				hdfs.create(targetPath).close();
+				// file.setLocation(hdfs.resolvePath(targetPath).toUri());
+				pushFlowVariableString(this.target.getStringValue(), hdfs.resolvePath(targetPath).toUri().toString());
+			} finally {
+				hdfs.delete(targetPath, true);
+			}
+			//
+			// HDFSFilesObjectSpec hdfsFileObject = new HDFSFilesObjectSpec();
+			// hdfsFileObject.setFiles(Sets.newHashSet(file));
+			return new PortObjectSpec[] { FlowVariablePortObjectSpec.INSTANCE };
+		} catch (IOException e) {
 			throw new InvalidSettingsException(e);
 		}
 	}

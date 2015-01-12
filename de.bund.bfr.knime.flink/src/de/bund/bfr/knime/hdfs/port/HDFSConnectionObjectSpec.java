@@ -16,12 +16,17 @@
  ******************************************************************************/
 package de.bund.bfr.knime.hdfs.port;
 
+import java.io.IOException;
+
 import javax.swing.JComponent;
 
 import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.node.port.PortObjectSpecZipInputStream;
+import org.knime.core.node.port.PortObjectSpecZipOutputStream;
+import org.knime.core.node.port.PortObjectSpec.PortObjectSpecSerializer;
 
+import de.bund.bfr.knime.flink.SerializationHelper;
 import de.bund.bfr.knime.hdfs.HDFSSettings;
-
 
 /**
  * Represents a connection to the HDFS. Currently, the connection is only virtual: With every file operator, we send a
@@ -64,5 +69,21 @@ public class HDFSConnectionObjectSpec implements PortObjectSpec {
 
 	public static PortObjectSpecSerializer<HDFSConnectionObjectSpec> getPortObjectSpecSerializer() {
 		return new HDFSConnectionObjectSpecSerializer();
+	}
+
+	public static class HDFSConnectionObjectSpecSerializer extends
+			PortObjectSpecSerializer<HDFSConnectionObjectSpec> {
+		@Override
+		public HDFSConnectionObjectSpec loadPortObjectSpec(PortObjectSpecZipInputStream in) throws IOException {
+			HDFSConnectionObjectSpec spec = new HDFSConnectionObjectSpec();
+			spec.setSettings(SerializationHelper.<HDFSSettings> readObject(in));
+			return spec;
+		}
+
+		@Override
+		public void savePortObjectSpec(HDFSConnectionObjectSpec portObjectSpec, PortObjectSpecZipOutputStream out)
+				throws IOException {
+			SerializationHelper.writeObject(out, portObjectSpec.getSettings());
+		}
 	}
 }
