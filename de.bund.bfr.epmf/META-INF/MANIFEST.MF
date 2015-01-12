@@ -18,4 +18,5 @@ Export-Package: de.bund.bfr.numl,
  org.jpmml.schema
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Require-Bundle: org.sbml.jsbml;bundle-version="1.0.0",
- org.codehaus.groovy;bundle-version="2.3.7"
+ org.codehaus.groovy;bundle-version="2.3.7",
+ org.apache.log4j

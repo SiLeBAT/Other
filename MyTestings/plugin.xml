@@ -16,6 +16,7 @@
    <extension point="org.knime.workbench.repository.nodes">
       <node category-path="/" factory-class="de.bund.bfr.knime.aaw.MyClusteringNodeFactory" id="de.bund.bfr.knime.aaw.MyClusteringNodeFactory"/>
    <node category-path="/" factory-class="de.bund.bfr.knime.aaw.hartung.MyImporterNodeFactory" id="de.bund.bfr.knime.aaw.hartung.MyImporterNodeFactory"/>
+<node category-path="/" factory-class="de.bund.bfr.knime.aaw.lims.MyTab21NodeFactory" id="de.bund.bfr.knime.aaw.lims.MyTab21NodeFactory"/>
 </extension>
    
 </plugin>
