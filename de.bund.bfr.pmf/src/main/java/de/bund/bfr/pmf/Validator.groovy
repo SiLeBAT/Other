@@ -37,7 +37,7 @@ class Validator {
 			reader.readFileSet(args)
 		}
 		
-		println "The provides file${args.size() > 1 ? '(s)' : ''} are ${reader.getParseMessages(Level.ERROR) ? 'NOT ' : ''}valid"
+		println "The provided file${args.size() > 1 ? '(s)' : ''} are ${reader.getParseMessages(Level.ERROR) ? 'NOT ' : ''}valid"
 		println "Detailed comments (including warnings): "
 		println reader.parseMessages.join('\n')
 		println "<Press any key to close>"

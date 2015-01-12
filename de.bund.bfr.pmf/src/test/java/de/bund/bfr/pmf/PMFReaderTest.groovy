@@ -79,8 +79,8 @@ class PMFReaderTest {
 		// check parsed values for correctness
 		def dimension = doc.dataSets[dataFile as String].resultComponents[0].dimension
 		assertEquals(4, dimension.size())
-		assertNotNull(dimension[73.018d])
-		assertEquals(2.1, dimension[73.018d][1], 0.0001)
+		assertNotNull(dimension[9.33d])
+		assertEquals(2.1, dimension[9.33d][1], 0.0001)
 	}
 	
 	@Test
@@ -98,8 +98,8 @@ class PMFReaderTest {
 		// check parsed values for correctness
 		def dimension = doc.dataSets*.value.first().resultComponents[0].dimension
 		assertEquals(4, dimension.size())
-		assertNotNull(dimension[73.018d])
-		assertEquals(2.1, dimension[73.018d][1], 0.0001)
+		assertNotNull(dimension[9.33d])
+		assertEquals(2.1, dimension[9.33d][1], 0.0001)
 	}
 	
 	@Test
@@ -117,8 +117,8 @@ class PMFReaderTest {
 		// check parsed values for correctness
 		def dimension = doc.dataSets*.value.first().resultComponents[0].dimension
 		assertEquals(4, dimension.size())
-		assertNotNull(dimension[73.018d])
-		assertEquals(2.1, dimension[73.018d][1], 0.0001)
+		assertNotNull(dimension[9.33d])
+		assertEquals(2.1, dimension[9.33d][1], 0.0001)
 	}
 	
 	@Test

@@ -121,7 +121,7 @@ class PMFParameter extends Parameter implements SBMLReplacement {
 		def newConstraint = new Constraint()
 		def id = new ASTNode(type: Type.NAME, name: this.id)
 		def unit = this.units
-		def lowerPart = range.from != Double.NEGATIVE_INFINITY ? newAST(Type.RELATIONAL_LEQ, range.from, id) : null
+		def lowerPart = range.from != Double.NEGATIVE_INFINITY ? newAST(Type.RELATIONAL_GEQ, id, range.from) : null
 		def upperPart = range.to != Double.POSITIVE_INFINITY ? newAST(Type.RELATIONAL_LEQ, id, range.to) : null
 		if(!lowerPart && !upperPart)
 			return
@@ -169,6 +169,16 @@ class PMFParameter extends Parameter implements SBMLReplacement {
 					}
 			} catch(e) {
 				messages << new ConformityMessage("$prefix: invalid source value because of $e.message: $e.cause (Specification 13)")
+			}
+			
+			if(!this.rangeConstraint) {
+				messages << new ConformityMessage(level: Level.WARN,
+					message: "$prefix: parameter $id does not contain a range constraint (Specification 11)")
+			} else {			
+				def invalidRange = new DoubleRange(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY)
+				if(invalidRange == this.range)
+					messages << new ConformityMessage(
+						message: "$prefix: could not extract a lower or upper bound in the constraint of parameter $id (Specification 11)")
 			}
 		}
 		messages
