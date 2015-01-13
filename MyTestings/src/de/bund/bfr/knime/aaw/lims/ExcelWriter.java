@@ -2,8 +2,11 @@ package de.bund.bfr.knime.aaw.lims;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.Calendar;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.poi.xssf.usermodel.XSSFCreationHelper;
 import org.apache.poi.xssf.usermodel.XSSFCell;
@@ -19,30 +22,50 @@ public class ExcelWriter {
 	XSSFSheet sheet;
 	XSSFCellStyle defaultStyle;
 
-	public ExcelWriter(LinkedHashSet<List<Object>> data, Object css) {
+	public ExcelWriter() {
 		// Blank workbook
 		workbook = new XSSFWorkbook();
 		// Create a blank sheet
 		sheet = workbook.createSheet("default");
 		defaultStyle = workbook.createCellStyle();
+	}
 
+	public ExcelWriter(LinkedHashSet<List<Object>> data) {
+		this();
+
+		Set<Integer> dateStyles = new HashSet<Integer>();
 		// Iterate over data and write to sheet
 		int rownum = 0;
 		for (List<Object> rowData : data) {
 			XSSFRow row = sheet.createRow(rownum++);
 			int cellnum = 0;
 			for (Object obj : rowData) {
-				XSSFCell cell = row.createCell(cellnum++);
+				XSSFCell cell = row.createCell(cellnum);
 				if (obj instanceof String)
 					cell.setCellValue((String) obj);
 				else if (obj instanceof Integer)
 					cell.setCellValue((Integer) obj);
 				else if (obj instanceof Double)
 					cell.setCellValue((Double) obj);
+				else if (obj instanceof Boolean)
+					cell.setCellValue((Boolean) obj);
+				else if (obj instanceof Calendar) {
+					cell.setCellValue((Calendar) obj);
+					if (!dateStyles.contains(cellnum)) dateStyles.add(cellnum);
+				}
 				else
 					System.err.println("Unsupported type: " + obj);
+				
+				cellnum++;
 			}
 		}
+		String format = "dd.mm.yyyy";
+		for (int i : dateStyles) {
+			setStyle(false, i, false, false, false, false, format);
+		}
+	}
+	public XSSFRow createRow(int rowNum) {
+		return sheet.createRow(rowNum);
 	}
 
 	public void save(String filename) {
@@ -109,7 +132,16 @@ public class ExcelWriter {
 			
 		}
 	}
+	public void autoSizeColumn(int colIndex) {
+		sheet.autoSizeColumn(colIndex);		
+	}
 	public void autoSizeColumns(int numCols) {
 		for (int i=0;i<numCols;i++) sheet.autoSizeColumn(i);		
+	}
+	public XSSFCellStyle getWBStyle() {
+		return workbook.createCellStyle();
+	}
+	public XSSFCreationHelper getHelper() {
+		return workbook.getCreationHelper();		
 	}
 }

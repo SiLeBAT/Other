@@ -75,7 +75,8 @@ public class Programm {
 		else if (value >= 0.5 && value < 0.6) return 0.5;
 		else return value;
 	}
-	public void addWirkstoff(Wirkstoff w, double value) {
+	public boolean addWirkstoff(Wirkstoff w, double value) {
+		boolean result = false;
 		double cValue = checkValue(value); 
 		String kurz = w.getKurz();
 		if (cValue > w.getCutoff()) {
@@ -84,10 +85,12 @@ public class Programm {
 			else
 				numPostive.put(kurz, 1);
 			groupResistance.add(w.getGruppe());
+			result = true;
 		}
 		List<Double> al = new ArrayList<Double>();
 		al.add(cValue);
 		wirkstoffVals.put(kurz, al);
+		return result;
 	}
 
 	public void sampleFin() {
