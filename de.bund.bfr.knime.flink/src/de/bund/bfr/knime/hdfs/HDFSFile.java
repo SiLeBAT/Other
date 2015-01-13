@@ -19,7 +19,6 @@ package de.bund.bfr.knime.hdfs;
 import java.io.File;
 import java.io.Serializable;
 import java.net.URI;
-import java.net.URL;
 
 /**
  * 

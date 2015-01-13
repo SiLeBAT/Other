@@ -94,4 +94,10 @@ public class HDFSSettings implements Serializable {
 
 		this.configuration = configuration;
 	}
+//	
+//	static{
+//		if(System.getProperty("hadoop.home.dir") == null && System.getenv("HADOOP_HOME") == null) {
+//			System.setProperty("hadoop.home.dir", new File("./hadoop").getAbsolutePath());
+//		}
+//	}
 }

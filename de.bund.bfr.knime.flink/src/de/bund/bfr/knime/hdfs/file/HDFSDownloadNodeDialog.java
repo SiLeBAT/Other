@@ -18,6 +18,8 @@ package de.bund.bfr.knime.hdfs.file;
 
 import javax.swing.JFileChooser;
 
+import layout.KnimeLayoutUtilties;
+
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentFileChooser;
@@ -40,10 +42,15 @@ public class HDFSDownloadNodeDialog extends DefaultNodeSettingsPane {
 	 * New pane for configuring the HDFSUpload node.
 	 */
 	protected HDFSDownloadNodeDialog() {
-		this.addDialogComponent(new DialogComponentString(HDFSDownloadNodeModel.createSourceModel(), "Remote path"));
-		this.addDialogComponent(new DialogComponentFileChooser(HDFSDownloadNodeModel.createTargetModel(),
-			HDFSUploadNodeDialog.class.getName(), JFileChooser.SAVE_DIALOG, false));
-		this.addDialogComponent(new DialogComponentBoolean(HDFSDownloadNodeModel.createOverrideModel(), "Override: "));
+		this.addDialogComponent(new DialogComponentString(HDFSDownloadNodeModel.createSourceModel(), "Source path"));
+		final DialogComponentFileChooser component = new DialogComponentFileChooser(HDFSDownloadNodeModel.createTargetModel(),
+			HDFSUploadNodeDialog.class.getName(), JFileChooser.SAVE_DIALOG, false);
+		component.setBorderTitle("Target path");
+		this.addDialogComponent(component);
+		this.addDialogComponent(new DialogComponentString(HDFSDownloadNodeModel.createTargetVariableModel(false), "Target variable"));
+		this.addDialogComponent(new DialogComponentBoolean(HDFSDownloadNodeModel.createOverrideModel(), "Override target?"));
+		
+		new KnimeLayoutUtilties().beautify(this);
 	}
 }
 

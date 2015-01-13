@@ -36,12 +36,8 @@ import org.knime.core.node.port.PortType;
 import org.knime.core.node.port.flowvariable.FlowVariablePortObject;
 import org.knime.core.node.port.flowvariable.FlowVariablePortObjectSpec;
 
-import com.google.common.collect.Sets;
-
-import de.bund.bfr.knime.hdfs.HDFSFile;
 import de.bund.bfr.knime.hdfs.port.HDFSConnectionObject;
 import de.bund.bfr.knime.hdfs.port.HDFSConnectionObjectSpec;
-import de.bund.bfr.knime.hdfs.port.HDFSFilesObject;
 
 /**
  * This is the model implementation of HDFSUpload.
@@ -50,20 +46,27 @@ import de.bund.bfr.knime.hdfs.port.HDFSFilesObject;
  * @author Arvid Heise
  */
 public class HDFSUploadNodeModel extends NodeModel {
-	private SettingsModelString source = createSourceModel(), target = createTargetModel();
+	private SettingsModelString source = createSourceModel(), target = createTargetModel(),
+			targetVar = createTargetVariableModel(true);
 
 	private SettingsModelBoolean override = createOverrideModel();
 
+	private static NameGenerator nameGenerator = new NameGenerator("hdfsFile");
+
 	static SettingsModelString createSourceModel() {
-		return new SettingsModelString("source", "");
+		return new SettingsModelString("source", String.format("%s%s", System.getProperty("user.home"), File.separator));
 	}
 
 	static SettingsModelString createTargetModel() {
-		return new SettingsModelString("target", "");
+		return new SettingsModelString("target", "HDFS path or flow variable with HDFS path");
 	}
 
 	static SettingsModelBoolean createOverrideModel() {
 		return new SettingsModelBoolean("override", true);
+	}
+
+	static SettingsModelString createTargetVariableModel(boolean generate) {
+		return new SettingsModelString("targetVar", generate ? nameGenerator.generate() : "");
 	}
 
 	/**
@@ -121,7 +124,7 @@ public class HDFSUploadNodeModel extends NodeModel {
 			try {
 				hdfs.create(targetPath).close();
 				// file.setLocation(hdfs.resolvePath(targetPath).toUri());
-				pushFlowVariableString(this.target.getStringValue(), hdfs.resolvePath(targetPath).toUri().toString());
+				pushFlowVariableString(this.targetVar.getStringValue(), hdfs.resolvePath(targetPath).toUri().toString());
 			} finally {
 				hdfs.delete(targetPath, true);
 			}
@@ -141,6 +144,7 @@ public class HDFSUploadNodeModel extends NodeModel {
 	protected void saveSettingsTo(final NodeSettingsWO settings) {
 		this.source.saveSettingsTo(settings);
 		this.target.saveSettingsTo(settings);
+		this.targetVar.saveSettingsTo(settings);
 		this.override.saveSettingsTo(settings);
 	}
 
@@ -151,7 +155,9 @@ public class HDFSUploadNodeModel extends NodeModel {
 	protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
 		this.source.loadSettingsFrom(settings);
 		this.target.loadSettingsFrom(settings);
+		this.targetVar.loadSettingsFrom(settings);
 		this.override.loadSettingsFrom(settings);
+		nameGenerator.addExistingName(this.targetVar.getStringValue());
 	}
 
 	/**
@@ -161,6 +167,7 @@ public class HDFSUploadNodeModel extends NodeModel {
 	protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
 		this.source.validateSettings(settings);
 		this.target.validateSettings(settings);
+		this.targetVar.validateSettings(settings);
 		this.override.validateSettings(settings);
 	}
 
