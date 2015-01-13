@@ -3,16 +3,20 @@ Bundle-ManifestVersion: 2
 Bundle-Name: MyClustering-Node extension for KNIME Workbench
 Bundle-SymbolicName: de.bund.bfr.knime.aaw; singleton:=true
 Bundle-Version: 1.0.0
-Bundle-ClassPath: myclustering.jar
+Bundle-ClassPath: myclustering.jar,
+ libs/poi-3.11-20141221.jar,
+ libs/poi-scratchpad-3.11-20141221.jar,
+ libs/poi-examples-3.11-20141221.jar,
+ libs/poi-ooxml-3.11-20141221.jar,
+ libs/poi-ooxml-schemas-3.11-20141221.jar
 Bundle-Activator: de.bund.bfr.knime.aaw.MyClusteringNodePlugin
 Bundle-Vendor: aaw
 Require-Bundle: org.eclipse.core.runtime,
  org.knime.workbench.core,
  org.knime.workbench.repository,
  org.knime.base,
- org.apache.poi;bundle-version="3.6.0"
+ org.knime.distmatrix;bundle-version="2.10.0"
 Bundle-ActivationPolicy: lazy
 Export-Package: de.bund.bfr.knime.aaw
-Import-Package: org.knime.distmatrix.type
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 

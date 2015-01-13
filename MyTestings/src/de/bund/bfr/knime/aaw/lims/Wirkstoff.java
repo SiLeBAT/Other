@@ -3,14 +3,14 @@ package de.bund.bfr.knime.aaw.lims;
 public class Wirkstoff {
 
 	private String name, gruppe, kurz;
-	private int indexSort;
+	private Integer indexSort;
 	private double cutoff, cutoffL, cutoffH;
 
-	public int getIndexSort() {
+	public Integer getIndexSort() {
 		return indexSort;
 	}
 
-	public void setIndexSort(int indexSort) {
+	public void setIndexSort(Integer indexSort) {
 		this.indexSort = indexSort;
 	}
 
