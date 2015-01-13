@@ -98,6 +98,8 @@ public class MyTab21NodeModel extends NodeModel {
     	// Ergebnisse berechnen und ausgeben
     	// Tab1
     	LinkedHashSet<List<Object>> tab1 = new LinkedHashSet<List<Object>>();
+   		List<Integer> tab1Borders = new ArrayList<Integer>();
+   		List<Integer> tab1BordersV = new ArrayList<Integer>();
     	SortedSet<String> pkeys = new TreeSet<String>(ps.keySet());
 		int maxResi = 0;
 		for (String pkey : pkeys) {
@@ -122,8 +124,10 @@ public class MyTab21NodeModel extends NodeModel {
 
    		List<Object> tab1Row = new ArrayList<Object>();
 		tab1Row.add("");
+		tab1BordersV.add(0);
     	for (String pkey : pkeys) {
     		tab1Row.add(pkey); tab1Row.add(pkey + " (#Positiv)"); tab1Row.add(pkey + " (%Positiv)");
+    		tab1BordersV.add(tab1Row.size()-1);
     	}
 		tab1.add(tab1Row);
 		
@@ -141,6 +145,7 @@ public class MyTab21NodeModel extends NodeModel {
    			tab1.add(tab1Row);
    		}
    		
+		tab1Borders.add(tab1.size() - 1);
    		for (int i=0;i<=maxResi;i++) {
    	   		tab1Row = new ArrayList<Object>();
    	   		tab1Row.add(i == 0 ? "Sensibel" : i + "x resistent");
@@ -157,7 +162,6 @@ public class MyTab21NodeModel extends NodeModel {
    		List<Integer> tab2Borders = new ArrayList<Integer>();
    		List<Object> tab2Row = new ArrayList<Object>();
    		tab2Row.add("Gruppe"); tab2Row.add("Sum"); tab2Row.add("percent"); tab2Row.add("totalCount"); tab2Row.add("Programm");
-		tab2Borders.add(tab2.size());
 		tab2.add(tab2Row);
     	for (String pkey : pkeys) {
     		Programm p = ps.get(pkey);
@@ -180,20 +184,72 @@ public class MyTab21NodeModel extends NodeModel {
     		}
     	}
 
+    	// Tab3
+    	List<Double> doubleList = new ArrayList<Double>();
+    	doubleList.add(0.008);doubleList.add(0.015);doubleList.add(0.03125);doubleList.add(0.0625);doubleList.add(0.125);doubleList.add(0.25);
+    	doubleList.add(0.5);doubleList.add(1.0);doubleList.add(2.0);doubleList.add(4.0);doubleList.add(8.0);doubleList.add(16.0);
+    	doubleList.add(32.0);doubleList.add(64.0);doubleList.add(128.0);doubleList.add(256.0);doubleList.add(512.0);
+    	doubleList.add(1024.0);doubleList.add(2048.0);
+		for (String pkey : pkeys) {
+			Programm p = ps.get(pkey);
+   	    	LinkedHashSet<List<Object>> tab3 = new LinkedHashSet<List<Object>>();
+   	   		List<Object> tab3Row = new ArrayList<Object>();
+   	   		tab3Row.add(""); tab3Row.add("Total"); tab3Row.add("#Positiv"); tab3Row.add("%Positiv");
+   	   		for (Double dbl : doubleList) tab3Row.add(dbl);
+   			tab3.add(tab3Row);
+   	   		for (Integer wkey : wkeys) {
+   	   			Wirkstoff w = ws.get(wkey);
+   	   			String kurz = w.getKurz();
+   	   			tab3Row = new ArrayList<Object>();
+   	   			tab3Row.add(kurz);
+   				HashMap<String, Integer> pw = p.getNumPositive();
+   				int num = pw.containsKey(kurz) ? pw.get(kurz) : 0;
+   				tab3Row.add(p.getNumSamples()); tab3Row.add(num); tab3Row.add(100.0 * num / p.getNumSamples()); 
+	   	   		HashMap<Double, Integer> frequencymap = p.getFrequencyMap(kurz);
+	   	   		if (frequencymap != null) {
+			   	   	for (Double dbl : doubleList) {
+			   	   		if (frequencymap.containsKey(dbl)) tab3Row.add(frequencymap.get(dbl));
+			   	   		else tab3Row.add("");
+			   	   	}	   	   			
+	   	   		}
+	   			tab3.add(tab3Row);
+   			}
+   	   		
+   	   		for (int i=0;i<=maxResi;i++) {
+   	   			tab3Row = new ArrayList<Object>();
+   	   			tab3Row.add(i == 0 ? "Sensibel" : i + "x resistent");
+   				int num = p.getNumResistent(i);
+   				tab3Row.add(p.getNumSamples()); tab3Row.add(num); tab3Row.add(100.0 * num / p.getNumSamples());   				
+   	   	   		tab3.add(tab3Row);
+   	   		}
+   	    	String fn = getFilename("C:/Dokumente und Einstellungen/Weiser/Desktop/tawak/", "Tab213_" + p.getName());
+   	    	ExcelWriter ew = new ExcelWriter(tab3, null);
+   	    	ew.setStyle(true, 0, true, true, false, true, null); // RowHeader
+   	    	ew.setStyle(false, 0, true, false, true, false, null); // ColumnHeader
+   	    	ew.setStyle(false, 3, false, false, true, false, null); // TrennBorder
+   	    	ew.setStyle(false, 3 + doubleList.size(), false, false, true, false, null); // LastColumnBorder
+   	    	ew.setStyle(true, tab3.size() - maxResi - 2, false, false, false, true, null); // LastRowBorder
+   	    	ew.setStyle(true, tab3.size() - 1, false, false, false, true, null); // LastRowBorder
+   	    	ew.autoSizeColumns(tab1Row.size());
+   	    	ew.save(fn);
+   		}
 
     	String fn = getFilename("C:/Dokumente und Einstellungen/Weiser/Desktop/tawak/", "Tab21");
     	ExcelWriter ew = new ExcelWriter(tab1, null);
-    	ew.setStyle(true, 0, true, true, false, false, false, null);
+    	ew.setStyle(true, 0, true, true, false, true, null); // RowHeader
+    	ew.setStyle(false, 0, true, false, true, false, null); // ColumnHeader
+    	for (int bl : tab1Borders) ew.setStyle(true, bl, false, false, false, true, null); // TrennBorder
+    	for (int bl : tab1BordersV) ew.setStyle(false, bl, false, false, true, false, null); // TrennBorder
+    	ew.setStyle(true, tab1.size() - 1, false, false, false, true, null); // LastRowBorder
     	ew.autoSizeColumns(tab1Row.size());
     	ew.save(fn);
     	fn = getFilename("C:/Dokumente und Einstellungen/Weiser/Desktop/tawak/", "Tab212");
     	ew = new ExcelWriter(tab2, null);
-    	for (int bl : tab2Borders) ew.setStyle(true, bl, false, false, false, false, true, null);
-    	ew.setStyle(false, 1, false, false, true, false, false, null);
-    	ew.setStyle(false, 4, false, false, false, true, false, null);
-    	ew.setStyle(false, 2, false, false, false, false, false, "#.###");
-    	ew.setStyle(true, 0, true, true, false, false, false, null);
-    	ew.setStyle(false, 0, true, false, false, false, false, null);
+    	for (int bl : tab2Borders) ew.setStyle(true, bl, false, false, false, true, null); // TrennBorder
+    	ew.setStyle(true, 0, true, true, false, true, null); // RowHeader
+    	ew.setStyle(false, 0, true, false, true, false, null); // ColumnHeader
+    	ew.setStyle(false, 4, false, false, true, false, null); // LastColumnBorder
+    	ew.setStyle(false, 2, false, false, false, false, "#.###"); // DoubleColumn
     	ew.autoSizeColumns(tab2Row.size());
     	ew.save(fn);
     	    	    	

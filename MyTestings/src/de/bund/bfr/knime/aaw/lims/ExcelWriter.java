@@ -57,7 +57,7 @@ public class ExcelWriter {
 		}
 	}
 
-	public void setStyle(boolean isRow, int num, boolean isBold, boolean isCenter, boolean hasLeftBorder, boolean hasRightBorder, boolean hasBottomBorder, String dataFormat) {
+	public void setStyle(boolean isRow, int num, boolean isBold, boolean isCenter, boolean hasRightBorder, boolean hasBottomBorder, String dataFormat) {
 		XSSFFont font = workbook.createFont();
 		if (isBold) font.setBold(isBold);
 
@@ -67,7 +67,6 @@ public class ExcelWriter {
 		if (isCenter) style.setAlignment(XSSFCellStyle.ALIGN_CENTER);
 		style.setFont(font);
 		
-		if (hasLeftBorder) style.setBorderLeft(XSSFCellStyle.BORDER_MEDIUM);
 		if (hasRightBorder) style.setBorderRight(XSSFCellStyle.BORDER_MEDIUM);
 		if (hasBottomBorder) style.setBorderBottom(XSSFCellStyle.BORDER_MEDIUM);
 		
@@ -78,9 +77,11 @@ public class ExcelWriter {
 
 		if (isRow) {
 			XSSFRow row = sheet.getRow(num);
-			for (int i=row.getFirstCellNum();i<=row.getLastCellNum();i++) {
-				XSSFCell cell = row.getCell(i);
-				setS(cell, style);
+			if (row != null) {
+				for (int i=row.getFirstCellNum();i<=row.getLastCellNum();i++) {
+					XSSFCell cell = row.getCell(i);
+					setS(cell, style);
+				}				
 			}
 		}
 		else {
@@ -100,7 +101,6 @@ public class ExcelWriter {
 			else {
 				if (style.getFont().getBold() != defaultStyle.getFont().getBold()) cstyle.setFont(style.getFont());
 				if (style.getAlignment() != defaultStyle.getAlignment()) cstyle.setAlignment(style.getAlignment());
-				if (style.getBorderLeft() != defaultStyle.getBorderLeft()) cstyle.setBorderLeft(style.getBorderLeft());
 				if (style.getBorderRight() != defaultStyle.getBorderRight()) cstyle.setBorderRight(style.getBorderRight());
 				if (style.getBorderBottom() != defaultStyle.getBorderBottom()) cstyle.setBorderBottom(style.getBorderBottom());
 				if (style.getDataFormat() != defaultStyle.getDataFormat()) cstyle.setDataFormat(style.getDataFormat());
