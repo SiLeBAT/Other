@@ -34,9 +34,8 @@ along with this program.  If not, see &quot;http://www.gnu.org/licenses/&quot;.
       <import plugin="org.knime.workbench.core"/>
       <import plugin="org.knime.workbench.repository"/>
       <import plugin="org.knime.base"/>
-      <import plugin="org.sbml.jsbml" version="1.0.0" match="greaterOrEqual"/>
-      <import plugin="org.apache.log4j"/>
       <import plugin="org.codehaus.groovy" version="2.3.7" match="greaterOrEqual"/>
+      <import plugin="org.apache.log4j"/>
    </requires>
 
    <plugin
@@ -48,6 +47,12 @@ along with this program.  If not, see &quot;http://www.gnu.org/licenses/&quot;.
 
    <plugin
          id="de.bund.bfr.pmf"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.sbml.jsbml"
          download-size="0"
          install-size="0"
          version="0.0.0"/>
