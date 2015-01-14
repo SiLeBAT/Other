@@ -29,18 +29,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see &quot;http://www.gnu.org/licenses/&quot;.
    </license>
 
-   <includes
-         id="de.bund.bfr.pmf.feature"
-         version="0.0.0"/>
-
    <requires>
       <import plugin="org.eclipse.core.runtime"/>
       <import plugin="org.knime.workbench.core"/>
       <import plugin="org.knime.workbench.repository"/>
       <import plugin="org.knime.base"/>
       <import plugin="org.sbml.jsbml" version="1.0.0" match="greaterOrEqual"/>
-      <import plugin="org.codehaus.groovy" version="2.3.7" match="greaterOrEqual"/>
       <import plugin="org.apache.log4j"/>
+      <import plugin="org.codehaus.groovy" version="2.3.7" match="greaterOrEqual"/>
    </requires>
 
    <plugin
