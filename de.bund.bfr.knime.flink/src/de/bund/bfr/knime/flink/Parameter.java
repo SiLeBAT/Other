@@ -17,13 +17,67 @@
 package de.bund.bfr.knime.flink;
 
 import java.io.Serializable;
-
-import org.knime.core.node.workflow.FlowVariable;
+import java.text.Format;
+import java.text.NumberFormat;
 
 /**
  * 
  */
 public class Parameter implements Serializable {
+	public static enum Type {
+		STRING(org.knime.core.node.workflow.FlowVariable.Type.STRING, null), 
+		INTEGER(org.knime.core.node.workflow.FlowVariable.Type.INTEGER, NumberFormat.getIntegerInstance()) {
+			@Override
+			public Object fromString(String value) {
+				return Integer.valueOf(value);
+			}
+		},
+		DOUBLE(org.knime.core.node.workflow.FlowVariable.Type.DOUBLE, NumberFormat.getNumberInstance()) {
+			@Override
+			public Object fromString(String value) {
+				return Double.valueOf(value);
+			}
+		};
+		
+		/**
+		 * Initializes Type.
+		 *
+		 * @param format
+		 */
+		private Type(org.knime.core.node.workflow.FlowVariable.Type flowType, Format format) {
+			this.flowType = flowType;
+			this.format = format;
+		}
+
+		private final Format format;
+		
+		private final org.knime.core.node.workflow.FlowVariable.Type flowType;
+		
+		/**
+		 * Returns the flowType.
+		 * 
+		 * @return the flowType
+		 */
+		public org.knime.core.node.workflow.FlowVariable.Type getFlowType() {
+			return this.flowType;
+		}
+		
+		public String toString(Object value) {
+			return value.toString();
+		}
+
+		public Object fromString(String value) {
+			return value;
+		}
+
+		/**
+		 * @return
+		 */
+		public Format getFormat() {
+			return this.format;
+		}
+	}
+
 	/**
 	 * 
 	 */
@@ -33,7 +87,7 @@ public class Parameter implements Serializable {
 
 	private final String name;
 
-	private final FlowVariable.Type type;
+	private final Type type;
 
 	/**
 	 * Initializes Field.
@@ -41,7 +95,7 @@ public class Parameter implements Serializable {
 	 * @param name
 	 * @param type
 	 */
-	public Parameter(String name, FlowVariable.Type type, String defaultValue) {
+	public Parameter(String name, Type type, String defaultValue) {
 		super();
 		this.name = name;
 		this.type = type;
@@ -92,7 +146,7 @@ public class Parameter implements Serializable {
 	 * 
 	 * @return the type
 	 */
-	public FlowVariable.Type getType() {
+	public Type getType() {
 		return this.type;
 	}
 

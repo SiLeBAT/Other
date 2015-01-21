@@ -16,37 +16,50 @@
  ******************************************************************************/
 package de.bund.bfr.knime.hdfs.connection;
 
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
 import layout.KnimeLayoutUtilties;
 
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentNumberEdit;
 import org.knime.core.node.defaultnodesettings.DialogComponentString;
 import org.knime.core.node.defaultnodesettings.DialogComponentStringSelection;
+import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
+import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * <code>NodeDialog</code> for the "HDFSConnection" Node.
  * Connects to a local or remote HDFS server.
- *
  * This node dialog derives from {@link DefaultNodeSettingsPane} which allows
- * creation of a simple dialog with standard components. If you need a more 
- * complex dialog please derive directly from 
- * {@link org.knime.core.node.NodeDialogPane}.
+ * creation of a simple dialog with standard components. If you need a more
+ * complex dialog please derive directly from {@link org.knime.core.node.NodeDialogPane}.
  * 
  * @author Arvid Heise
  */
 public class HDFSConnectionNodeDialog extends DefaultNodeSettingsPane {
-    /**
-     * New pane for configuring the HDFSConnection node.
-     */
-    protected HDFSConnectionNodeDialog() {
-		this.addDialogComponent(new DialogComponentStringSelection(HDFSConnectionNodeModel.createProtocolModel(),
-				"Protocol:", "webhdfs", "hdfs"));
-		this.addDialogComponent(new DialogComponentString(HDFSConnectionNodeModel.createAddressModel(),
-			"Address:", true, 30));
-		this.addDialogComponent(new DialogComponentNumberEdit(HDFSConnectionNodeModel.createPortModel(),
-			"Port:"));
+	/**
+	 * New pane for configuring the HDFSConnection node.
+	 */
+	protected HDFSConnectionNodeDialog() {
+		final SettingsModelString protocolModel = HDFSConnectionNodeModel.createProtocolModel();
+		final SettingsModelIntegerBounded portModel = HDFSConnectionNodeModel.createPortModel();
 		
-		new KnimeLayoutUtilties().beautify(this);
-    }
-}
+		this.addDialogComponent(new DialogComponentStringSelection(protocolModel, "Protocol:", "webhdfs", "hdfs"));
+		this.addDialogComponent(new DialogComponentString(HDFSConnectionNodeModel.createAddressModel(), "Address:",
+			true, 30));
+		this.addDialogComponent(new DialogComponentNumberEdit(portModel, "Port:"));
 
+		final int[] defaultPorts = { 50070, 8020 };
+		protocolModel.addChangeListener(new ChangeListener() {
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				int protocolIndex = protocolModel.getStringValue().equals("webhdfs") ? 0 : 1;
+				if(portModel.getIntValue() == defaultPorts[1 - protocolIndex])
+					portModel.setIntValue(defaultPorts[protocolIndex]);
+			}
+		});
+
+		new KnimeLayoutUtilties().beautify(this);
+	}
+}

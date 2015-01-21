@@ -18,22 +18,23 @@ package de.bund.bfr.knime.flink.scala;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
-import org.knime.core.node.port.flowvariable.FlowVariablePortObjectSpec;
 
 import de.bund.bfr.knime.flink.port.FlinkProgramObject;
+import de.bund.bfr.knime.flink.port.FlinkProgramObjectSpec;
 
 /**
  * This is the model implementation of FlinkScalaBuilder.
@@ -42,11 +43,6 @@ import de.bund.bfr.knime.flink.port.FlinkProgramObject;
  * @author Arvid Heise
  */
 public class FlinkScalaBuilderNodeModel extends NodeModel {
-
-	// the logger instance
-	private static final NodeLogger logger = NodeLogger
-		.getLogger(FlinkScalaBuilderNodeModel.class);
-
 	private JarBuilder jarBuilder = new JarBuilder();
 
 	private ScalaSnippetSettings m_settings = new ScalaSnippetSettings();
@@ -64,14 +60,16 @@ public class FlinkScalaBuilderNodeModel extends NodeModel {
 	 */
 	@Override
 	protected PortObjectSpec[] configure(PortObjectSpec[] inSpecs) throws InvalidSettingsException {
-		if (this.m_settings != null)
-			try {
-				// test compile
+		try {
+			Path executableJar =
 				this.jarBuilder.getScriptJar(this.m_settings.getScript(), this.m_settings.getJarPaths());
-			} catch (Exception e) {
-				throw new InvalidSettingsException(e.getMessage());
-			}
-		return new PortObjectSpec[] { FlowVariablePortObjectSpec.INSTANCE };
+			FlinkProgramObjectSpec flinkProgramObject = new FlinkProgramObjectSpec();
+			flinkProgramObject.getProgram().setJarPath(executableJar.toAbsolutePath().toString());
+			flinkProgramObject.getProgram().setParameters(this.m_settings.getParameters());
+			return new PortObjectSpec[] { flinkProgramObject };
+		} catch (Exception e) {
+			throw new InvalidSettingsException(e.getMessage());
+		}
 	}
 
 	/*
@@ -84,7 +82,7 @@ public class FlinkScalaBuilderNodeModel extends NodeModel {
 		Path executableJar = this.jarBuilder.getScriptJar(this.m_settings.getScript(), this.m_settings.getJarPaths());
 
 		FlinkProgramObject flinkProgramObject = new FlinkProgramObject();
-		flinkProgramObject.getProgram().setJarPath(executableJar);
+		flinkProgramObject.getProgram().setJarPath(executableJar.toAbsolutePath().toString());
 		flinkProgramObject.getProgram().setParameters(this.m_settings.getParameters());
 		return new PortObject[] { flinkProgramObject };
 	}
@@ -93,9 +91,14 @@ public class FlinkScalaBuilderNodeModel extends NodeModel {
 	 * {@inheritDoc}
 	 */
 	@Override
-	protected void loadInternals(final File internDir,
-			final ExecutionMonitor exec) throws IOException,
+	protected void loadInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
 			CanceledExecutionException {
+		Path executableJar = this.jarBuilder.getCachedJar(this.m_settings.getScript(), this.m_settings.getJarPaths());
+		if (executableJar != null && !Files.exists(executableJar)) {
+			Path internalJar = internDir.toPath().resolve(executableJar.getFileName());
+			if (Files.exists(internalJar))
+				Files.copy(internalJar, executableJar, StandardCopyOption.REPLACE_EXISTING);
+		}
 	}
 
 	/**
@@ -122,9 +125,11 @@ public class FlinkScalaBuilderNodeModel extends NodeModel {
 	 * {@inheritDoc}
 	 */
 	@Override
-	protected void saveInternals(final File internDir,
-			final ExecutionMonitor exec) throws IOException,
+	protected void saveInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
 			CanceledExecutionException {
+		Path executableJar = this.jarBuilder.getCachedJar(this.m_settings.getScript(), this.m_settings.getJarPaths());
+		if (executableJar != null && Files.exists(executableJar))
+			Files.copy(executableJar, internDir.toPath(), StandardCopyOption.REPLACE_EXISTING);
 	}
 
 	/**

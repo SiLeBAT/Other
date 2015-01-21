@@ -16,11 +16,16 @@
  ******************************************************************************/
 package de.bund.bfr.knime.flink.port;
 
+import java.io.IOException;
+
 import javax.swing.JComponent;
 
 import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.node.port.PortObjectSpecZipInputStream;
+import org.knime.core.node.port.PortObjectSpecZipOutputStream;
 
 import de.bund.bfr.knime.flink.FlinkProgramWithUsage;
+import de.bund.bfr.knime.flink.SerializationHelper;
 
 /**
  * Represents a connection to the Flink job manager. Currently, the connection is only virtual: With every job
@@ -63,5 +68,20 @@ public class FlinkProgramObjectSpec implements PortObjectSpec {
 
 	public static PortObjectSpecSerializer<FlinkProgramObjectSpec> getPortObjectSpecSerializer() {
 		return new FlinkProgramObjectSpecSerializer();
+	}
+	
+	public static class FlinkProgramObjectSpecSerializer extends PortObjectSpecSerializer<FlinkProgramObjectSpec> {
+		@Override
+		public FlinkProgramObjectSpec loadPortObjectSpec(PortObjectSpecZipInputStream in) throws IOException {
+			FlinkProgramObjectSpec spec = new FlinkProgramObjectSpec();
+			spec.setProgram(SerializationHelper.<FlinkProgramWithUsage> readObject(in));
+			return spec;
+		}
+
+		@Override
+		public void savePortObjectSpec(FlinkProgramObjectSpec portObjectSpec, PortObjectSpecZipOutputStream out)
+				throws IOException {
+			SerializationHelper.writeObject(out, portObjectSpec.getProgram());
+		}
 	}
 }

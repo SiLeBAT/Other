@@ -17,7 +17,7 @@
 package de.bund.bfr.knime.flink;
 
 import java.io.Serializable;
-import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -29,16 +29,16 @@ public class FlinkProgramWithUsage implements Serializable {
 	 */
 	private static final long serialVersionUID = 6579443517360560694L;
 
-	private Path jarPath;
+	private String jarPath;
 
-	private List<Parameter> parameters;
+	private List<Parameter> parameters = new ArrayList<>();
 
 	/**
 	 * Returns the jarPath.
 	 * 
 	 * @return the jarPath
 	 */
-	public Path getJarPath() {
+	public String getJarPath() {
 		return this.jarPath;
 	}
 
@@ -57,7 +57,7 @@ public class FlinkProgramWithUsage implements Serializable {
 	 * @param jarPath
 	 *        the jarPath to set
 	 */
-	public void setJarPath(Path jarPath) {
+	public void setJarPath(String jarPath) {
 		if (jarPath == null)
 			throw new NullPointerException("jarPath must not be null");
 
@@ -84,6 +84,38 @@ public class FlinkProgramWithUsage implements Serializable {
 	@Override
 	public String toString() {
 		return this.jarPath + " " + this.parameters;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((this.jarPath == null) ? 0 : this.jarPath.hashCode());
+		result = prime * result + this.parameters.hashCode();
+		return result;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		FlinkProgramWithUsage other = (FlinkProgramWithUsage) obj;
+		if (this.jarPath == null) {
+			if (other.jarPath != null)
+				return false;
+		} else if (!this.jarPath.equals(other.jarPath))
+			return false;
+		return this.parameters.equals(other.parameters);
 	}
 
 }

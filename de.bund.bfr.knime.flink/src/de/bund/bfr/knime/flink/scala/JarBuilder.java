@@ -20,23 +20,28 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.regex.Pattern;
+import java.util.Enumeration;
 
 import org.apache.maven.cli.MavenCli;
 import org.knime.core.util.crypto.HexUtils;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.FrameworkUtil;
 
 /**
  * Creates and caches the jars build from the Scala fragment. A hashing function identifies the same program to avoid
@@ -75,7 +80,7 @@ public class JarBuilder {
 			Files.delete(cachedJar);
 	}
 
-	void buildJar(String partialScript, Path[] additionalJars, Path targetJar)
+	public void buildJar(String partialScript, Path targetJar, Path[] additionalJars)
 			throws IOException {
 		Path tempProject = this.createEmptyMavenProject(targetJar);
 		Path srcTarget = tempProject.resolve("src/main/scala/");
@@ -90,38 +95,54 @@ public class JarBuilder {
 		}
 	}
 
-	Path getScriptJar(String partialScript, Path... additionalJars) throws IOException {
+	public Path getScriptJar(String partialScript, Path... additionalJars) throws IOException {
 		Path cachedJar = this.getCachedJar(partialScript, additionalJars);
 		if (!Files.exists(cachedJar))
-			this.buildJar(partialScript, additionalJars, cachedJar);
+			this.buildJar(partialScript, cachedJar, additionalJars);
 		return cachedJar;
 	}
 
 	private Path createEmptyMavenProject(Path targetJar) throws IOException {
+		Bundle currentBundle = FrameworkUtil.getBundle(getClass());
+		URL bundleBase = currentBundle.getEntry("/");
+		Enumeration<String> resources = currentBundle.getEntryPaths("maven/");
+		// Bundle bundle = Platform.getBundle("de.vogella.example.readfile");
+		// URL fileURL = bundle.getEntry("files/test.txt");
+
 		Path tempDir = Files.createTempDirectory(targetJar.getFileName().toString());
-		Files.delete(tempDir);
-		Files.createDirectories(tempDir);
+		while (resources.hasMoreElements()) {
+			String resource = resources.nextElement();
+			URL resourceURL = new URL(bundleBase, resource);
+			try (InputStream in = resourceURL.openStream()) {
+				Files.copy(in, tempDir.resolve(Paths.get(resource).getFileName()));
+			}
+		}
 
-		// Create a minimal project (usually word count).
-		// Here, we could also take a pre-configured pom.xml and save one Maven execution.
-		// However, this approach is more flexible, because the quickstart example may be fixed by the Flink developers
-		// in case of bugs.
-		String[] mvnCommand = { "archetype:generate",
-			"-DarchetypeArtifactId=flink-quickstart-scala",
-			"-DarchetypeGroupId=org.apache.flink",
-			"-DarchetypeVersion=0.7.0-incubating",
-			"-DgroupId=org.apache.flink",
-			"-DartifactId=generated",
-			"-Dversion=0.1",
-			"-Dpackage=org.apache.flink",
-			"-DinteractiveMode=false" };
-
-		this.invokeMaven(mvnCommand, tempDir.toAbsolutePath().toString(),
-			"Cannot create archetype project (error code %s).\nPlease make sure you have Internet access.");
-
-		// Delete the given scala sources. We retain only the pom.xml and the assembly configurations.
-		this.deleteInDir(tempDir.resolve("generated/src"), ".*\\.scala");
-		return tempDir.resolve("generated");
+		// Files.delete(tempDir);
+		// Files.createDirectories(tempDir);
+		//
+		// // Create a minimal project (usually word count).
+		// // Here, we could also take a pre-configured pom.xml and save one Maven execution.
+		// // However, this approach is more flexible, because the quickstart example may be fixed by the Flink
+		// developers
+		// // in case of bugs.
+		// String[] mvnCommand = { "archetype:generate",
+		// "-DarchetypeArtifactId=flink-quickstart-scala",
+		// "-DarchetypeGroupId=org.apache.flink",
+		// "-DarchetypeVersion=0.7.0-incubating",
+		// "-DgroupId=org.apache.flink",
+		// "-DartifactId=generated",
+		// "-Dversion=0.1",
+		// "-Dpackage=org.apache.flink",
+		// "-DinteractiveMode=false" };
+		//
+		// this.invokeMaven(mvnCommand, tempDir.toAbsolutePath().toString(),
+		// "Cannot create archetype project (error code %s).\nPlease make sure you have Internet access.");
+		//
+		// // Delete the given scala sources. We retain only the pom.xml and the assembly configurations.
+		// this.deleteInDir(tempDir.resolve("generated/src"), ".*\\.scala");
+		// return tempDir.resolve("generated");
+		return tempDir;
 	}
 
 	private void deleteAll(Path dir) throws IOException {
@@ -138,37 +159,38 @@ public class JarBuilder {
 				return super.visitFile(file, attrs);
 			}
 		});
+		Files.delete(dir);
 	}
 
-	private void deleteInDir(Path dir, String filePattern) throws IOException {
-		final Pattern pattern = Pattern.compile(filePattern);
-		Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
-			/*
-			 * (non-Javadoc)
-			 * @see java.nio.file.SimpleFileVisitor#visitFile(java.lang.Object,
-			 * java.nio.file.attribute.BasicFileAttributes)
-			 */
-			@Override
-			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-				if (pattern.matcher(file.getFileName().toString()).matches())
-					Files.delete(file);
-				return super.visitFile(file, attrs);
-			}
-		});
-	}
+//	private void deleteInDir(Path dir, String filePattern) throws IOException {
+//		final Pattern pattern = Pattern.compile(filePattern);
+//		Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
+//			/*
+//			 * (non-Javadoc)
+//			 * @see java.nio.file.SimpleFileVisitor#visitFile(java.lang.Object,
+//			 * java.nio.file.attribute.BasicFileAttributes)
+//			 */
+//			@Override
+//			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+//				if (pattern.matcher(file.getFileName().toString()).matches())
+//					Files.delete(file);
+//				return super.visitFile(file, attrs);
+//			}
+//		});
+//	}
 
 	private Path findGeneratedJar(Path emptyMavenProject) throws IOException {
 		try (DirectoryStream<Path> files = Files.newDirectoryStream(emptyMavenProject.resolve("target"))) {
 			for (Path file : files) {
 				String fileName = file.getName(file.getNameCount() - 1).toString();
-				if (fileName.endsWith(".jar") && fileName.contains("fat"))
+				if (fileName.endsWith(".jar"))
 					return file;
 			}
 		}
 		throw new IllegalStateException("Cannot find generated jar in " + emptyMavenProject);
 	}
 
-	private Path getCachedJar(String partialScript, Path[] jars) throws IOException, FileNotFoundException {
+	public Path getCachedJar(String partialScript, Path[] jars) throws IOException, FileNotFoundException {
 		this.hash.update(partialScript.getBytes(UTF8));
 		Arrays.sort(jars, new Comparator<Path>() {
 			@Override

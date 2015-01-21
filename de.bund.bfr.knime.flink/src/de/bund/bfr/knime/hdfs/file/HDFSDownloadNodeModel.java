@@ -18,9 +18,15 @@ package de.bund.bfr.knime.hdfs.file;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IOUtils;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
@@ -51,7 +57,7 @@ public class HDFSDownloadNodeModel extends NodeModel {
 
 	private SettingsModelBoolean override = createOverrideModel();
 
-	private static NameGenerator nameGenerator = new NameGenerator("localFile");
+	private static NameGenerator nameGenerator = NameGenerator.getInstance("localFile");
 
 	static SettingsModelString createSourceModel() {
 		return new SettingsModelString("source", "HDFS path or flow variable with HDFS path");
@@ -85,9 +91,24 @@ public class HDFSDownloadNodeModel extends NodeModel {
 	@Override
 	protected PortObject[] execute(PortObject[] inObjects, ExecutionContext exec) throws Exception {
 		HDFSConnectionObject connection = (HDFSConnectionObject) inObjects[0];
-		FileSystem hdfs = FileSystem.get(connection.getSettings().getConfiguration());
-		hdfs.copyToLocalFile(false, new Path(this.source.getStringValue()), new Path(this.target.getStringValue()),
-			true);
+		Configuration configuration = connection.getSettings().getConfiguration();
+		FileSystem hdfs = FileSystem.get(configuration);
+		FileSystem local = FileSystem.getLocal(connection.getSettings().getConfiguration());
+		Path targetPath = new Path(this.target.getStringValue());
+
+		try (FSDataOutputStream out =
+			local.create(targetPath, null, true, local.getConf().getInt("io.file.buffer.size", 4096),
+				local.getDefaultReplication(targetPath), local.getDefaultBlockSize(targetPath), null)) {
+			FileStatus contents[] = hdfs.listStatus(new Path(this.source.getStringValue()));
+			Arrays.sort(contents);
+			for (int i = 0; i < contents.length; i++) {
+				if (contents[i].isFile()) {
+					try(InputStream in = hdfs.open(contents[i].getPath())) {
+						IOUtils.copyBytes(in, out, configuration, false);
+					}
+				}
+			}
+		}
 		return new PortObject[] { FlowVariablePortObject.INSTANCE };
 	}
 
@@ -112,20 +133,18 @@ public class HDFSDownloadNodeModel extends NodeModel {
 				throw new InvalidSettingsException("Target may not be empty");
 
 			HDFSConnectionObjectSpec connection = (HDFSConnectionObjectSpec) inSpecs[0];
-			FileSystem hdfs = FileSystem.get(connection.getSettings().getConfiguration());
 			FileSystem local = FileSystem.getLocal(connection.getSettings().getConfiguration());
 			final Path targetPath = new Path(this.target.getStringValue());
 			if (!this.override.getBooleanValue() && local.exists(targetPath))
 				throw new InvalidSettingsException("File already exists");
 
-			final Path sourcePath = new Path(this.source.getStringValue());
-			// test if file can be accessed
-			hdfs.open(sourcePath).close();
 			try {
 				// test if target can be written
+				local.delete(targetPath, true);
 				local.create(targetPath, null, true, local.getConf().getInt("io.file.buffer.size", 4096),
 					local.getDefaultReplication(targetPath), local.getDefaultBlockSize(targetPath), null).close();
-				pushFlowVariableString(this.targetVar.getStringValue(), local.resolvePath(targetPath).toUri().toString());
+				pushFlowVariableString(this.targetVar.getStringValue(),
+					local.resolvePath(targetPath).toUri().toString());
 			} finally {
 				local.delete(targetPath, true);
 			}

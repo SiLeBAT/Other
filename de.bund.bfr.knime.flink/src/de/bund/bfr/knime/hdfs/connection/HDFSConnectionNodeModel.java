@@ -124,6 +124,8 @@ public class HDFSConnectionNodeModel extends NodeModel {
 	protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
 			throws InvalidSettingsException {
 		this.namenodeAddress.loadSettingsFrom(settings);
+		this.namenodePort.loadSettingsFrom(settings);
+		this.namenodeProtocol.loadSettingsFrom(settings);
 	}
 
 	/**
@@ -148,6 +150,8 @@ public class HDFSConnectionNodeModel extends NodeModel {
 	@Override
 	protected void saveSettingsTo(final NodeSettingsWO settings) {
 		this.namenodeAddress.saveSettingsTo(settings);
+		this.namenodePort.saveSettingsTo(settings);
+		this.namenodeProtocol.saveSettingsTo(settings);
 	}
 
 	/**
@@ -157,6 +161,8 @@ public class HDFSConnectionNodeModel extends NodeModel {
 	protected void validateSettings(final NodeSettingsRO settings)
 			throws InvalidSettingsException {
 		this.namenodeAddress.validateSettings(settings);
+		this.namenodePort.validateSettings(settings);
+		this.namenodeProtocol.validateSettings(settings);
 	}
 
 	static SettingsModelString createAddressModel() {

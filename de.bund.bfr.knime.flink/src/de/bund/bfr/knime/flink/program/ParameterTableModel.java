@@ -18,7 +18,8 @@ package de.bund.bfr.knime.flink.program;
 
 import org.knime.core.node.util.DefaultConfigTableModel;
 import org.knime.core.node.workflow.FlowVariable;
-import org.knime.core.node.workflow.FlowVariable.Type;
+
+import de.bund.bfr.knime.flink.Parameter.Type;
 
 /**
  * The model for the parameter table. Performs validation of the given data. <br/>
@@ -213,7 +214,12 @@ public class ParameterTableModel extends DefaultConfigTableModel {
 			return null;
 		Type type = (Type) this.getValueAt(row, Column.TYPE);
 		String value = this.getValueAt(row, Column.DEFAULT_VALUE).toString();
-		return isValidInput(type, value);
+		try {
+			type.fromString(value);
+			return null;
+		} catch(Exception e) {
+			return e.getMessage();
+		}
 	}
 
 	/**
@@ -229,25 +235,6 @@ public class ParameterTableModel extends DefaultConfigTableModel {
 			return "Please select a value";
 
 		// no errror found
-		return null;
-	}
-
-	public static String isValidInput(Type type, String value) {
-		switch (type) {
-		case DOUBLE:
-			try {
-				Double.parseDouble(value);
-			} catch (Exception e) {
-				return e.getMessage();
-			}
-			break;
-		case INTEGER:
-			try {
-				Integer.parseInt(value);
-			} catch (Exception e) {
-				return e.getMessage();
-			}
-		}
 		return null;
 	}
 

@@ -40,7 +40,6 @@ import org.fife.ui.rsyntaxtextarea.folding.FoldManager;
 import org.fife.ui.rtextarea.RTextScrollPane;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
@@ -58,10 +57,6 @@ import de.bund.bfr.knime.flink.scala.ScalaSnippetDocument.Section;
  * @author Arvid Heise
  */
 public class FlinkScalaBuilderNodeDialog extends NodeDialogPane {
-	// the logger instance
-	private static final NodeLogger logger = NodeLogger
-		.getLogger(FlinkScalaBuilderNodeDialog.class);
-
 	private static final String SNIPPET_TAB = "Scala Snippet";
 
 	/** The settings. */

@@ -16,14 +16,12 @@
  ******************************************************************************/
 package de.bund.bfr.knime.hdfs.port;
 
-import java.io.File;
 import java.io.IOException;
 
 import javax.swing.JComponent;
 
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionMonitor;
-import org.knime.core.node.NodeLogger;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortObjectZipInputStream;
@@ -40,8 +38,6 @@ import de.bund.bfr.knime.hdfs.HDFSSettings;
 public class HDFSConnectionObject implements PortObject {
 	/** Type representing this port object. */
 	public static final PortType TYPE = new PortType(HDFSConnectionObject.class);
-
-	private static final NodeLogger LOGGER = NodeLogger.getLogger(HDFSConnectionObject.class);
 
 	private HDFSSettings settings = new HDFSSettings();
 

@@ -19,21 +19,21 @@ package de.bund.bfr.knime.flink.program;
 import java.io.File;
 import java.io.IOException;
 
-import org.knime.core.data.DataTableSpec;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.port.PortObject;
+import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
 
 import de.bund.bfr.knime.flink.FlinkProgramWithUsage;
 import de.bund.bfr.knime.flink.SerializationHelper;
 import de.bund.bfr.knime.flink.port.FlinkProgramObject;
+import de.bund.bfr.knime.flink.port.FlinkProgramObjectSpec;
 
 /**
  * This is the model implementation of FlinkProgramLoader.
@@ -42,10 +42,6 @@ import de.bund.bfr.knime.flink.port.FlinkProgramObject;
  * @author Arvid Heise
  */
 public class FlinkProgramLoaderNodeModel extends NodeModel {
-
-	// the logger instance
-	private static final NodeLogger logger = NodeLogger
-		.getLogger(FlinkProgramLoaderNodeModel.class);
 
 	private FlinkProgramWithUsage program = new FlinkProgramWithUsage();
 
@@ -56,20 +52,18 @@ public class FlinkProgramLoaderNodeModel extends NodeModel {
 		super(new PortType[0], new PortType[] { FlinkProgramObject.TYPE });
 	}
 
-	/**
-	 * {@inheritDoc}
+	/*
+	 * (non-Javadoc)
+	 * @see org.knime.core.node.NodeModel#configure(org.knime.core.node.port.PortObjectSpec[])
 	 */
 	@Override
-	protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
-			throws InvalidSettingsException {
-
-		// TODO: check if user settings are available, fit to the incoming
-		// table structure, and the incoming types are feasible for the node
-		// to execute. If the node can execute in its current state return
-		// the spec of its output data table(s) (if you can, otherwise an array
-		// with null elements), or throw an exception with a useful user message
-
-		return new DataTableSpec[] { null };
+	protected PortObjectSpec[] configure(PortObjectSpec[] inSpecs) throws InvalidSettingsException {
+		if (this.program.getJarPath() == null)
+			throw new InvalidSettingsException("Path to jar not specified.");
+		FlinkProgramObjectSpec flinkProgramObject = new FlinkProgramObjectSpec();
+		flinkProgramObject.getProgram().setJarPath(this.program.getJarPath());
+		flinkProgramObject.getProgram().setParameters(this.program.getParameters());
+		return new PortObjectSpec[] { flinkProgramObject };
 	}
 
 	/*
@@ -100,6 +94,7 @@ public class FlinkProgramLoaderNodeModel extends NodeModel {
 	@Override
 	protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
 			throws InvalidSettingsException {
+		this.program = SerializationHelper.readObject(settings, "program");
 	}
 
 	/**
@@ -130,8 +125,10 @@ public class FlinkProgramLoaderNodeModel extends NodeModel {
 	 * {@inheritDoc}
 	 */
 	@Override
-	protected void validateSettings(final NodeSettingsRO settings)
-			throws InvalidSettingsException {
+	protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
+		FlinkProgramWithUsage program = SerializationHelper.readObject(settings, "program");
+		if (program.getJarPath() == null)
+			throw new InvalidSettingsException("Path to jar not specified.");
 	}
 
 }

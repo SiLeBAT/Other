@@ -19,7 +19,6 @@ package de.bund.bfr.knime.flink.program;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.DefaultCellEditor;
@@ -29,10 +28,9 @@ import javax.swing.JTextField;
 import javax.swing.table.TableColumn;
 
 import org.knime.core.node.util.ConfigTablePanel;
-import org.knime.core.node.workflow.FlowVariable;
-import org.knime.core.node.workflow.FlowVariable.Type;
 
 import de.bund.bfr.knime.flink.Parameter;
+import de.bund.bfr.knime.flink.Parameter.Type;
 import de.bund.bfr.knime.flink.program.ParameterTableModel.Column;
 
 /**
@@ -80,18 +78,7 @@ public class ParameterTable extends ConfigTablePanel {
 	}
 
 	public void addParameter(final Parameter outVar) {
-		this.model.addRow(new Object[] { outVar.getName(), outVar.getType(), Boolean.TRUE, "" });
-	}
-
-	/**
-	 * Adds a row using the given flow variable as a hint.
-	 * 
-	 * @param var
-	 *        the flow variable definition
-	 * @return true when the row was added successfully
-	 */
-	public void addRow(final FlowVariable var) {
-		this.addParameter(new Parameter(var.getName(), var.getType(), var.getValueAsString()));
+		this.model.addRow(new Object[] { outVar.getName(), outVar.getType(), outVar.getDefaultValue() == null, outVar.getDefaultValue() });
 	}
 
 	/**
@@ -123,7 +110,7 @@ public class ParameterTable extends ConfigTablePanel {
 	}
 
 	public void setParameters(List<Parameter> parameters) {
-		model.clear();
+		this.model.clear();
 		for (Parameter parameter : parameters) {
 			addParameter(parameter);
 		}

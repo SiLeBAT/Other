@@ -90,6 +90,7 @@ public class JarListPanel extends JPanel {
 	private JButton m_removeButton;
 
 	/** Inits GUI. */
+	@SuppressWarnings("unchecked")
 	public JarListPanel() {
 		super(new BorderLayout());
 		this.m_addJarList = new JList<String>(new DefaultListModel<String>()) {

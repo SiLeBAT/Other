@@ -16,12 +16,9 @@
  ******************************************************************************/
 package de.bund.bfr.knime.flink.program;
 
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.File;
 
 import javax.swing.JComponent;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SpringLayout;
@@ -93,9 +90,13 @@ public class FlinkProgramLoaderNodeDialog extends NodeDialogPane {
 	 */
 	@Override
 	protected void loadSettingsFrom(NodeSettingsRO settings, PortObjectSpec[] specs) throws NotConfigurableException {
-		FlinkProgramWithUsage program = SerializationHelper.readObject(settings, "program");
-		this.filePanel.setFileName(program.getJarPath().toString());
-		this.parameterTable.setParameters(program.getParameters());
+		try {
+			FlinkProgramWithUsage program = SerializationHelper.readObject(settings, "program");
+			this.filePanel.setFileName(program.getJarPath() == null ? "" : program.getJarPath().toString());
+			this.parameterTable.setParameters(program.getParameters());
+		} catch (Exception e) {
+			throw new NotConfigurableException(e.getMessage(), e);
+		}
 	}
 
 	/*
@@ -108,13 +109,13 @@ public class FlinkProgramLoaderNodeDialog extends NodeDialogPane {
 		if (!parameterModel.validateValues())
 			throw new InvalidSettingsException("The parameter table has errors.");
 
-		Path path = FileSystems.getDefault().getPath(this.filePanel.getFileName());
-		if (!Files.exists(path))
+		File file = new File(this.filePanel.getFileName());
+		if (!file.exists())
 			throw new InvalidSettingsException("The jar does not exist.");
-		
+
 		FlinkProgramWithUsage program = new FlinkProgramWithUsage();
 		program.setParameters(this.parameterTable.getParameters());
-		program.setJarPath(path);
+		program.setJarPath(file.getAbsolutePath());
 		SerializationHelper.writeObject(settings, "program", program);
 	}
 }

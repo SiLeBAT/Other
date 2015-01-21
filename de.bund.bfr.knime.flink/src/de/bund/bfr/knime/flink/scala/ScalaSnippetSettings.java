@@ -30,9 +30,9 @@ import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.config.base.ConfigBaseRO;
 import org.knime.core.node.config.base.ConfigBaseWO;
-import org.knime.core.node.workflow.FlowVariable.Type;
 
 import de.bund.bfr.knime.flink.Parameter;
+import de.bund.bfr.knime.flink.Parameter.Type;
 import de.bund.bfr.knime.flink.scala.ScalaSnippetDocument.Section;
 
 /**

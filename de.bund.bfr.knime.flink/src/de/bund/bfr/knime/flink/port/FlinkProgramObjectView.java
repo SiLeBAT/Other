@@ -17,14 +17,17 @@
 package de.bund.bfr.knime.flink.port;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-
-import org.apache.commons.lang3.StringUtils;
 
 import de.bund.bfr.knime.flink.FlinkProgramWithUsage;
+import de.bund.bfr.knime.flink.JMultilineLabel;
+import de.bund.bfr.knime.flink.Parameter;
 
 final class FlinkProgramObjectView extends JPanel {
 	/**
@@ -34,17 +37,27 @@ final class FlinkProgramObjectView extends JPanel {
 
 	FlinkProgramObjectView(final FlinkProgramWithUsage program) {
 		super(new BorderLayout());
-		super.setName("Jobmanager connection");
-		StringBuilder buf = new StringBuilder("<html><body>");
-		buf.append("<h2>Flink program</h2>");
-		buf.append("<br/>");
-		buf.append("<strong>Location:</strong><br/>");
-		buf.append("<tt>" + program.getJarPath() + "</tt>");
-		buf.append("<br/>");
-		buf.append("<strong>Arguments:</strong><br/>");
-		buf.append("<tt>" + StringUtils.join(program.getParameters(), "\n") + "</tt>");
-		buf.append("</body></html>");
-		final JScrollPane jsp = new JScrollPane(new JLabel(buf.toString()));
-		super.add(jsp, BorderLayout.CENTER);
+		super.setName("Flink program");
+		JPanel panel = new JPanel();
+		panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+		
+		panel.add(new JLabel("<html><body><h2>Flink program</h2></body></html>"));
+		panel.add(Box.createVerticalStrut(20));
+		panel.add(new JLabel("<html><body><h3>Location</h3></body></html>"));
+		panel.add(new JMultilineLabel(program.getJarPath(), 1, 0));
+		panel.add(Box.createVerticalStrut(20));
+		panel.add(new JLabel("<html><body><h3>Parameters</h3></body></html>"));
+		for (Parameter parameter : program.getParameters()) {
+			StringBuilder buf = new StringBuilder();
+			buf.append(parameter.getType()).append(" ").append(parameter.getName());
+			if(parameter.getDefaultValue() != null)
+				buf.append(" = ").append(parameter.getDefaultValue());
+			panel.add(new JLabel(buf.toString()));
+		}
+		panel.add(Box.createVerticalGlue());
+		for(Component child : panel.getComponents())
+			((JComponent)child).setAlignmentX(0);
+//		final JScrollPane jsp = new JScrollPane(f, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		super.add(panel, BorderLayout.CENTER);
 	}
 }

@@ -51,7 +51,7 @@ public class HDFSUploadNodeModel extends NodeModel {
 
 	private SettingsModelBoolean override = createOverrideModel();
 
-	private static NameGenerator nameGenerator = new NameGenerator("hdfsFile");
+	private static NameGenerator nameGenerator = NameGenerator.getInstance("hdfsFile");
 
 	static SettingsModelString createSourceModel() {
 		return new SettingsModelString("source", String.format("%s%s", System.getProperty("user.home"), File.separator));

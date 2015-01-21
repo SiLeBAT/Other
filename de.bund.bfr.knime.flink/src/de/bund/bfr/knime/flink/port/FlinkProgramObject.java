@@ -16,12 +16,16 @@
  ******************************************************************************/
 package de.bund.bfr.knime.flink.port;
 
+import java.io.IOException;
+
 import javax.swing.JComponent;
 
-import org.knime.core.node.NodeLogger;
+import org.knime.core.node.CanceledExecutionException;
+import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
-import org.knime.core.node.port.PortObjectSpec.PortObjectSpecSerializer;
+import org.knime.core.node.port.PortObjectZipInputStream;
+import org.knime.core.node.port.PortObjectZipOutputStream;
 import org.knime.core.node.port.PortType;
 
 import de.bund.bfr.knime.flink.FlinkProgramWithUsage;
@@ -34,8 +38,6 @@ import de.bund.bfr.knime.flink.FlinkProgramWithUsage;
 public class FlinkProgramObject implements PortObject {
 	/** Type representing this port object. */
 	public static final PortType TYPE = new PortType(FlinkProgramObject.class);
-
-	private static final NodeLogger LOGGER = NodeLogger.getLogger(FlinkProgramObject.class);
 
 	private FlinkProgramWithUsage program = new FlinkProgramWithUsage();
 
@@ -105,8 +107,34 @@ public class FlinkProgramObject implements PortObject {
 		return result;
 	}
 
-	public static PortObjectSpecSerializer<FlinkProgramObjectSpec> getPortObjectSpecSerializer() {
-		return new FlinkProgramObjectSpecSerializer();
+	public static PortObjectSerializer<FlinkProgramObject> getPortObjectSerializer() {
+		return new FlinkProgramObjectSerializer();
 	}
 
+	public static class FlinkProgramObjectSerializer extends PortObjectSerializer<FlinkProgramObject> {
+		@Override
+		public FlinkProgramObject loadPortObject(PortObjectZipInputStream in, PortObjectSpec spec, ExecutionMonitor exec)
+				throws IOException, CanceledExecutionException {
+			FlinkProgramObject object = new FlinkProgramObject();
+			object.setProgram(((FlinkProgramObjectSpec) spec).getProgram());
+			return object;
+		}
+
+		@Override
+		public void savePortObject(FlinkProgramObject portObject, PortObjectZipOutputStream out, ExecutionMonitor exec)
+				throws IOException, CanceledExecutionException {
+		}
+	}
+
+	/**
+	 * Sets the program to the specified value.
+	 *
+	 * @param program the program to set
+	 */
+	public void setProgram(FlinkProgramWithUsage program) {
+		if (program == null)
+			throw new NullPointerException("program must not be null");
+
+		this.program = program;
+	}
 }

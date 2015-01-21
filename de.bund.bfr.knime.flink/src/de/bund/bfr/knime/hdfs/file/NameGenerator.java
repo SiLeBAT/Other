@@ -17,7 +17,9 @@
 package de.bund.bfr.knime.hdfs.file;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 
@@ -34,7 +36,7 @@ public class NameGenerator {
 	 * 
 	 * @param prefix
 	 */
-	public NameGenerator(String prefix) {
+	private NameGenerator(String prefix) {
 		this.prefix = prefix;
 	}
 
@@ -49,5 +51,16 @@ public class NameGenerator {
 
 	public void addExistingName(String name) {
 		this.takenNames.add(name);
+	}
+	
+	private static Map<String, NameGenerator> Generators = new ConcurrentHashMap<>(); 
+	
+	public static NameGenerator getInstance(String prefix) {
+		synchronized (Generators) {
+			NameGenerator nameGenerator = Generators.get(prefix);
+			if(nameGenerator == null)
+				Generators.put(prefix, nameGenerator = new NameGenerator(prefix));
+			return nameGenerator;
+		}
 	}
 }

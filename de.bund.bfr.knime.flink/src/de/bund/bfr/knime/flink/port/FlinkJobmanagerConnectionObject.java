@@ -16,12 +16,19 @@
  ******************************************************************************/
 package de.bund.bfr.knime.flink.port;
 
+import java.io.IOException;
+
 import javax.swing.JComponent;
 
-import org.knime.core.node.NodeLogger;
+import org.apache.flink.configuration.ConfigConstants;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.GlobalConfiguration;
+import org.knime.core.node.CanceledExecutionException;
+import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
-import org.knime.core.node.port.PortObjectSpec.PortObjectSpecSerializer;
+import org.knime.core.node.port.PortObjectZipInputStream;
+import org.knime.core.node.port.PortObjectZipOutputStream;
 import org.knime.core.node.port.PortType;
 
 import de.bund.bfr.knime.flink.FlinkJobManagerSettings;
@@ -34,8 +41,6 @@ import de.bund.bfr.knime.flink.FlinkJobManagerSettings;
 public class FlinkJobmanagerConnectionObject implements PortObject {
 	/** Type representing this port object. */
 	public static final PortType TYPE = new PortType(FlinkJobmanagerConnectionObject.class);
-
-	private static final NodeLogger LOGGER = NodeLogger.getLogger(FlinkJobmanagerConnectionObject.class);
 
 	private FlinkJobManagerSettings settings = new FlinkJobManagerSettings();
 
@@ -64,6 +69,18 @@ public class FlinkJobmanagerConnectionObject implements PortObject {
 		return this.settings;
 	}
 
+	/**
+	 * Sets the settings to the specified value.
+	 *
+	 * @param settings the settings to set
+	 */
+	public void setSettings(FlinkJobManagerSettings settings) {
+		if (settings == null)
+			throw new NullPointerException("settings must not be null");
+
+		this.settings = settings;
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * @see org.knime.core.node.port.PortObject#getSpec()
@@ -105,8 +122,30 @@ public class FlinkJobmanagerConnectionObject implements PortObject {
 		return result;
 	}
 
-	public static PortObjectSpecSerializer<FlinkJobmanagerConnectionObjectSpec> getPortObjectSpecSerializer() {
+	public static PortObjectSerializer<FlinkJobmanagerConnectionObject> getPortObjectSerializer() {
 		return new FlinkJobmanagerConnectionObjectSpecSerializer();
 	}
 
+	public static class FlinkJobmanagerConnectionObjectSpecSerializer extends
+			PortObjectSerializer<FlinkJobmanagerConnectionObject> {
+		@Override
+		public FlinkJobmanagerConnectionObject loadPortObject(PortObjectZipInputStream in, PortObjectSpec spec,
+				ExecutionMonitor exec) throws IOException, CanceledExecutionException {
+			FlinkJobmanagerConnectionObject object = new FlinkJobmanagerConnectionObject();
+			object.setSettings(((FlinkJobmanagerConnectionObjectSpec) spec).getSettings());
+			return object;
+		}
+		
+		@Override
+		public void savePortObject(FlinkJobmanagerConnectionObject portObject, PortObjectZipOutputStream out,
+				ExecutionMonitor exec) throws IOException, CanceledExecutionException {
+		}
+	}
+	
+	static {
+		Configuration configuration = new Configuration();
+		configuration.setBoolean(ConfigConstants.FILESYSTEM_DEFAULT_OVERWRITE_KEY, true);
+		configuration.setBoolean(ConfigConstants.FILESYSTEM_OUTPUT_ALWAYS_CREATE_DIRECTORY_KEY, true);
+		GlobalConfiguration.includeConfiguration(configuration);
+	}
 }

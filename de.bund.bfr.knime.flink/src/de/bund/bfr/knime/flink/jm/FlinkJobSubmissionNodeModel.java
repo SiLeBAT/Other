@@ -19,10 +19,8 @@ package de.bund.bfr.knime.flink.jm;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.client.program.Client;
 import org.apache.flink.client.program.PackagedProgram;
-import org.apache.flink.client.program.ProgramInvocationException;
 import org.apache.flink.configuration.ConfigConstants;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.GlobalConfiguration;
@@ -30,13 +28,10 @@ import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
-import org.knime.core.node.defaultnodesettings.SettingsModelOptionalString;
-import org.knime.core.node.defaultnodesettings.SettingsModelStringArray;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
@@ -45,6 +40,8 @@ import org.knime.core.node.port.flowvariable.FlowVariablePortObjectSpec;
 
 import de.bund.bfr.knime.flink.FlinkJobManagerSettings;
 import de.bund.bfr.knime.flink.port.FlinkJobmanagerConnectionObject;
+import de.bund.bfr.knime.flink.port.FlinkProgramObject;
+import de.bund.bfr.knime.flink.port.FlinkProgramObjectSpec;
 
 /**
  * This is the model implementation of FlinkJobSubmission.
@@ -60,7 +57,6 @@ public class FlinkJobSubmissionNodeModel extends NodeModel {
 	 * the dialog).
 	 */
 	static final String CFGKEY_DOP = "Degree of parallelism",
-			CFGKEY_PARAMETER = "Parameters",
 			CFGKEY_JAR = "Jar",
 			CFGKEY_JOB_SUCCESS = "Job success",
 			CFGKEY_JOB_STATUS = "Job status";
@@ -68,25 +64,18 @@ public class FlinkJobSubmissionNodeModel extends NodeModel {
 	/** initial default count value. */
 	static final int DEFAULT_DOP = -1;
 
-	// the logger instance
-	private static final NodeLogger logger = NodeLogger
-		.getLogger(FlinkJobSubmissionNodeModel.class);
-
 	// example value: the models count variable filled from the dialog
 	// and used in the models execution method. The default components of the
 	// dialog work with "SettingsModels".
 	private final SettingsModelIntegerBounded dop = createDOPModel();
 
-	private final SettingsModelOptionalString jarPath = createPathModel();
-
-	private final SettingsModelStringArray parameters = new SettingsModelStringArray(
-		CFGKEY_PARAMETER, new String[0]);
+	private SubmissionSettings submissionSettings = new SubmissionSettings();
 
 	/**
 	 * Constructor for the node model.
 	 */
 	protected FlinkJobSubmissionNodeModel() {
-		super(new PortType[] { FlinkJobmanagerConnectionObject.TYPE, FlowVariablePortObject.TYPE_OPTIONAL },
+		super(new PortType[] { FlinkJobmanagerConnectionObject.TYPE, FlinkProgramObject.TYPE },
 			new PortType[] { FlowVariablePortObject.TYPE });
 	}
 
@@ -96,6 +85,8 @@ public class FlinkJobSubmissionNodeModel extends NodeModel {
 	 */
 	@Override
 	protected PortObjectSpec[] configure(PortObjectSpec[] inSpecs) throws InvalidSettingsException {
+		this.submissionSettings.setProgram(((FlinkProgramObjectSpec) inSpecs[1]).getProgram());
+		this.submissionSettings.validateSettings();
 		return new PortObjectSpec[] { FlowVariablePortObjectSpec.INSTANCE };
 	}
 
@@ -107,22 +98,21 @@ public class FlinkJobSubmissionNodeModel extends NodeModel {
 	@Override
 	protected PortObject[] execute(PortObject[] inObjects, ExecutionContext exec) throws Exception {
 		FlinkJobmanagerConnectionObject connection = (FlinkJobmanagerConnectionObject) inObjects[0];
+		FlinkProgramObject program = (FlinkProgramObject) inObjects[1];
 		FlinkJobManagerSettings settings = connection.getSettings();
 
-		try {
-			PackagedProgram packagedProgram =
-				new PackagedProgram(new File(this.jarPath.getStringValue()), this.parameters.getStringArrayValue());
+		this.pushFlowVariableInt(CFGKEY_JOB_SUCCESS, 0);
+		PackagedProgram packagedProgram =
+			new PackagedProgram(new File(program.getProgram().getJarPath()),
+				this.submissionSettings.getParameterValues());
 
-			Configuration configuration = GlobalConfiguration.getConfiguration();
-			if (this.dop.getIntValue() != -1)
-				configuration.setInteger(ConfigConstants.DEFAULT_PARALLELIZATION_DEGREE_KEY, this.dop.getIntValue());
-			Client client = new Client(settings.getAddress(), configuration, packagedProgram.getUserCodeClassLoader());
-			JobExecutionResult result = client.run(packagedProgram, this.dop.getIntValue(), true);
-			this.pushFlowVariableInt(CFGKEY_JOB_SUCCESS, 1);
-			this.pushFlowVariableString(CFGKEY_JOB_STATUS, String.format("Executed in %s ms", result.getNetRuntime()));
-		} catch (ProgramInvocationException e) {
-			this.pushFlowVariableInt(CFGKEY_JOB_SUCCESS, 0);
-		}
+		Configuration configuration = GlobalConfiguration.getConfiguration();
+		if (this.dop.getIntValue() != -1)
+			configuration.setInteger(ConfigConstants.DEFAULT_PARALLELIZATION_DEGREE_KEY, this.dop.getIntValue());
+		Client client = new Client(settings.getAddress(), configuration, packagedProgram.getUserCodeClassLoader());
+		client.run(packagedProgram, this.dop.getIntValue(), true);
+		this.pushFlowVariableInt(CFGKEY_JOB_SUCCESS, 1);
+//		this.pushFlowVariableString(CFGKEY_JOB_STATUS, String.format("Executed in %s ms", result.getNetRuntime()));
 
 		return new PortObject[] { FlowVariablePortObject.INSTANCE };
 	}
@@ -141,8 +131,7 @@ public class FlinkJobSubmissionNodeModel extends NodeModel {
 	@Override
 	protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
 		this.dop.loadSettingsFrom(settings);
-		this.jarPath.loadSettingsFrom(settings);
-
+		this.submissionSettings.loadSettingsFrom(settings);
 	}
 
 	/**
@@ -166,7 +155,10 @@ public class FlinkJobSubmissionNodeModel extends NodeModel {
 	@Override
 	protected void saveSettingsTo(final NodeSettingsWO settings) {
 		this.dop.saveSettingsTo(settings);
-		this.jarPath.saveSettingsTo(settings);
+		try {
+			this.submissionSettings.saveSettingsTo(settings);
+		} catch (InvalidSettingsException e) {
+		}
 	}
 
 	/**
@@ -175,15 +167,10 @@ public class FlinkJobSubmissionNodeModel extends NodeModel {
 	@Override
 	protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
 		this.dop.validateSettings(settings);
-		this.jarPath.validateSettings(settings);
 	}
 
 	static SettingsModelIntegerBounded createDOPModel() {
 		return new SettingsModelIntegerBounded(CFGKEY_DOP, DEFAULT_DOP, -1, Integer.MAX_VALUE);
-	}
-
-	static SettingsModelOptionalString createPathModel() {
-		return new SettingsModelOptionalString(CFGKEY_JAR, "", false);
 	}
 
 }

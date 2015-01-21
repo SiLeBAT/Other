@@ -24,14 +24,12 @@ import javax.swing.JComponent;
 
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionMonitor;
-import org.knime.core.node.NodeLogger;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortObjectZipInputStream;
 import org.knime.core.node.port.PortObjectZipOutputStream;
 import org.knime.core.node.port.PortType;
 
-import de.bund.bfr.knime.flink.SerializationHelper;
 import de.bund.bfr.knime.hdfs.HDFSFile;
 
 /**
@@ -42,8 +40,6 @@ public class HDFSFilesObject implements PortObject {
 	public static final PortType TYPE = new PortType(HDFSFilesObject.class);
 
 	public static final PortType TYPE_OPTIONAL = new PortType(HDFSFilesObject.class, true);
-
-	private static final NodeLogger LOGGER = NodeLogger.getLogger(HDFSFilesObject.class);
 
 	private Set<HDFSFile> files = new HashSet<>();
 

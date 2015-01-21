@@ -25,10 +25,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 
-import org.knime.core.node.NodeLogger;
-import org.knime.core.node.workflow.FlowVariable.Type;
-
 import de.bund.bfr.knime.flink.Parameter;
+import de.bund.bfr.knime.flink.Parameter.Type;
 import de.bund.bfr.knime.flink.scala.ScalaSnippetDocument.Section;
 
 /**
@@ -43,12 +41,17 @@ public class ScalaSnippet {
 
 	private static Map<Type, String> TypeParserPattern = new EnumMap<>(Type.class);
 
+	private static Map<Type, String> DefaultValuePattern = new EnumMap<>(Type.class);
+
 	private static Map<Type, String> TypeToScalaType = new EnumMap<>(Type.class);
 
 	static {
 		TypeToScalaType.put(Type.STRING, "String = \"\"");
 		TypeToScalaType.put(Type.DOUBLE, "Double = 0");
 		TypeToScalaType.put(Type.INTEGER, "Integer = 0");
+		DefaultValuePattern.put(Type.STRING, "\"%s\"");
+		DefaultValuePattern.put(Type.DOUBLE, "%s");
+		DefaultValuePattern.put(Type.INTEGER, "%s");
 		TypeParserPattern.put(Type.STRING, "%s");
 		TypeParserPattern.put(Type.DOUBLE, "%s.toDouble");
 		TypeParserPattern.put(Type.INTEGER, "%s.toInt");
@@ -64,15 +67,6 @@ public class ScalaSnippet {
 	 * Create a new snippet.
 	 */
 	public ScalaSnippet() {
-	}
-
-	/**
-	 * Attach logger to be used by this java snippet instance.
-	 * 
-	 * @param logger
-	 *        the node logger
-	 */
-	public void attachLogger(final NodeLogger logger) {
 	}
 
 	/**
@@ -182,8 +176,7 @@ public class ScalaSnippet {
 		if (this.m_settings != null && this.m_settings.getParameters().size() > 0) {
 			out.append("  // Parsed input parameters; all parameters have been set (with the correct default values)\n");
 			for (Parameter parameter : this.m_settings.getParameters()) {
-				String initializer =
-					String.format(TypeToScalaType.get(parameter.getType()), parameter.getDefaultValue());
+				String initializer = TypeToScalaType.get(parameter.getType());
 				out.append(String.format("  private var %s: %s\n", parameter.getName(), initializer));
 			}
 		}
@@ -215,8 +208,14 @@ public class ScalaSnippet {
 			List<Parameter> parameters = this.m_settings.getParameters();
 			for (int index = 0; index < parameters.size(); index++) {
 				String argSelector = String.format("args(%d)", index);
-				String parser = String.format(TypeParserPattern.get(parameters.get(index).getType()), argSelector);
-				out.append(String.format("    %s = %s\n", parameters.get(index).getName(), parser));
+				Parameter parameter = parameters.get(index);
+				String parser = String.format(TypeParserPattern.get(parameter.getType()), argSelector);
+				if (parameter.getDefaultValue() != null) {
+					String defaultValueInScala =
+						String.format(DefaultValuePattern.get(parameter.getType()), parameter.getDefaultValue());
+					parser = String.format("if(args.length > %d) %s else %s", index, parser, defaultValueInScala);
+				}
+				out.append(String.format("    %s = %s\n", parameter.getName(), parser));
 			}
 		}
 		out.append("    performTask\n");
