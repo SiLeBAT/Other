@@ -54,11 +54,11 @@ public class HDFSUploadNodeModel extends NodeModel {
 	private static NameGenerator nameGenerator = NameGenerator.getInstance("hdfsFile");
 
 	static SettingsModelString createSourceModel() {
-		return new SettingsModelString("source", String.format("%s%s", System.getProperty("user.home"), File.separator));
+		return new SettingsModelString("source", "");
 	}
 
 	static SettingsModelString createTargetModel() {
-		return new SettingsModelString("target", "HDFS path or flow variable with HDFS path");
+		return new SettingsModelString("target", "");
 	}
 
 	static SettingsModelBoolean createOverrideModel() {

@@ -20,10 +20,13 @@ import javax.swing.JFileChooser;
 
 import layout.KnimeLayoutUtilties;
 
+import org.knime.core.node.FlowVariableModel;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentFileChooser;
 import org.knime.core.node.defaultnodesettings.DialogComponentString;
+import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.node.workflow.FlowVariable.Type;
 
 /**
  * <code>NodeDialog</code> for the "HDFSUpload" Node.
@@ -40,14 +43,21 @@ public class HDFSUploadNodeDialog extends DefaultNodeSettingsPane {
 	 * New pane for configuring the HDFSUpload node.
 	 */
 	protected HDFSUploadNodeDialog() {
-		final DialogComponentFileChooser fileChooser = new DialogComponentFileChooser(HDFSUploadNodeModel.createSourceModel(),
-			HDFSUploadNodeDialog.class.getName(), JFileChooser.OPEN_DIALOG, false);
+		SettingsModelString sourceModel = HDFSUploadNodeModel.createSourceModel();
+		FlowVariableModel sourceFlowVariableModel = createFlowVariableModel(sourceModel.getKey(), Type.STRING);
+		final DialogComponentFileChooser fileChooser =
+			new DialogComponentFileChooser(sourceModel, HDFSUploadNodeDialog.class.getName(), JFileChooser.OPEN_DIALOG,
+				false, sourceFlowVariableModel);
 		fileChooser.setBorderTitle("Source path");
 		this.addDialogComponent(fileChooser);
-		this.addDialogComponent(new DialogComponentString(HDFSUploadNodeModel.createTargetModel(), "Target path"));
-		this.addDialogComponent(new DialogComponentString(HDFSUploadNodeModel.createTargetVariableModel(false), "Target variable"));
-		this.addDialogComponent(new DialogComponentBoolean(HDFSUploadNodeModel.createOverrideModel(), "Override target?"));
-		
+		SettingsModelString targetModel = HDFSUploadNodeModel.createTargetModel();
+		FlowVariableModel targetFlowVariableModel = createFlowVariableModel(targetModel.getKey(), Type.STRING);
+		this.addDialogComponent(new DialogComponentString(targetModel, "Target path", true, 30, targetFlowVariableModel));
+		this.addDialogComponent(new DialogComponentString(HDFSUploadNodeModel.createTargetVariableModel(false),
+			"Target variable"));
+		this.addDialogComponent(new DialogComponentBoolean(HDFSUploadNodeModel.createOverrideModel(),
+			"Override target?"));
+
 		new KnimeLayoutUtilties().beautify(this);
 	}
 }

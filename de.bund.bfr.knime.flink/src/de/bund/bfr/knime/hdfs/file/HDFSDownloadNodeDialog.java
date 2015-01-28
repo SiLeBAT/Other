@@ -20,19 +20,20 @@ import javax.swing.JFileChooser;
 
 import layout.KnimeLayoutUtilties;
 
+import org.knime.core.node.FlowVariableModel;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentFileChooser;
 import org.knime.core.node.defaultnodesettings.DialogComponentString;
+import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.node.workflow.FlowVariable.Type;
 
 /**
  * <code>NodeDialog</code> for the "HDFSDownload" Node.
  * Downloads an HDFS file from a remote HDFS namenode to the local filesystem.
- *
  * This node dialog derives from {@link DefaultNodeSettingsPane} which allows
- * creation of a simple dialog with standard components. If you need a more 
- * complex dialog please derive directly from 
- * {@link org.knime.core.node.NodeDialogPane}.
+ * creation of a simple dialog with standard components. If you need a more
+ * complex dialog please derive directly from {@link org.knime.core.node.NodeDialogPane}.
  * 
  * @author Arvid Heise
  */
@@ -42,15 +43,21 @@ public class HDFSDownloadNodeDialog extends DefaultNodeSettingsPane {
 	 * New pane for configuring the HDFSUpload node.
 	 */
 	protected HDFSDownloadNodeDialog() {
-		this.addDialogComponent(new DialogComponentString(HDFSDownloadNodeModel.createSourceModel(), "Source path"));
-		final DialogComponentFileChooser component = new DialogComponentFileChooser(HDFSDownloadNodeModel.createTargetModel(),
-			HDFSUploadNodeDialog.class.getName(), JFileChooser.SAVE_DIALOG, false);
+		SettingsModelString sourceModel = HDFSDownloadNodeModel.createSourceModel();
+		FlowVariableModel sourceFlowVariableModel = createFlowVariableModel(sourceModel.getKey(), Type.STRING);
+		this.addDialogComponent(new DialogComponentString(sourceModel, "Source path", false, 30,
+			sourceFlowVariableModel));
+		SettingsModelString targetModel = HDFSDownloadNodeModel.createTargetModel();
+		FlowVariableModel targetFlowVariableModel = createFlowVariableModel(targetModel.getKey(), Type.STRING);
+		final DialogComponentFileChooser component = new DialogComponentFileChooser(targetModel,
+			HDFSUploadNodeDialog.class.getName(), JFileChooser.SAVE_DIALOG, false, targetFlowVariableModel);
 		component.setBorderTitle("Target path");
 		this.addDialogComponent(component);
-		this.addDialogComponent(new DialogComponentString(HDFSDownloadNodeModel.createTargetVariableModel(false), "Target variable"));
-		this.addDialogComponent(new DialogComponentBoolean(HDFSDownloadNodeModel.createOverrideModel(), "Override target?"));
-		
+		this.addDialogComponent(new DialogComponentString(HDFSDownloadNodeModel.createTargetVariableModel(false),
+			"Target variable"));
+		this.addDialogComponent(new DialogComponentBoolean(HDFSDownloadNodeModel.createOverrideModel(),
+			"Override target?"));
+
 		new KnimeLayoutUtilties().beautify(this);
 	}
 }
-

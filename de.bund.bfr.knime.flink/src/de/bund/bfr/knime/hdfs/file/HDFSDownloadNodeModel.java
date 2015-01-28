@@ -60,12 +60,11 @@ public class HDFSDownloadNodeModel extends NodeModel {
 	private static NameGenerator nameGenerator = NameGenerator.getInstance("localFile");
 
 	static SettingsModelString createSourceModel() {
-		return new SettingsModelString("source", "HDFS path or flow variable with HDFS path");
+		return new SettingsModelString("source", "");
 	}
 
 	static SettingsModelString createTargetModel() {
-		return new SettingsModelString("target", String.format("%s%s", System.getProperty("java.io.tmpdir"),
-			File.separator));
+		return new SettingsModelString("target", "");
 	}
 
 	static SettingsModelBoolean createOverrideModel() {
