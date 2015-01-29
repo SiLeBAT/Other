@@ -48,7 +48,13 @@ import org.knime.core.node.NodeSettingsWO;
 public class MyTab21NodeModel extends NodeModel {
     
 	private boolean doAutosize = false;
-    /**
+	private String baseFolder = "C:/Dokumente und Einstellungen/Weiser/Desktop/tawak/";
+	private String erreger = "SA";
+	private int jahr = 2013;
+	private int kriterienJahr = 2013;
+	private String bfrProgramm = "Dia";
+	
+	/**
      * Constructor for the node model.
      */
     protected MyTab21NodeModel() {
@@ -153,7 +159,7 @@ public class MyTab21NodeModel extends NodeModel {
     		}
     	}
     	System.err.println("preTab0:\t" + (System.currentTimeMillis()-ttt));
-    	String pfn = getFilename("C:/Dokumente und Einstellungen/Weiser/Desktop/tawak/", "preTab21_");
+    	String pfn = getFilename(baseFolder, "preTab21_");
 
     	ew.setStyle(true, 0, true, true, false, true, null); // RowHeader
     	if (doAutosize) ew.autoSizeColumn(5);
@@ -289,7 +295,7 @@ public class MyTab21NodeModel extends NodeModel {
    				tab3Row.add(p.getNumSamples()); tab3Row.add(num); tab3Row.add(100.0 * num / p.getNumSamples());   				
    	   	   		tab3.add(tab3Row);
    	   		}
-   	    	String fn = getFilename("C:/Dokumente und Einstellungen/Weiser/Desktop/tawak/", "Tab213_" + p.getName());
+   	    	String fn = getFilename(baseFolder, "Tab213_" + p.getName());
    	    	ew = new ExcelWriter(tab3);
    	    	ew.setStyle(true, 0, true, true, false, true, null); // RowHeader
    	    	ew.setStyle(false, 0, true, false, true, false, null); // ColumnHeader
@@ -302,7 +308,7 @@ public class MyTab21NodeModel extends NodeModel {
    		}
     	System.err.println("tab3:\t" + (System.currentTimeMillis()-ttt));
 
-    	String fn = getFilename("C:/Dokumente und Einstellungen/Weiser/Desktop/tawak/", "Tab21");
+    	String fn = getFilename(baseFolder, "Tab21");
     	ew = new ExcelWriter(tab1);
     	ew.setStyle(true, 0, true, true, false, true, null); // RowHeader
     	ew.setStyle(false, 0, true, false, true, false, null); // ColumnHeader
@@ -311,7 +317,7 @@ public class MyTab21NodeModel extends NodeModel {
     	ew.setStyle(true, tab1.size() - 1, false, false, false, true, null); // LastRowBorder
     	if (doAutosize) ew.autoSizeColumns(tab1Row.size());
     	ew.save(fn);
-    	fn = getFilename("C:/Dokumente und Einstellungen/Weiser/Desktop/tawak/", "Tab212");
+    	fn = getFilename(baseFolder, "Tab212");
     	ew = new ExcelWriter(tab2);
     	for (int bl : tab2Borders) ew.setStyle(true, bl, false, false, false, true, null); // TrennBorder
     	ew.setStyle(true, 0, true, true, false, true, null); // RowHeader
@@ -339,7 +345,7 @@ public class MyTab21NodeModel extends NodeModel {
     }
     private String getFilename(String baseFolder, String fbase) {
     	//baseFolder = "G:/Abteilung-4/43/Forschung/EFSA CFP_EFSA_BIOMO_2011_01/Tauschordner_AK_AW/";
-    	String filename = baseFolder + "BfRProg_Erreger_Jahr/MassKrit/" + fbase + "_ser_";
+    	String filename = baseFolder + bfrProgramm + "_" + erreger + "_" + jahr + "/Mass" + kriterienJahr + "/" + fbase + "_ser_";
     	try {
     		String DATE_FORMAT = "yyMMdd";
     		java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(DATE_FORMAT);
