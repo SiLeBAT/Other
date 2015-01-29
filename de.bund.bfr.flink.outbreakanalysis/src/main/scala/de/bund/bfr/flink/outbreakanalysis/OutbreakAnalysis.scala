@@ -18,16 +18,16 @@ import org.apache.flink.api.java.aggregation.Aggregations
 /**
  */
 object OutbreakAnalysis {
-  private var numberOfScenarios: Integer = 50
-  private var salesPath: String = "C:\\Users\\heisea\\Data\\expData\\refac\\PL2\\201043\\expData_refac_201043PL2_GS_100_0.tsv"
-  private var outbreakPath: String = "C:\\Users\\heisea\\Data\\outbreak_data\\exp_c10_PL2.csv"
-  private var delimiter: String = "\t"
-  private var minimalMCL: Double = 0.95
-  private var mclCDFOutputPath: Option[String] = Option("C:\\Users\\heisea\\Downloads\\mclCDFs.csv")
-  private var mclSetSizeOutputPath: Option[String] = Option("C:\\Users\\heisea\\Downloads\\mclSetSize.csv")
-  private var productScoreOutputPath: Option[String] = Option("C:\\Users\\heisea\\Downloads\\productScore.csv")
-  private var productRankOutputPath: Option[String] = Option("C:\\Users\\heisea\\Downloads\\productRanks.csv")
-  private var productSetOutputPath: Option[String] = Option("C:\\Users\\heisea\\Downloads\\productSet.csv")
+  private var salesPath: String = null.asInstanceOf[String]
+  private var outbreakPath: String = null.asInstanceOf[String]
+  private var numberOfScenarios: Integer = null.asInstanceOf[Integer]
+  private var delimiter: String = null.asInstanceOf[String]
+  private var minimalMCL: Double = null.asInstanceOf[Double]
+  private var mclCDFOutputPath: Option[String] = None
+  private var mclSetSizeOutputPath: Option[String] = None
+  private var productScoreOutputPath: Option[String] = None
+  private var productRankOutputPath: Option[String] = None
+  private var productSetOutputPath: Option[String] = None
   private val env = ExecutionEnvironment.getExecutionEnvironment //createLocalEnvironment(2)
 
   def main(args: Array[String]) {
