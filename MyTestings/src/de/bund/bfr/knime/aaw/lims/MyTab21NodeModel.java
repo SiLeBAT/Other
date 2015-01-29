@@ -38,6 +38,8 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.defaultnodesettings.SettingsModelInteger;
+import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * This is the model implementation of MyTab21.
@@ -47,12 +49,21 @@ import org.knime.core.node.NodeSettingsWO;
  */
 public class MyTab21NodeModel extends NodeModel {
     
-	private boolean doAutosize = false;
-	private String baseFolder = "C:/Dokumente und Einstellungen/Weiser/Desktop/tawak/";
-	private String erreger = "SA";
-	private int jahr = 2013;
-	private int kriterienJahr = 2013;
-	private String bfrProgramm = "Dia";
+	static final String BASE_FOLDER = "basefolder";
+	static final String ERREGER = "erreger";
+	static final String BFR_PROGRAMM = "bfrprogramm";
+	static final String SEROVAR = "serovar";
+	static final String JAHR = "jahr";
+	static final String KRITERIEN_JAHR = "kriterienjahr";
+	
+    private final SettingsModelString baseFolder = new SettingsModelString(BASE_FOLDER, "C:/Dokumente und Einstellungen/Weiser/Desktop/tawak/");
+    private final SettingsModelString erreger = new SettingsModelString(ERREGER, "SA");
+    private final SettingsModelString bfrProgramm = new SettingsModelString(BFR_PROGRAMM, "Dia");
+    private final SettingsModelString serovar = new SettingsModelString(SEROVAR, "");
+    private final SettingsModelInteger jahr = new SettingsModelInteger(JAHR, 2013);
+    private final SettingsModelInteger kriterienJahr = new SettingsModelInteger(KRITERIEN_JAHR, 2013);
+
+    private boolean doAutosize = false;
 	
 	/**
      * Constructor for the node model.
@@ -159,7 +170,7 @@ public class MyTab21NodeModel extends NodeModel {
     		}
     	}
     	System.err.println("preTab0:\t" + (System.currentTimeMillis()-ttt));
-    	String pfn = getFilename(baseFolder, "preTab21_");
+    	String pfn = getFilename(baseFolder.getStringValue(), "preTab21_");
 
     	ew.setStyle(true, 0, true, true, false, true, null); // RowHeader
     	if (doAutosize) ew.autoSizeColumn(5);
@@ -295,7 +306,7 @@ public class MyTab21NodeModel extends NodeModel {
    				tab3Row.add(p.getNumSamples()); tab3Row.add(num); tab3Row.add(100.0 * num / p.getNumSamples());   				
    	   	   		tab3.add(tab3Row);
    	   		}
-   	    	String fn = getFilename(baseFolder, "Tab213_" + p.getName());
+   	    	String fn = getFilename(baseFolder.getStringValue(), "Tab213_" + p.getName());
    	    	ew = new ExcelWriter(tab3);
    	    	ew.setStyle(true, 0, true, true, false, true, null); // RowHeader
    	    	ew.setStyle(false, 0, true, false, true, false, null); // ColumnHeader
@@ -308,7 +319,7 @@ public class MyTab21NodeModel extends NodeModel {
    		}
     	System.err.println("tab3:\t" + (System.currentTimeMillis()-ttt));
 
-    	String fn = getFilename(baseFolder, "Tab21");
+    	String fn = getFilename(baseFolder.getStringValue(), "Tab21");
     	ew = new ExcelWriter(tab1);
     	ew.setStyle(true, 0, true, true, false, true, null); // RowHeader
     	ew.setStyle(false, 0, true, false, true, false, null); // ColumnHeader
@@ -317,7 +328,7 @@ public class MyTab21NodeModel extends NodeModel {
     	ew.setStyle(true, tab1.size() - 1, false, false, false, true, null); // LastRowBorder
     	if (doAutosize) ew.autoSizeColumns(tab1Row.size());
     	ew.save(fn);
-    	fn = getFilename(baseFolder, "Tab212");
+    	fn = getFilename(baseFolder.getStringValue(), "Tab212");
     	ew = new ExcelWriter(tab2);
     	for (int bl : tab2Borders) ew.setStyle(true, bl, false, false, false, true, null); // TrennBorder
     	ew.setStyle(true, 0, true, true, false, true, null); // RowHeader
@@ -345,7 +356,8 @@ public class MyTab21NodeModel extends NodeModel {
     }
     private String getFilename(String baseFolder, String fbase) {
     	//baseFolder = "G:/Abteilung-4/43/Forschung/EFSA CFP_EFSA_BIOMO_2011_01/Tauschordner_AK_AW/";
-    	String filename = baseFolder + bfrProgramm + "_" + erreger + "_" + jahr + "/Mass" + kriterienJahr + "/" + fbase + "_ser_";
+    	String ser = serovar.getStringValue().replace(":", "_");
+    	String filename = baseFolder + bfrProgramm.getStringValue() + "_" + erreger.getStringValue() + "_" + jahr.getIntValue() + "/Mass" + kriterienJahr.getIntValue() + "/" + fbase + "_" + ser + "_";
     	try {
     		String DATE_FORMAT = "yyMMdd";
     		java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(DATE_FORMAT);
@@ -390,6 +402,12 @@ public class MyTab21NodeModel extends NodeModel {
      */
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
+    	baseFolder.saveSettingsTo(settings);
+    	erreger.saveSettingsTo(settings);
+    	bfrProgramm.saveSettingsTo(settings);
+    	serovar.saveSettingsTo(settings);
+    	jahr.saveSettingsTo(settings);
+    	kriterienJahr.saveSettingsTo(settings);
     }
 
     /**
@@ -398,6 +416,12 @@ public class MyTab21NodeModel extends NodeModel {
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
+    	baseFolder.loadSettingsFrom(settings);
+    	erreger.loadSettingsFrom(settings);
+    	bfrProgramm.loadSettingsFrom(settings);
+    	serovar.loadSettingsFrom(settings);
+    	jahr.loadSettingsFrom(settings);
+    	kriterienJahr.loadSettingsFrom(settings);
     }
 
     /**
@@ -406,6 +430,12 @@ public class MyTab21NodeModel extends NodeModel {
     @Override
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
+    	baseFolder.validateSettings(settings);
+    	erreger.validateSettings(settings);
+    	bfrProgramm.validateSettings(settings);
+    	serovar.validateSettings(settings);
+    	jahr.validateSettings(settings);
+    	kriterienJahr.validateSettings(settings);
     }
     
     /**
