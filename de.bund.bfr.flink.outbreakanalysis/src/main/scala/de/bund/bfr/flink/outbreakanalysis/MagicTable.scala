@@ -2,7 +2,6 @@ package de.bund.bfr.flink.outbreakanalysis
 
 import java.util.Random
 import java.util.TreeMap
-import scala.collection.mutable.MultiMap
 import scala.collection.mutable.ListBuffer
 
 class MagicTable(probabilities: Array[Double]) {

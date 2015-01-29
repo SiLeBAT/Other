@@ -1,6 +1,5 @@
 package de.bund.bfr.flink.outbreakanalysis
 
-import scala.annotation.meta.field
 import scala.collection.JavaConverters._
 import scala.io.Source
 
@@ -29,10 +28,25 @@ object OutbreakAnalysis {
   private var productScoreOutputPath: Option[String] = Option("C:\\Users\\heisea\\Downloads\\productScore.csv")
   private var productRankOutputPath: Option[String] = Option("C:\\Users\\heisea\\Downloads\\productRanks.csv")
   private var productSetOutputPath: Option[String] = Option("C:\\Users\\heisea\\Downloads\\productSet.csv")
-  private val env = ExecutionEnvironment.createLocalEnvironment(2)
+  private val env = ExecutionEnvironment.getExecutionEnvironment //createLocalEnvironment(2)
 
   def main(args: Array[String]) {
-
+    salesPath = args(0)
+    outbreakPath = args(1)
+    numberOfScenarios = args(2).toInt
+    delimiter = args(3)
+    minimalMCL = args(4).toDouble
+    if(args.length > 5 && args(5) != "")
+      mclCDFOutputPath = Option(args(5))
+    if(args.length > 6 && args(6) != "")
+      mclSetSizeOutputPath = Option(args(6))
+    if(args.length > 7 && args(7) != "")
+      productScoreOutputPath = Option(args(7))
+    if(args.length > 8 && args(8) != "")
+      productRankOutputPath = Option(args(8))
+    if(args.length > 9 && args(9) != "")
+      productSetOutputPath = Option(args(9))
+      
     // outbreak line consists of area code, count 
     val outbreaks: DataSet[(String, Int)] = env.readCsvFile(outbreakPath)
 
@@ -41,7 +55,7 @@ object OutbreakAnalysis {
 
     // build sparse sales vector for product
     // the distribution over the sale areas is normalized to one
-    val products: DataSet[Product] = productSales.groupBy(0).reduceGroup { in =>
+    val products: DataSet[Product] = productSales.groupBy(0).reduceGroup[Product] { in: Iterator[(String, String, Double)] =>
       val list = in.toList
       val totalSales: Double = list.map { _._3 }.sum
       val distribution = list.map { t => t._2 -> (t._3 / totalSales) }.toMap
@@ -123,10 +137,9 @@ object OutbreakAnalysis {
       productRanks.map { _.productName }.
         writeAsText(productRankOutputPath.get, WriteMode.OVERWRITE).setParallelism(1)
 
-    if (productSetOutputPath.isDefined) {
+    if (productSetOutputPath.isDefined) 
       productSet.flatMap { x => x }.
         writeAsText(productSetOutputPath.get, WriteMode.OVERWRITE).setParallelism(1)
-    }
 
     env.execute("Foodborne disease simulation")
   }
@@ -137,18 +150,15 @@ object OutbreakAnalysis {
     // Manually read header from data source and configure input dataSet accordingly.
     val input = new Path(salesPath)
     val source = Source.fromInputStream(input.getFileSystem.open(input))
-    val header = source.getLines().next().split(delimiter).map { _.replaceAll("^\"(.*)\"$", "$1") }
+    val header = source.getLines().next()
     val saleMatrix: DataSet[String] = env.readTextFile(salesPath)
     
+    var parameters = new Configuration()
+    parameters.setString("header", header)
+    parameters.setString("delimiter", delimiter)
     // sales line consists of ean, area code, count 
-    saleMatrix.flatMap { (row, collector) =>
-      val cells = row.split(delimiter)
-      val area = cells.head.replaceAll("^\"(.*)\"$", "$1")
-      if (area != "row ID")
-        cells.tail.map { _.toDouble }.zipWithIndex.filter { _._1 > 0 }.foreach { countWithIndex =>
-          collector.collect(header(countWithIndex._2 + 1), area, countWithIndex._1.toDouble)
-        }
-    }
+    saleMatrix.flatMap(new SplitIntoCells).
+      withParameters(parameters)
   }
   
   def count(dataSet : DataSet[_]) : DataSet[Int] = {
@@ -164,6 +174,28 @@ case class Scenario(id: ScenarioId, distribution: Map[String, Double])
 case class Score(productName: String, scenario: ScenarioId, score: Double)
 case class Rank(productName: String, rank: Int)
 case class RankProbability(rank: Int, probability: Double)
+
+/**
+ * Splits a row in a matrix into cells
+ */
+final class SplitIntoCells extends RichFlatMapFunction[String, (String, String, Double)] {
+  var delimiter: String = null
+  var header: Array[String] = null
+
+  override def open(config: Configuration): Unit = {
+    delimiter = config.getString("delimiter", "")
+    header = config.getString("header", "").split(delimiter).map { _.replaceAll("^\"(.*)\"$", "$1") }
+  }
+
+  def flatMap(row: String, collector: Collector[(String, String, Double)]) = {
+      val cells = row.split(delimiter)
+      val area = cells.head.replaceAll("^\"(.*)\"$", "$1")
+      if (area != "row ID")
+        cells.tail.map { _.toDouble }.zipWithIndex.filter { _._1 > 0 }.foreach { countWithIndex =>
+          collector.collect(header(countWithIndex._2 + 1), area, countWithIndex._1.toDouble)
+        }
+  }
+}
 
 /**
  * Draws numberOfScenarios times distributions with numberOfOutbreaks cases. 
