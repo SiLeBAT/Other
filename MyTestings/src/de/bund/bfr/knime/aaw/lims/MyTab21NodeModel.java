@@ -170,7 +170,7 @@ public class MyTab21NodeModel extends NodeModel {
     		}
     	}
     	System.err.println("preTab0:\t" + (System.currentTimeMillis()-ttt));
-    	String pfn = getFilename(baseFolder.getStringValue(), "preTab21_");
+    	String pfn = getFilename(baseFolder.getStringValue(), "preTab21");
 
     	ew.setStyle(true, 0, true, true, false, true, null); // RowHeader
     	if (doAutosize) ew.autoSizeColumn(5);
@@ -306,7 +306,7 @@ public class MyTab21NodeModel extends NodeModel {
    				tab3Row.add(p.getNumSamples()); tab3Row.add(num); tab3Row.add(100.0 * num / p.getNumSamples());   				
    	   	   		tab3.add(tab3Row);
    	   		}
-   	    	String fn = getFilename(baseFolder.getStringValue(), "Tab213_" + p.getName());
+   	    	String fn = getFilename(baseFolder.getStringValue(), "MHKs_" + p.getName());
    	    	ew = new ExcelWriter(tab3);
    	    	ew.setStyle(true, 0, true, true, false, true, null); // RowHeader
    	    	ew.setStyle(false, 0, true, false, true, false, null); // ColumnHeader
@@ -328,7 +328,7 @@ public class MyTab21NodeModel extends NodeModel {
     	ew.setStyle(true, tab1.size() - 1, false, false, false, true, null); // LastRowBorder
     	if (doAutosize) ew.autoSizeColumns(tab1Row.size());
     	ew.save(fn);
-    	fn = getFilename(baseFolder.getStringValue(), "Tab212");
+    	fn = getFilename(baseFolder.getStringValue(), "WGruppen");
     	ew = new ExcelWriter(tab2);
     	for (int bl : tab2Borders) ew.setStyle(true, bl, false, false, false, true, null); // TrennBorder
     	ew.setStyle(true, 0, true, true, false, true, null); // RowHeader

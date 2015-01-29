@@ -79,14 +79,18 @@ public class Programm {
 		boolean result = false;
 		double cValue = checkValue(value); 
 		String kurz = w.getKurz();
+		int increment = 0;
 		if (cValue > w.getCutoff()) {
-			if (numPostive.containsKey(kurz))
-				numPostive.put(kurz, numPostive.get(kurz) + 1);
-			else
-				numPostive.put(kurz, 1);
+			increment = 1;
 			groupResistance.add(w.getGruppe());
 			result = true;
 		}
+		
+		if (numPostive.containsKey(kurz))
+			numPostive.put(kurz, numPostive.get(kurz) + increment);
+		else
+			numPostive.put(kurz, increment);
+			
 		List<Double> al = new ArrayList<Double>();
 		al.add(cValue);
 		wirkstoffVals.put(kurz, al);
@@ -98,6 +102,7 @@ public class Programm {
 		for (String group : groupResistance) {
 			groupResistanceCount.put(group, 1);
 		}
+		maxResi = groupResistance.size();
 	}
 
 	public void merge(Programm p) {
