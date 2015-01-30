@@ -1,0 +1,46 @@
+/*
+* This is a manifest file that'll be compiled into application.css, which will include all the files
+* listed below.
+*
+* Any CSS file within this directory can be referenced here using a relative path.
+*
+* You're free to add application-wide styles to this file and they'll appear at the top of the
+* compiled file, but it's generally better to create a new file per style scope.
+*
+*= require main
+*= require mobile
+*= require_self
+*/
+body, html {
+  height: 100%;
+  width: 100%;
+}
+
+#mapContainer {
+  height: 100%;
+  width: 100%;
+}
+
+.gwt-SuggestBox {
+   border: 1x solid #666;
+   text-align: left;
+   width: 400px;
+}
+
+.gwt-SuggestBoxPopup {
+   background-color: #fff;
+   border-top: 0;
+   border: 2x solid #C3D9FF;
+   cursor: pointer;
+   cursor: hand;
+   text-align: left;
+}
+
+.gwt-SuggestBoxPopup .item {
+   padding: 2px;
+}
+
+.gwt-SuggestBoxPopup .item-selected {
+   background-color: #C3D9FF;
+   padding: 2px;
+} 
