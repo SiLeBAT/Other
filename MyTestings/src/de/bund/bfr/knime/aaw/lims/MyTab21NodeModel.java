@@ -53,6 +53,7 @@ public class MyTab21NodeModel extends NodeModel {
 	static final String ERREGER = "erreger";
 	static final String BFR_PROGRAMM = "bfrprogramm";
 	static final String SEROVAR = "serovar";
+	static final String BLSUBFOLDER = "blsubfolder";
 	static final String JAHR = "jahr";
 	static final String KRITERIEN_JAHR = "kriterienjahr";
 	
@@ -60,6 +61,7 @@ public class MyTab21NodeModel extends NodeModel {
     private final SettingsModelString erreger = new SettingsModelString(ERREGER, "SA");
     private final SettingsModelString bfrProgramm = new SettingsModelString(BFR_PROGRAMM, "Dia");
     private final SettingsModelString serovar = new SettingsModelString(SEROVAR, "");
+    private final SettingsModelString blSubFolder = new SettingsModelString(BLSUBFOLDER, "");
     private final SettingsModelInteger jahr = new SettingsModelInteger(JAHR, 2013);
     private final SettingsModelInteger kriterienJahr = new SettingsModelInteger(KRITERIEN_JAHR, 2013);
 
@@ -357,7 +359,11 @@ public class MyTab21NodeModel extends NodeModel {
     private String getFilename(String baseFolder, String fbase) {
     	//baseFolder = "G:/Abteilung-4/43/Forschung/EFSA CFP_EFSA_BIOMO_2011_01/Tauschordner_AK_AW/";
     	String ser = serovar.getStringValue().replace(":", "_");
-    	String filename = baseFolder + bfrProgramm.getStringValue() + "_" + erreger.getStringValue() + "_" + jahr.getIntValue() + "/Mass" + kriterienJahr.getIntValue() + "/" + fbase + "_" + ser + "_";
+    	String filename = baseFolder + bfrProgramm.getStringValue() + "_" + erreger.getStringValue() + "_" + jahr.getIntValue();
+    	if (blSubFolder.getStringValue() != null && !blSubFolder.getStringValue().isEmpty()) {
+    		filename += "/" + blSubFolder.getStringValue();
+    	}
+    	filename += "/Mass" + kriterienJahr.getIntValue() + "/" + fbase + "_" + ser + "_";
     	try {
     		String DATE_FORMAT = "yyMMdd";
     		java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(DATE_FORMAT);
@@ -406,6 +412,7 @@ public class MyTab21NodeModel extends NodeModel {
     	erreger.saveSettingsTo(settings);
     	bfrProgramm.saveSettingsTo(settings);
     	serovar.saveSettingsTo(settings);
+    	blSubFolder.saveSettingsTo(settings);
     	jahr.saveSettingsTo(settings);
     	kriterienJahr.saveSettingsTo(settings);
     }
@@ -420,6 +427,7 @@ public class MyTab21NodeModel extends NodeModel {
     	erreger.loadSettingsFrom(settings);
     	bfrProgramm.loadSettingsFrom(settings);
     	serovar.loadSettingsFrom(settings);
+    	blSubFolder.loadSettingsFrom(settings);
     	jahr.loadSettingsFrom(settings);
     	kriterienJahr.loadSettingsFrom(settings);
     }
@@ -434,6 +442,7 @@ public class MyTab21NodeModel extends NodeModel {
     	erreger.validateSettings(settings);
     	bfrProgramm.validateSettings(settings);
     	serovar.validateSettings(settings);
+    	blSubFolder.validateSettings(settings);
     	jahr.validateSettings(settings);
     	kriterienJahr.validateSettings(settings);
     }
