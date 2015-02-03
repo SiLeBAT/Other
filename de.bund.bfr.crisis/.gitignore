@@ -1,0 +1,7 @@
+.link_to_grails_plugins
+.settings
+.classpath
+.project
+bin
+target
+target-eclipse
