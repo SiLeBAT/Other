@@ -41,6 +41,6 @@ public class PmfValidatorNodeDialog extends DefaultNodeSettingsPane {
 	protected PmfValidatorNodeDialog() {
 		addDialogComponent(new DialogComponentFileChooser(
 				new SettingsModelString(PmfValidatorNodeModel.PMF_FILE, null),
-				PMF_FILE_HISTORY, ".pmf"));
+				PMF_FILE_HISTORY));
 	}
 }

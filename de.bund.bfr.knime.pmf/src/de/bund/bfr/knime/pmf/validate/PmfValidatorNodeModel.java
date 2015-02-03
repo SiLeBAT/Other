@@ -77,7 +77,12 @@ public class PmfValidatorNodeModel extends NodeModel {
 		int index = 1;
 
 		reader.setValidating(true);
-		reader.read(file);
+
+		if (file.getName().endsWith(".zip") || file.getName().endsWith(".pmf")) {
+			reader.read(file);
+		} else {
+			reader.readFileSet(file);
+		}
 
 		for (ConformityMessage message : reader.getMessages()) {
 			container.addRowToTable(new DefaultRow(String.valueOf(index++),
