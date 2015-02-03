@@ -63,7 +63,7 @@ public class SnippetTextArea extends KnimeSyntaxTextArea {
 	 */
 	@Override
 	public Color getForegroundForToken(final Token t) {
-		if (this.isInGuardedSection(t.offset))
+		if (this.isInGuardedSection(t.getOffset()))
 			return Color.gray;
 		return super.getForegroundForToken(t);
 	}
