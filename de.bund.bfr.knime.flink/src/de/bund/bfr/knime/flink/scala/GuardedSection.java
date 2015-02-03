@@ -202,9 +202,7 @@ public final class GuardedSection {
 		this.m_document.setBreakGuarded(true);
 		// Empty text is not allowed, this would break the positioning
 		String text = null == t || t.isEmpty() ? " " : t;
-		text = text.endsWith("\n")
-			? text.substring(0, text.length() - 1)
-			: text;
+		text = text.endsWith("\n") ? text.substring(0, text.length() - 1) : text;
 
 		int docLen = this.m_document.getLength();
 		this.m_document.insertString(p1 + 1, text, null);

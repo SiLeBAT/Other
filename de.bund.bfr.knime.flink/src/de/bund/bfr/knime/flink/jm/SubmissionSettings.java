@@ -62,8 +62,6 @@ public class SubmissionSettings {
 						}
 
 				String value = this.parameterValues.get(oldParameter);
-				if (value == null || value.isEmpty())
-					value = newParameter.getDefaultValue();
 				newParameterValues.put(newParameter, value);
 			}
 			this.parameterValues = newParameterValues;
@@ -102,12 +100,12 @@ public class SubmissionSettings {
 				// create ad-hoc program for loading the settings
 				List<Parameter> parameters = new ArrayList<>();
 				for (String parameterName : subSettings)
-					parameters.add(new Parameter(parameterName, Type.STRING, ""));
+					parameters.add(new Parameter(parameterName, Type.STRING, false));
 				this.flinkProgramWithUsage = new FlinkProgramWithUsage();
 				this.flinkProgramWithUsage.setParameters(parameters);
 			}
 			for (Parameter parameter : this.flinkProgramWithUsage.getParameters()) {
-				String value = subSettings.getString(parameter.getName(), parameter.getDefaultValue());
+				String value = subSettings.getString(parameter.getName(), "");
 				parameterValues.put(parameter, value);
 			}
 		}
@@ -123,8 +121,6 @@ public class SubmissionSettings {
 		Config subSettings = settings.addConfig(CFGKEY_PARAMETER);
 		for (Parameter parameter : this.flinkProgramWithUsage.getParameters()) {
 			String value = this.parameterValues.get(parameter);
-			if (value == null)
-				value = parameter.getDefaultValue();
 			subSettings.addString(parameter.getName(), value);
 		}
 	}
@@ -135,15 +131,14 @@ public class SubmissionSettings {
 	public void validateSettings() throws InvalidSettingsException {
 		for (Parameter parameter : this.flinkProgramWithUsage.getParameters()) {
 			String value = this.parameterValues.get(parameter);
-			if (value == null || value.isEmpty())
-				value = parameter.getDefaultValue();
 			if (value == null)
 				throw new InvalidSettingsException(String.format("Parameter %s must be set", parameter.getName()));
-			try {
-				parameter.getType().fromString(value);
-			} catch (Exception e) {
-				throw new InvalidSettingsException(e.getMessage(), e);
-			}
+			if (value != "<variable>")
+				try {
+					parameter.getType().fromString(value);
+				} catch (Exception e) {
+					throw new InvalidSettingsException(e.getMessage(), e);
+				}
 		}
 	}
 

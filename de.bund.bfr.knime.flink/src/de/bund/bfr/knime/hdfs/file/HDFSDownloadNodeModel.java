@@ -94,6 +94,9 @@ public class HDFSDownloadNodeModel extends NodeModel {
 		FileSystem hdfs = FileSystem.get(configuration);
 		FileSystem local = FileSystem.getLocal(connection.getSettings().getConfiguration());
 		Path targetPath = new Path(this.target.getStringValue());
+		Path sourcePath = new Path(this.source.getStringValue());
+		if(local.exists(targetPath) && local.isDirectory(targetPath))
+			targetPath = new Path(targetPath, sourcePath.getName());
 
 		try (FSDataOutputStream out =
 			local.create(targetPath, null, true, local.getConf().getInt("io.file.buffer.size", 4096),
@@ -133,7 +136,11 @@ public class HDFSDownloadNodeModel extends NodeModel {
 
 			HDFSConnectionObjectSpec connection = (HDFSConnectionObjectSpec) inSpecs[0];
 			FileSystem local = FileSystem.getLocal(connection.getSettings().getConfiguration());
-			final Path targetPath = new Path(this.target.getStringValue());
+			Path targetPath = new Path(this.target.getStringValue());
+			Path sourcePath = new Path(this.source.getStringValue());
+			if(local.exists(targetPath) && local.isDirectory(targetPath))
+				targetPath = new Path(targetPath, sourcePath.getName());
+			
 			if (!this.override.getBooleanValue() && local.exists(targetPath))
 				throw new InvalidSettingsException("File already exists");
 

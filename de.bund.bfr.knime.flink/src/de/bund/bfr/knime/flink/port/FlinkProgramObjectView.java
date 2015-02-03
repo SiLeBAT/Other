@@ -40,7 +40,7 @@ final class FlinkProgramObjectView extends JPanel {
 		super.setName("Flink program");
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
-		
+
 		panel.add(new JLabel("<html><body><h2>Flink program</h2></body></html>"));
 		panel.add(Box.createVerticalStrut(20));
 		panel.add(new JLabel("<html><body><h3>Location</h3></body></html>"));
@@ -50,14 +50,15 @@ final class FlinkProgramObjectView extends JPanel {
 		for (Parameter parameter : program.getParameters()) {
 			StringBuilder buf = new StringBuilder();
 			buf.append(parameter.getType()).append(" ").append(parameter.getName());
-			if(parameter.getDefaultValue() != null)
-				buf.append(" = ").append(parameter.getDefaultValue());
+			if (parameter.isOptional())
+				buf.append("?");
 			panel.add(new JLabel(buf.toString()));
 		}
 		panel.add(Box.createVerticalGlue());
-		for(Component child : panel.getComponents())
-			((JComponent)child).setAlignmentX(0);
-//		final JScrollPane jsp = new JScrollPane(f, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		for (Component child : panel.getComponents())
+			((JComponent) child).setAlignmentX(0);
+		// final JScrollPane jsp = new JScrollPane(f, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+		// ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		super.add(panel, BorderLayout.CENTER);
 	}
 }

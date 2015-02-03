@@ -41,7 +41,7 @@ public class ScalaSnippetDocument extends GuardedDocument<ScalaSnippetDocument.S
 			this.addGuardedSection(Section.Imports, this.getLength());
 			this.insertString(this.getLength(), "\n\n", null);
 			GuardedSection jobStart = this.addGuardedSection(Section.JobStart, this.getLength());
-			jobStart.setText("// Job class\nobject Job {\n");
+			jobStart.setText("// Job singleton class\nobject Job {\n");
 			this.addGuardedSection(Section.Fields, this.getLength());
 			this.insertString(this.getLength(), "\n", null);
 

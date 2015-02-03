@@ -41,17 +41,12 @@ public class ScalaSnippet {
 
 	private static Map<Type, String> TypeParserPattern = new EnumMap<>(Type.class);
 
-	private static Map<Type, String> DefaultValuePattern = new EnumMap<>(Type.class);
-
 	private static Map<Type, String> TypeToScalaType = new EnumMap<>(Type.class);
 
 	static {
-		TypeToScalaType.put(Type.STRING, "String = \"\"");
-		TypeToScalaType.put(Type.DOUBLE, "Double = 0");
-		TypeToScalaType.put(Type.INTEGER, "Integer = 0");
-		DefaultValuePattern.put(Type.STRING, "\"%s\"");
-		DefaultValuePattern.put(Type.DOUBLE, "%s");
-		DefaultValuePattern.put(Type.INTEGER, "%s");
+		TypeToScalaType.put(Type.STRING, "String");
+		TypeToScalaType.put(Type.DOUBLE, "Double");
+		TypeToScalaType.put(Type.INTEGER, "Integer");
 		TypeParserPattern.put(Type.STRING, "%s");
 		TypeParserPattern.put(Type.DOUBLE, "%s.toDouble");
 		TypeParserPattern.put(Type.INTEGER, "%s.toInt");
@@ -174,10 +169,14 @@ public class ScalaSnippet {
 		StringBuilder out = new StringBuilder();
 		out.append("  private val env: ExecutionEnvironment = ExecutionEnvironment.getExecutionEnvironment\n");
 		if (this.m_settings != null && this.m_settings.getParameters().size() > 0) {
-			out.append("  // Parsed input parameters; all parameters have been set (with the correct default values)\n");
+			out.append("  // Parsed input parameters; all parameters have been initialized\n");
 			for (Parameter parameter : this.m_settings.getParameters()) {
-				String initializer = TypeToScalaType.get(parameter.getType());
-				out.append(String.format("  private var %s: %s\n", parameter.getName(), initializer));
+				String scalaType = TypeToScalaType.get(parameter.getType());
+				if (parameter.isOptional())
+					out.append(String.format("  private var %s: Option[%s] = None\n", parameter.getName(),
+						scalaType));
+				else
+					out.append(String.format("  private var %s: %s = null.asInstanceOf[%2$s]\n", parameter.getName(), scalaType));
 			}
 		}
 		return out.toString();
@@ -210,12 +209,11 @@ public class ScalaSnippet {
 				String argSelector = String.format("args(%d)", index);
 				Parameter parameter = parameters.get(index);
 				String parser = String.format(TypeParserPattern.get(parameter.getType()), argSelector);
-				if (parameter.getDefaultValue() != null) {
-					String defaultValueInScala =
-						String.format(DefaultValuePattern.get(parameter.getType()), parameter.getDefaultValue());
-					parser = String.format("if(args.length > %d) %s else %s", index, parser, defaultValueInScala);
-				}
-				out.append(String.format("    %s = %s\n", parameter.getName(), parser));
+				if (parameter.isOptional())
+					out.append(String.format("    if(args.length > %d && args(%1$d) != \"\")\n      %s = Option(%s)\n",
+						index, parameter.getName(), parser));
+				else
+					out.append(String.format("    %s = %s\n", parameter.getName(), parser));
 			}
 		}
 		out.append("    performTask\n");

@@ -85,7 +85,11 @@ public class HDFSUploadNodeModel extends NodeModel {
 	protected PortObject[] execute(PortObject[] inObjects, ExecutionContext exec) throws Exception {
 		HDFSConnectionObject connection = (HDFSConnectionObject) inObjects[0];
 		FileSystem hdfs = FileSystem.get(connection.getSettings().getConfiguration());
-		hdfs.copyFromLocalFile(new Path(this.source.getStringValue()), new Path(this.target.getStringValue()));
+		Path sourcePath = new Path(this.source.getStringValue());
+		Path targetPath = new Path(this.target.getStringValue());
+		if(hdfs.exists(targetPath) && hdfs.isDirectory(targetPath))
+			targetPath = new Path(targetPath, sourcePath.getName());
+		hdfs.copyFromLocalFile(new Path(this.source.getStringValue()), targetPath);
 
 		// HDFSFile file = new HDFSFile();
 		// file.setHdfsSettings(connection.getSettings());
@@ -113,8 +117,12 @@ public class HDFSUploadNodeModel extends NodeModel {
 				throw new InvalidSettingsException("Target may not be empty");
 
 			HDFSConnectionObjectSpec connection = (HDFSConnectionObjectSpec) inSpecs[0];
-			FileSystem hdfs = FileSystem.get(connection.getSettings().getConfiguration());
-			final Path targetPath = new Path(this.target.getStringValue());
+			Path targetPath = new Path(this.target.getStringValue());
+			FileSystem hdfs = targetPath.getFileSystem(connection.getSettings().getConfiguration());
+			Path sourcePath = new Path(this.source.getStringValue());
+			if(hdfs.exists(targetPath) && hdfs.isDirectory(targetPath))
+				targetPath = new Path(targetPath, sourcePath.getName());
+			
 			if (!this.override.getBooleanValue() && hdfs.exists(targetPath))
 				throw new InvalidSettingsException("File already exists");
 

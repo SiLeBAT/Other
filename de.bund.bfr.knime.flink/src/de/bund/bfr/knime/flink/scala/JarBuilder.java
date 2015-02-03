@@ -159,7 +159,6 @@ public class JarBuilder {
 				return super.visitFile(file, attrs);
 			}
 		});
-		Files.delete(dir);
 	}
 
 //	private void deleteInDir(Path dir, String filePattern) throws IOException {

@@ -40,7 +40,7 @@ public class ParameterTableModel extends DefaultConfigTableModel {
 	 *        be defined.
 	 */
 	public ParameterTableModel() {
-		super(new String[] { "Name", "Type", "Required", "Default" });
+		super(new String[] { "Name", "Type", "Optional" });
 	}
 
 	/*
@@ -50,7 +50,7 @@ public class ParameterTableModel extends DefaultConfigTableModel {
 	@Override
 	public Class<?> getColumnClass(int column) {
 		switch (Column.values()[column]) {
-		case REQUIRED:
+		case OPTIONAL:
 			return Boolean.class;
 
 		case TYPE:
@@ -143,10 +143,8 @@ public class ParameterTableModel extends DefaultConfigTableModel {
 			return this.validateColColumn(row);
 		case TYPE:
 			return this.validateJavaTypeColumn(row);
-		case REQUIRED:
+		case OPTIONAL:
 			return null;
-		case DEFAULT_VALUE:
-			return this.validateDefaultValueColumn(row);
 		default:
 			throw new IllegalStateException("Unknown column.");
 		}
@@ -209,19 +207,6 @@ public class ParameterTableModel extends DefaultConfigTableModel {
 		return null;
 	}
 
-	private String validateDefaultValueColumn(int row) {
-		if (this.getValueAt(row, Column.REQUIRED).equals(Boolean.TRUE))
-			return null;
-		Type type = (Type) this.getValueAt(row, Column.TYPE);
-		String value = this.getValueAt(row, Column.DEFAULT_VALUE).toString();
-		try {
-			type.fromString(value);
-			return null;
-		} catch(Exception e) {
-			return e.getMessage();
-		}
-	}
-
 	/**
 	 * Validate java type in the given row.
 	 * 
@@ -265,8 +250,7 @@ public class ParameterTableModel extends DefaultConfigTableModel {
 	public enum Column {
 		NAME,
 		TYPE,
-		REQUIRED,
-		DEFAULT_VALUE,
+		OPTIONAL
 	}
 
 }

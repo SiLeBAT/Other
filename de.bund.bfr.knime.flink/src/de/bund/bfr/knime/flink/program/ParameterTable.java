@@ -19,6 +19,8 @@ package de.bund.bfr.knime.flink.program;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.swing.DefaultCellEditor;
@@ -68,17 +70,13 @@ public class ParameterTable extends ConfigTablePanel {
 		nameColumn.setCellEditor(textEditor);
 		TableColumn typeColumn = table.getColumnModel().getColumn(this.model.getIndex(Column.TYPE));
 		typeColumn.setCellEditor(new DefaultCellEditor(new JComboBox<Type>(Type.values())));
-		// TableColumn requiredColumn = table.getColumnModel().getColumn(this.m_model.getIndex(Column.REQUIRED));
-		// requiredColumn.setCellEditor(new DefaultCellEditor(new JCheckBox()));
-		TableColumn defaultColumn = table.getColumnModel().getColumn(this.model.getIndex(Column.DEFAULT_VALUE));
-		defaultColumn.setCellEditor(textEditor);
 
 		// commit editor on focus lost
 		this.getTable().putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
 	}
 
 	public void addParameter(final Parameter outVar) {
-		this.model.addRow(new Object[] { outVar.getName(), outVar.getType(), outVar.getDefaultValue() == null, outVar.getDefaultValue() });
+		this.model.addRow(new Object[] { outVar.getName(), outVar.getType(), outVar.isOptional() });
 	}
 
 	/**
@@ -91,7 +89,7 @@ public class ParameterTable extends ConfigTablePanel {
 	 * @return true when the row was added successfully
 	 */
 	public void addRow(final String name, final Type type) {
-		this.addParameter(new Parameter(name, type, null));
+		this.addParameter(new Parameter(name, type, false));
 	}
 
 	public List<Parameter> getParameters() {
@@ -103,9 +101,15 @@ public class ParameterTable extends ConfigTablePanel {
 			parameters.add(new Parameter(
 				(String) this.model.getValueAt(r, Column.NAME),
 				(Type) this.model.getValueAt(r, Column.TYPE),
-				Boolean.TRUE.equals(this.model.getValueAt(r, Column.REQUIRED)) ? null :
-					(String) this.model.getValueAt(r, Column.DEFAULT_VALUE)));
+				(Boolean) this.model.getValueAt(r, Column.OPTIONAL)));
 		}
+		// sort optional last
+		Collections.sort(parameters, new Comparator<Parameter>() {
+			@Override
+			public int compare(Parameter o1, Parameter o2) {
+				return (o1.isOptional() ? 1 : 0) - (o2.isOptional() ? 1 : 0);
+			}
+		});
 		return parameters;
 	}
 
@@ -115,7 +119,7 @@ public class ParameterTable extends ConfigTablePanel {
 			addParameter(parameter);
 		}
 	}
-	
+
 	/**
 	 * {@inheritDoc}
 	 */

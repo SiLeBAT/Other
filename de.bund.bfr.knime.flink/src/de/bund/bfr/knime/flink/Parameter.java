@@ -25,7 +25,7 @@ import java.text.NumberFormat;
  */
 public class Parameter implements Serializable {
 	public static enum Type {
-		STRING(org.knime.core.node.workflow.FlowVariable.Type.STRING, null), 
+		STRING(org.knime.core.node.workflow.FlowVariable.Type.STRING, null),
 		INTEGER(org.knime.core.node.workflow.FlowVariable.Type.INTEGER, NumberFormat.getIntegerInstance()) {
 			@Override
 			public Object fromString(String value) {
@@ -38,10 +38,10 @@ public class Parameter implements Serializable {
 				return Double.valueOf(value);
 			}
 		};
-		
+
 		/**
 		 * Initializes Type.
-		 *
+		 * 
 		 * @param format
 		 */
 		private Type(org.knime.core.node.workflow.FlowVariable.Type flowType, Format format) {
@@ -50,9 +50,9 @@ public class Parameter implements Serializable {
 		}
 
 		private final Format format;
-		
+
 		private final org.knime.core.node.workflow.FlowVariable.Type flowType;
-		
+
 		/**
 		 * Returns the flowType.
 		 * 
@@ -61,7 +61,7 @@ public class Parameter implements Serializable {
 		public org.knime.core.node.workflow.FlowVariable.Type getFlowType() {
 			return this.flowType;
 		}
-		
+
 		public String toString(Object value) {
 			return value.toString();
 		}
@@ -83,11 +83,11 @@ public class Parameter implements Serializable {
 	 */
 	private static final long serialVersionUID = 7010758786608017809L;
 
-	private final String defaultValue;
-
 	private final String name;
 
 	private final Type type;
+
+	private final boolean optional;
 
 	/**
 	 * Initializes Field.
@@ -95,15 +95,27 @@ public class Parameter implements Serializable {
 	 * @param name
 	 * @param type
 	 */
-	public Parameter(String name, Type type, String defaultValue) {
+	public Parameter(String name, Type type, boolean optional) {
 		super();
 		this.name = name;
 		this.type = type;
-		this.defaultValue = defaultValue;
+		this.optional = optional;
 	}
 
-	/*
-	 * (non-Javadoc)
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + this.name.hashCode();
+		result = prime * result + (this.optional ? 1231 : 1237);
+		result = prime * result + this.type.hashCode();
+		return result;
+	}
+
+	/* (non-Javadoc)
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -112,24 +124,19 @@ public class Parameter implements Serializable {
 			return true;
 		if (obj == null)
 			return false;
-		if (this.getClass() != obj.getClass())
+		if (getClass() != obj.getClass())
 			return false;
 		Parameter other = (Parameter) obj;
-		if (this.defaultValue == null) {
-			if (other.defaultValue != null)
-				return false;
-		} else if (!this.defaultValue.equals(other.defaultValue))
-			return false;
-		return this.name.equals(other.name) && this.type.equals(other.type);
+		return this.name.equals(other.name) && this.type.equals(other.type) && this.optional == other.optional;
 	}
 
 	/**
-	 * Returns the defaultValue.
+	 * Returns the optional.
 	 * 
-	 * @return the defaultValue
+	 * @return the optional
 	 */
-	public String getDefaultValue() {
-		return this.defaultValue;
+	public boolean isOptional() {
+		return this.optional;
 	}
 
 	/**
@@ -152,25 +159,11 @@ public class Parameter implements Serializable {
 
 	/*
 	 * (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (this.defaultValue == null ? 0 : this.defaultValue.hashCode());
-		result = prime * result + this.name.hashCode();
-		result = prime * result + this.type.hashCode();
-		return result;
-	}
-
-	/*
-	 * (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
 	public String toString() {
-		return this.name + ": " + this.type + " = " + this.defaultValue;
+		return this.name + ": " + this.type + (this.optional ? "?" : "");
 	}
 
 }

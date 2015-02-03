@@ -228,7 +228,7 @@ public class ScalaSnippetSettings {
 		for (int index = 0; index < count; index++)
 			fields.add(new Parameter(config.getString(String.format("name%d", index)),
 				Type.valueOf(config.getString(String.format("type%d", index))),
-				config.getString(String.format("default%d", index))));
+				config.getBoolean(String.format("optional%d", index))));
 		return fields;
 	}
 
@@ -239,7 +239,7 @@ public class ScalaSnippetSettings {
 		for (int index = 0; index < count; index++) {
 			config.addString(String.format("name%d", index), vars.get(index).getName());
 			config.addString(String.format("type%d", index), vars.get(index).getType().name());
-			config.addString(String.format("default%d", index), vars.get(index).getDefaultValue());
+			config.addBoolean(String.format("optional%d", index), vars.get(index).isOptional());
 		}
 	}
 }

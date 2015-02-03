@@ -112,7 +112,7 @@ public class FlinkJobSubmissionNodeModel extends NodeModel {
 		Client client = new Client(settings.getAddress(), configuration, packagedProgram.getUserCodeClassLoader());
 		client.run(packagedProgram, this.dop.getIntValue(), true);
 		this.pushFlowVariableInt(CFGKEY_JOB_SUCCESS, 1);
-//		this.pushFlowVariableString(CFGKEY_JOB_STATUS, String.format("Executed in %s ms", result.getNetRuntime()));
+		// this.pushFlowVariableString(CFGKEY_JOB_STATUS, String.format("Executed in %s ms", result.getNetRuntime()));
 
 		return new PortObject[] { FlowVariablePortObject.INSTANCE };
 	}
