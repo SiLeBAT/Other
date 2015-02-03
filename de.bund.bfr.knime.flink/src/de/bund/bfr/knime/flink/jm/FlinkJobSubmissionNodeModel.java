@@ -21,6 +21,7 @@ import java.io.IOException;
 
 import org.apache.flink.client.program.Client;
 import org.apache.flink.client.program.PackagedProgram;
+import org.apache.flink.client.program.ProgramInvocationException;
 import org.apache.flink.configuration.ConfigConstants;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.GlobalConfiguration;
@@ -110,8 +111,14 @@ public class FlinkJobSubmissionNodeModel extends NodeModel {
 		if (this.dop.getIntValue() != -1)
 			configuration.setInteger(ConfigConstants.DEFAULT_PARALLELIZATION_DEGREE_KEY, this.dop.getIntValue());
 		Client client = new Client(settings.getAddress(), configuration, packagedProgram.getUserCodeClassLoader());
-		client.run(packagedProgram, this.dop.getIntValue(), true);
-		this.pushFlowVariableInt(CFGKEY_JOB_SUCCESS, 1);
+		try {
+			client.run(packagedProgram, this.dop.getIntValue(), true);
+			this.pushFlowVariableInt(CFGKEY_JOB_SUCCESS, 1);
+		} catch (ProgramInvocationException e) {
+			if(e.getCause() instanceof Exception)
+				throw (Exception) e.getCause();
+			throw e;
+		}
 		// this.pushFlowVariableString(CFGKEY_JOB_STATUS, String.format("Executed in %s ms", result.getNetRuntime()));
 
 		return new PortObject[] { FlowVariablePortObject.INSTANCE };
