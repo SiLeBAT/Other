@@ -23,9 +23,10 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 public class MyTab21NodeDialog extends DefaultNodeSettingsPane {
 
 	private final DialogComponentFileChooser folderDialog;
-	private final DialogComponentString erregerDialog, bfrProgrammDialog, serovarDialog;
+	private final DialogComponentString erregerDialog, bfrProgrammDialog, serovarDialog, blSubFolderDialog;
 	private final DialogComponentNumberEdit jahrDialog, kriterienJahrDialog;
     private final SettingsModelString baseFolder = new SettingsModelString(MyTab21NodeModel.BASE_FOLDER, "C:/Dokumente und Einstellungen/Weiser/Desktop/tawak/");
+    private final SettingsModelString blSubFolder = new SettingsModelString(MyTab21NodeModel.BLSUBFOLDER, "");
     private final SettingsModelString erreger = new SettingsModelString(MyTab21NodeModel.ERREGER, "SA");
     private final SettingsModelString bfrProgramm = new SettingsModelString(MyTab21NodeModel.BFR_PROGRAMM, "Dia");
     private final SettingsModelString serovar = new SettingsModelString(MyTab21NodeModel.SEROVAR, "");
@@ -41,6 +42,7 @@ public class MyTab21NodeDialog extends DefaultNodeSettingsPane {
     	erregerDialog = new DialogComponentString(erreger, MyTab21NodeModel.ERREGER);
     	bfrProgrammDialog = new DialogComponentString(bfrProgramm, MyTab21NodeModel.BFR_PROGRAMM);
     	serovarDialog = new DialogComponentString(serovar, MyTab21NodeModel.SEROVAR);
+    	blSubFolderDialog = new DialogComponentString(blSubFolder, MyTab21NodeModel.BLSUBFOLDER);
     	
     	jahrDialog = new DialogComponentNumberEdit(jahr, MyTab21NodeModel.JAHR);
     	kriterienJahrDialog = new DialogComponentNumberEdit(kriterienJahr, MyTab21NodeModel.KRITERIEN_JAHR);
@@ -51,6 +53,7 @@ public class MyTab21NodeDialog extends DefaultNodeSettingsPane {
     	addDialogComponent(erregerDialog);
     	addDialogComponent(bfrProgrammDialog);
     	addDialogComponent(serovarDialog);
+    	addDialogComponent(blSubFolderDialog);
     	addDialogComponent(jahrDialog);
     	addDialogComponent(kriterienJahrDialog);
     }
