@@ -1,5 +1,8 @@
 import grails.util.Environment;
 
+// PROXY: When using a proxy, please use grails add-proxy and set-proxy commands
+// In case of failure, see proxy comment in grails.project.dependency.resolution
+
 grails.servlet.version = "3.0" // Change depending on target container compliance (2.5 or 3.0)
 grails.project.class.dir = "target/classes"
 grails.project.test.class.dir = "target/test-classes"
@@ -25,9 +28,10 @@ grails.project.fork = [
 
 grails.project.dependency.resolver = "maven" // or ivy
 grails.project.dependency.resolution = {
-
-	System.setProperty("http.proxyHost", 'webproxy.bfr.bund.de');
-	System.setProperty("http.proxyPort", '3128');
+	// PROXY: Hard-coding proxy, which is only necessary while setting up the project initially
+	// It's best to setup the project externally
+	// System.setProperty("http.proxyHost", 'webproxy.bfr.bund.de');
+	// System.setProperty("http.proxyPort", '3128');
 
 	// inherit Grails' default dependencies
 	inherits("global") {
@@ -82,7 +86,7 @@ grails.project.dependency.resolution = {
 
 		//compile ":excel-import:1.0.0"
 		compile ":resources:1.2.13"
-		
+
 		compile ":extended-dependency-manager:0.5.5"
 		compile ":gwt:1.0", { transitive=false }
 		// Uncomment these to enable additional asset-pipeline capabilities

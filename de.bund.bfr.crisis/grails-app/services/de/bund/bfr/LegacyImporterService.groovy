@@ -54,10 +54,11 @@ class LegacyImporterService {
 		if(!newObjects*.validate(deepValidate: false).every()) {
 			def erroneousObjects = newObjects.findAll { it.hasErrors() }
 			def messages = erroneousObjects.collect { object ->
-				object.errors.toString().replaceAll("in object (\\S+)", 'in object $1 ID=' + object.ID)
+				object.errors
 			}
 			throw new IllegalArgumentException("Error importing datasets\n" + messages.join('\n'))
 		}
+		legacyIDToDelivery.values()*.save()
 		legacyIDToStation.values()*.save()
 	}
 

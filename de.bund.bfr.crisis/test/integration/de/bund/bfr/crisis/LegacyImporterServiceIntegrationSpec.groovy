@@ -14,9 +14,13 @@ class LegacyImporterServiceIntegrationSpec extends IntegrationSpec {
 
     void "ehec import"() {
 		when:
-		legacyImporterService.bulkImportFromHSQLFile(/C:\Users\heisea\Material\SA_1.8.2.0.0_20141202_EHEC\DB/)
+		legacyImporterService.bulkImportFromHSQLFile('test/resources/importTest/DB')
 			
 		then:
-		Product.count() == 148	
+		Station.count() == 176	
+		Product.count() == 176
+		Lot.count() == 176	
+		Delivery.count() == 176	
+		FoodRecipe.count() == 176	
     }
 }
