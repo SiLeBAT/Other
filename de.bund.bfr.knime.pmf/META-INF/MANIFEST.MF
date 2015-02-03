@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: PmfValidator-Node extension for KNIME Workbench
 Bundle-SymbolicName: de.bund.bfr.knime.pmf;singleton:=true
-Bundle-Version: 1.0.0
+Bundle-Version: 1.0.0.qualifier
 Bundle-ClassPath: .
 Bundle-Activator: de.bund.bfr.knime.pmf.Activator
 Bundle-Vendor: Christian Thoens
