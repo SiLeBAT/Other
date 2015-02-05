@@ -54,6 +54,10 @@ grails.project.dependency.resolution = {
 		//mavenRepo "http://repository.codehaus.org"
 		//mavenRepo "http://download.java.net/maven/2/"
 		//mavenRepo "http://repository.jboss.com/maven2/"
+		
+		//println "${new File('localRepo').toURI()}"
+		//mavenRepo "${new File('localRepo').toURI()}"
+		mavenRepo "http://repository.jboss.org/nexus/content/groups/public/"
 	}
 
 	dependencies {
@@ -77,7 +81,7 @@ grails.project.dependency.resolution = {
 		// plugins for the compile step
 		compile ":scaffolding:2.1.2"
 		compile ':cache:1.1.8'
-		compile ":asset-pipeline:1.9.9"
+		compile ":asset-pipeline:2.1.1"
 
 		// plugins needed at runtime but not for compilation
 		runtime ":hibernate4:4.3.6.1" // or ":hibernate:3.6.10.18"
@@ -85,7 +89,7 @@ grails.project.dependency.resolution = {
 		runtime ":jquery:1.11.1"
 
 		//compile ":excel-import:1.0.0"
-		compile ":resources:1.2.13"
+		compile ":resources:1.2.14"
 
 		compile ":extended-dependency-manager:0.5.5"
 		compile ":gwt:1.0", { transitive=false }
@@ -101,7 +105,7 @@ gwt {
 	version = "2.7.0"
 	//	use.provided.deps = true
 	dependencies = [
-		'org.gwtopenmaps.openlayers:gwt-openlayers-client:1.0',
+		'org.gwtopenmaps.openlayers:gwt-openlayers-client:1.1-SNAPSHOT',
 		'com.google.gwt:gwt-codeserver:2.7.0',
 		'com.google.gwt:gwt-dev:2.7.0',
 		'org.ow2.asm:asm:5.0.3',
