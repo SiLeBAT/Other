@@ -31,11 +31,11 @@ import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
+import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.port.PortObjectSpec;
 
 import de.bund.bfr.knime.flink.FlinkProgramWithUsage;
 import de.bund.bfr.knime.flink.SerializationHelper;
-import de.bund.bfr.knime.ui.FilePanel;
 
 /**
  * <code>NodeDialog</code> for the "FlinkProgramLoader" Node.
