@@ -11,5 +11,6 @@ class FoodRecipe {
 	static belongsTo = [ingredient: Delivery]
 
     static constraints = {
+		lot nullable: false
     }
 }

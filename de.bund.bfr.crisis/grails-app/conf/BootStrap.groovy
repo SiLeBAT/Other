@@ -13,16 +13,19 @@ class BootStrap {
 
     def init = { servletContext ->
 		if (Environment.current == Environment.DEVELOPMENT) {
-//			legacyImporterService.bulkImportFromHSQLFile(/C:\Users\heisea\Material\SA_1.8.2.0.0_20141202_EHEC\DB/)
+//			legacyImporterService.bulkImportFromHSQLFile('test/resources/importTest/DB')
 			new User(name: 'Dr. Armin Weiser', email: 'armin.weiser@bfr.bund.de').save()
 			new User(name: 'Arvid Heise', email: 'arvid.heise@bfr.bund.de').save()
 			
 			def bfr1 = new Station(name: 'Bundesinstitut für Risikobewertung (Marienfelde)', 
-				latitude: '52.409909' as BigDecimal, longitude: '13.364732' as BigDecimal)
+				latitude: '52.409909' as BigDecimal, longitude: '13.364732' as BigDecimal,
+				vatNumber: 'vat1', country: 'Germany', county: 'Berlin', street: 'Diedersdorfer Str')
 			def bvl = new Station(name: 'Bundesinstitut für gesundheitlichen Verbraucherschutz und Veterinärmedizin', 
-				latitude: '52.443859' as BigDecimal, longitude: '13.283633' as BigDecimal)
+				latitude: '52.443859' as BigDecimal, longitude: '13.283633' as BigDecimal,
+				vatNumber: 'vat2', country: 'Germany', county: 'Berlin')
 			def bfr2 = new Station(name: 'Bundesinstitut für Risikobewertung (Jungfernheide)', 
-				latitude: '52.531075' as BigDecimal, longitude: '13.296178' as BigDecimal)
+				latitude: '52.531075' as BigDecimal, longitude: '13.296178' as BigDecimal,
+				vatNumber: 'vat3', country: 'Germany', county: 'Berlin')
 			
 			Random rand = new Random()
 			[bfr1, bvl, bfr2].each { Station station ->

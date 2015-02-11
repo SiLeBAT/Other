@@ -3,15 +3,13 @@ package de.bund.bfr.crisis
 import java.util.Collection;
 
 class Delivery {
-	int id
-	
 	double packagingUnits
 	String packagingType
 	
 	double amount
 	String unit
 	
-	Integer day, month, year
+	Integer deliveryDateDay, deliveryDateMonth, deliveryDateYear
 	
 	boolean isEnd
 	String endExplanation
@@ -28,9 +26,9 @@ class Delivery {
 	}
 	
     static constraints = {
-		day range: 1..31
-		month range: 1..12
-		year range: 1900..2100
+		deliveryDateDay range: 1..31
+		deliveryDateMonth range: 1..12
+		deliveryDateYear range: 1900..2100
 		packagingUnits min: 0d
     }
 	

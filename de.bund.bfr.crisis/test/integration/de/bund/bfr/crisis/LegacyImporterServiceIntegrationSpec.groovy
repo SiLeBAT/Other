@@ -17,10 +17,10 @@ class LegacyImporterServiceIntegrationSpec extends IntegrationSpec {
 		legacyImporterService.bulkImportFromHSQLFile('test/resources/importTest/DB')
 			
 		then:
-		Station.count() == 176	
+		Station.count() == 476	
 		Product.count() == 176
-		Lot.count() == 176	
-		Delivery.count() == 176	
-		FoodRecipe.count() == 176	
+		Lot.count() == 485	
+		Delivery.count() == 2152	
+		FoodRecipe.count() == 804	
     }
 }

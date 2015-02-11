@@ -72,6 +72,9 @@ grails.project.dependency.resolution = {
 		build 'com.google.gwt:gwt-servlet:2.7.0'
 
 		compile 'org.hsqldb:hsqldb:2.3.2'
+		
+		compile 'com.smartgwt:smartgwt:2.4'
+		compile 'com.smartgwt:smartgwt-skins:2.4'
 	}
 
 	plugins {
@@ -90,9 +93,11 @@ grails.project.dependency.resolution = {
 
 		//compile ":excel-import:1.0.0"
 		compile ":resources:1.2.14"
-
+		
+//		compile ":smartgwt:0.2"
 		compile ":extended-dependency-manager:0.5.5"
 		compile ":gwt:1.0", { transitive=false }
+		
 		// Uncomment these to enable additional asset-pipeline capabilities
 		//compile ":sass-asset-pipeline:1.9.0"
 		//compile ":less-asset-pipeline:1.10.0"
@@ -103,6 +108,9 @@ grails.project.dependency.resolution = {
 
 gwt {
 	version = "2.7.0"
+	run.args = {
+		jvmarg value: "-Xmx512m"
+	}
 	//	use.provided.deps = true
 	dependencies = [
 		'org.gwtopenmaps.openlayers:gwt-openlayers-client:1.1-SNAPSHOT',
@@ -110,6 +118,8 @@ gwt {
 		'com.google.gwt:gwt-dev:2.7.0',
 		'org.ow2.asm:asm:5.0.3',
 		'org.ow2.asm:asm-commons:5.0.3',
-		'org.ow2.asm:asm-util:5.0.3'
+		'org.ow2.asm:asm-util:5.0.3',
+		'com.smartgwt:smartgwt:2.4',
+		'com.smartgwt:smartgwt-skins:2.4'
 	]
 }

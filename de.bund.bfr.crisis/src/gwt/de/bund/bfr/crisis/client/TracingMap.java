@@ -13,6 +13,7 @@ import org.gwtopenmaps.openlayers.client.LonLat;
 import org.gwtopenmaps.openlayers.client.Map;
 import org.gwtopenmaps.openlayers.client.MapOptions;
 import org.gwtopenmaps.openlayers.client.MapWidget;
+import org.gwtopenmaps.openlayers.client.Pixel;
 import org.gwtopenmaps.openlayers.client.Projection;
 import org.gwtopenmaps.openlayers.client.Style;
 import org.gwtopenmaps.openlayers.client.StyleMap;
@@ -22,6 +23,7 @@ import org.gwtopenmaps.openlayers.client.control.ScaleLine;
 import org.gwtopenmaps.openlayers.client.control.SelectFeature;
 import org.gwtopenmaps.openlayers.client.event.MapMoveEndListener;
 import org.gwtopenmaps.openlayers.client.event.VectorFeatureSelectedListener;
+import org.gwtopenmaps.openlayers.client.event.VectorFeatureUnselectedListener;
 import org.gwtopenmaps.openlayers.client.feature.VectorFeature;
 import org.gwtopenmaps.openlayers.client.filter.ComparisonFilter;
 import org.gwtopenmaps.openlayers.client.filter.ComparisonFilter.Types;
@@ -47,13 +49,27 @@ import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle.MultiWordSuggestion;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 import com.google.gwt.user.client.ui.Widget;
+import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.DSCallback;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.HeaderControls;
+import com.smartgwt.client.widgets.Button;
+import com.smartgwt.client.widgets.HeaderControl;
+import com.smartgwt.client.widgets.Window;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.VLayout;
 
 public class TracingMap extends MapWidget {
 
@@ -125,6 +141,8 @@ public class TracingMap extends MapWidget {
 
 	private SuggestBox searchBox = new SuggestBox(new RpcSuggestOracle());
 
+	private StationPopup stationPopup = new StationPopup();
+
 	public TracingMap() {
 		this((MapServiceAsync) GWT.create(MapService.class));
 	}
@@ -138,10 +156,11 @@ public class TracingMap extends MapWidget {
 		Scheduler.get().scheduleDeferred(new Command() {
 			public void execute() {
 				search("");
+				centerTheMap(-1);
 			}
 		});
 	}
-
+	
 	public void fillMap(List<Station> stations, List<Delivery> deliveries) {
 		stationLayer.removeAllFeatures();
 
@@ -187,7 +206,7 @@ public class TracingMap extends MapWidget {
 
 			@Override
 			public void onFailure(Throwable e) {
-				Window.alert("Could not submit the search query to the server");
+				com.google.gwt.user.client.Window.alert("Could not submit the search query to the server");
 				logger.log(Level.SEVERE,
 					"Could not submit the search query to the server", e);
 			}
@@ -302,16 +321,11 @@ public class TracingMap extends MapWidget {
 	}
 
 	private void setPopup(VectorFeature vf) {
-		Popup popup;
 		if (vf.getCluster() == null) {
-			Station station = getStation(vf.getFeatureId());
-			String name = "unknown";
-			if (station != null)
-				name = station.getName();
-			popup = new FramedCloud("sid" + vf.getFeatureId(),
-				vf.getCenterLonLat(), null, "<h1>" + name + "</h1>", null,
-				true);
+			Pixel pxLonLat = getMap().getPixelFromLonLat(vf.getCenterLonLat());
+			stationPopup.show(vf.getFeatureId(), pxLonLat.x(), pxLonLat.y());
 		} else {
+			Popup popup;
 			int count = vf.getAttributes().getAttributeAsInt("count");
 			String stationen = "";
 			for (VectorFeature vfs : vf.getCluster()) {
@@ -323,11 +337,11 @@ public class TracingMap extends MapWidget {
 			}
 			popup = new FramedCloud("sidc" + count, vf.getCenterLonLat(), null,
 				"<h1>" + count + " Stationen</h1>" + stationen, null, true);
+			popup.setPanMapIfOutOfView(true); // this set the popup in a strategic
+			// way, and pans the map if needed.
+			popup.setAutoSize(true);
+			vf.setPopup(popup);
 		}
-		popup.setPanMapIfOutOfView(true); // this set the popup in a strategic
-											// way, and pans the map if needed.
-		popup.setAutoSize(true);
-		vf.setPopup(popup);
 	}
 
 	private void addDeliveries() {
@@ -415,7 +429,19 @@ public class TracingMap extends MapWidget {
 					FeatureSelectedEvent eventObject) {
 				VectorFeature vf = eventObject.getVectorFeature();
 				setPopup(vf);
-				map.addPopup(vf.getPopup());
+				// map.addPopup(vf.getPopup());
+			}
+		});
+		stationLayer.addVectorFeatureUnselectedListener(new VectorFeatureUnselectedListener() {
+			/*
+			 * (non-Javadoc)
+			 * @see
+			 * org.gwtopenmaps.openlayers.client.event.VectorFeatureUnselectedListener#onFeatureUnselected(org.gwtopenmaps
+			 * .openlayers.client.event.VectorFeatureUnselectedListener.FeatureUnselectedEvent)
+			 */
+			@Override
+			public void onFeatureUnselected(FeatureUnselectedEvent eventObject) {
+				stationPopup.hide();
 			}
 		});
 		// Add select feature for visibleDeliveries
@@ -468,15 +494,6 @@ public class TracingMap extends MapWidget {
 			lonLat.transform(DEFAULT_PROJECTION.getProjectionCode(), map.getProjection());
 			map.setCenter(lonLat, zoomLevel);
 		}
-	}
-
-	/**
-	 * Returns the searchBox.
-	 * 
-	 * @return the searchBox
-	 */
-	public Widget getSearchBox() {
-		return this.searchBox;
 	}
 
 	private void createSearchBox() {
@@ -698,5 +715,12 @@ public class TracingMap extends MapWidget {
 			p.transform(DEFAULT_PROJECTION, MAP_PROJ);
 		}
 		return pointList;
+	}
+
+	/**
+	 * @param panel
+	 */
+	public void addChildrenToParent(AbsolutePanel panel) {
+		panel.add(searchBox, 50, 10);
 	}
 }

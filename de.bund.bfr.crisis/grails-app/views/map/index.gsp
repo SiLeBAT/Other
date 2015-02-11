@@ -13,8 +13,21 @@
   <!-- If you add any GWT meta tags, they must   -->
   <!-- be added before this line.                -->
   <!--                                           -->
+  <script>
+     var isomorphicDir = "${createLinkTo(dir: 'gwt/de.bund.bfr.crisis.TracingApp/sc/')}";
+  </script>
   <script type="text/javascript" src="${resource(dir: 'gwt/de.bund.bfr.crisis.TracingApp', file: 'de.bund.bfr.crisis.TracingApp.nocache.js')}"></script>
   
+  <script type="text/javascript" src="${resource(dir: 'gwt/de.bund.bfr.crisis.TracingApp', file: 'sc/modules/ISC_Core.js')}"></script>
+  <script type="text/javascript" src="${resource(dir: 'gwt/de.bund.bfr.crisis.TracingApp', file: 'sc/modules/ISC_Foundation.js')}"></script>
+  <script type="text/javascript" src="${resource(dir: 'gwt/de.bund.bfr.crisis.TracingApp', file: 'sc/modules/ISC_Containers.js')}"></script>
+  <script type="text/javascript" src="${resource(dir: 'gwt/de.bund.bfr.crisis.TracingApp', file: 'sc/modules/ISC_Grids.js')}"></script>
+  <script type="text/javascript" src="${resource(dir: 'gwt/de.bund.bfr.crisis.TracingApp', file: 'sc/modules/ISC_Forms.js')}"></script>
+  <script type="text/javascript" src="${resource(dir: 'gwt/de.bund.bfr.crisis.TracingApp', file: 'sc/modules/ISC_RichTextEditor.js')}"></script>
+  <script type="text/javascript" src="${resource(dir: 'gwt/de.bund.bfr.crisis.TracingApp', file: 'sc/modules/ISC_Calendar.js')}"></script>
+  <script type="text/javascript" src="${resource(dir: 'gwt/de.bund.bfr.crisis.TracingApp', file: 'sc/modules/ISC_DataBinding.js')}"></script>
+  <script type="text/javascript" src="${resource(dir: 'gwt/de.bund.bfr.crisis.TracingApp', file: 'sc/skins/Enterprise/load_skin.js')}"></script>
+
   <script src="http://www.openlayers.org/api/OpenLayers.js"></script>
   <script src="http://www.openstreetmap.org/openlayers/OpenStreetMap.js"></script>
   <asset:stylesheet src="map.css"/>

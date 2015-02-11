@@ -27,7 +27,7 @@ class LegacyImporterService {
 		pd_month: 'productionMonth', pd_year: 'productionYear', OriginCountry: 'originCountry',
 		microbioSample: 'examinationResult', Kommentar: 'comment']
 
-	def deliveryTranslation = [dd_day: 'day', dd_month: 'month', dd_year: 'year',
+	def deliveryTranslation = [dd_day: 'deliveryDateDay', dd_month: 'deliveryDateMonth', dd_year: 'deliveryDateYear',
 		numPU: 'packagingUnits', typePU: 'packagingType', Unitmenge: 'amount', UnitEinheit: 'unit',
 		EndChain: 'isEnd', Explanation_EndChain: 'endExplanation', Further_Traceback: 'furtherTraceback', 
 		Kommentar: 'comment']
@@ -46,11 +46,7 @@ class LegacyImporterService {
 
 		Map<Integer, Delivery> legacyIDToDelivery = importDelivery(sql, legacyIDToLot)
 
-		Map<Integer, FoodRecipe> legacyIDToRecipe = importRecipes(sql, legacyIDToLot, legacyIDToDelivery)
-
-		// update all stations with relations
-		List<GormValidationApi> newObjects = [legacyIDToStation, legacyIDToProduct, legacyIDToLot, legacyIDToDelivery, 
-			legacyIDToRecipe]*.values().flatten()
+		List<GormValidationApi> newObjects = [legacyIDToStation, legacyIDToProduct, legacyIDToLot, legacyIDToDelivery]*.values().flatten()
 		if(!newObjects*.validate(deepValidate: false).every()) {
 			def erroneousObjects = newObjects.findAll { it.hasErrors() }
 			def messages = erroneousObjects.collect { object ->
@@ -58,13 +54,20 @@ class LegacyImporterService {
 			}
 			throw new IllegalArgumentException("Error importing datasets\n" + messages.join('\n'))
 		}
+		
+		// update all stations with relations
 		legacyIDToDelivery.values()*.save()
 		legacyIDToStation.values()*.save()
+
+		Map<Integer, FoodRecipe> legacyIDToRecipe = importRecipes(sql, legacyIDToLot, legacyIDToDelivery)
+		
+		// add recipes later to avoid cyclic dependencies
+		legacyIDToRecipe.values()*.save()
 	}
 
 	Map<Integer, FoodRecipe> importRecipes(Sql sql, Map<Integer, Lot> legacyIDToLot, Map<Integer, Delivery> legacyIDToDelivery) {
 		Map<Integer, FoodRecipe> legacyIDToRecipe = [:]		
-		sql.eachRow('SELECT * from "ChargenVerbindungen"') { legacyRecipe ->
+		sql.eachRow('SELECT * from "ChargenVerbindungen" where "Produkt" IS NOT NULL') { legacyRecipe ->				
 			def lot = legacyIDToLot[legacyRecipe.Produkt]
 			def delivery = legacyIDToDelivery[legacyRecipe.Zutat]
 			def recipe = new FoodRecipe(lot: lot, mixtureRatio: legacyRecipe.MixtureRatio)
