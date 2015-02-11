@@ -35,7 +35,7 @@ public class StationPopup extends Window {
 	}
 
 	private void initMySelf() {
-		setWidth(400);
+		setWidth(850);
 		setHeight(500);
 		setMembersMargin(5);
 		setMargin(5);
@@ -73,14 +73,17 @@ public class StationPopup extends Window {
 		dialog.setPadding(10);
 		dialog.addMember(form);
 		dialog.addMember(buttons);
-		dialog.addMember(new ScrollPanel(productGrid));
+		ScrollPanel scrollPanel = new ScrollPanel(productGrid);
+		scrollPanel.setWidth("800");
+		scrollPanel.setHeight("600");
+		dialog.addMember(scrollPanel);
 		dialog.setWidth100();
 		// form dialog
 		this.setShowShadow(true);
 		this.setShowTitle(false);
 //		this.setIsModal(true);
 		this.setPadding(20);
-		this.setWidth(500);
+		this.setWidth(900);
 		this.setHeight(600);
 		this.setShowMinimizeButton(false);
 		this.setShowCloseButton(true);

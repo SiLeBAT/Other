@@ -16,30 +16,55 @@
  ******************************************************************************/
 package de.bund.bfr.crisis;
 
+import javax.management.InstanceOfQueryExp;
+import javax.persistence.Persistence;
+
+import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
+import org.codehaus.groovy.grails.commons.GrailsApplication
+import org.codehaus.groovy.grails.web.converters.ConverterUtil
+import org.hibernate.collection.internal.PersistentBag;
+import org.hibernate.collection.spi.PersistentCollection;
+
 /**
  * @author heisea
  *
  */
 abstract class GWTRestController<T> {
+	GrailsApplication grailsApplication
 	Class<T> type
-	
+
 	public GWTRestController() {
 		this.type = this.class.genericSuperclass.actualTypeArguments[0]
 	}
 
-	def respondJson(dataObject) {		
+	def respondJson(dataObjects) {
 		render(contentType: "application/json") {
 			response = {
 				status = 0
-				data = dataObject
+				data = dataObjects.collect { dataObject ->
+					[id: dataObject.id] + 
+					dataObject.properties.collectEntries { key, value ->
+						if(value instanceof PersistentCollection) {
+							return [(key): value*.id]
+						}
+						if(value != null) {
+							String name = ConverterUtil.trimProxySuffix(value.class.name)
+							if(grailsApplication.isArtefactOfType(DomainClassArtefactHandler.TYPE, name))
+								return [(key): value.id]
+						}
+						[(key): value]
+					}
+				}
 			}
 		}
 	}
-	
+
 	def fetch() {
 		println params
 		if(params.id)
-			respondJson([this.type.findById(params.id)])
+			respondJson([
+				this.type.findById(params.id)
+			])
 		else
 			respondJson(this.type.list([min: params._startRow, max: params._endRow]))
 	}
@@ -62,8 +87,8 @@ abstract class GWTRestController<T> {
 		}
 	}
 
-	def remove(T instance) {		
-//		stationInstance.delete flush:true
+	def remove(T instance) {
+		//		stationInstance.delete flush:true
 		respondJson([id: params.id])
 	}
 }

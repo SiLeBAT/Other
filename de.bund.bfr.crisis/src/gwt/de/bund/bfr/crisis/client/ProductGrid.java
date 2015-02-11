@@ -17,7 +17,9 @@
 package de.bund.bfr.crisis.client;
 
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 /**
  * @author heisea
@@ -27,10 +29,10 @@ public class ProductGrid extends ListGrid {
 	 * Initializes ProductGrid.
 	 */
 	public ProductGrid() {
-		setWidth100();
-		setHeight(300);
+		setHeight100();
+		setWidth(800);
 		setDrawAheadRatio(4);
-//		setCanExpandRecords(true);
+		setCanExpandRecords(true);
 
 		setAutoFetchData(true);
 		setDataSource(ProductDS.getInstance());
@@ -38,5 +40,52 @@ public class ProductGrid extends ListGrid {
 	
 	public void updateStation(Record stationRecord) {
 		fetchRelatedData(stationRecord, StationDS.getInstance());    
+	}
+	
+	/* (non-Javadoc)
+	 * @see com.smartgwt.client.widgets.grid.ListGrid#getExpansionComponent(com.smartgwt.client.widgets.grid.ListGridRecord)
+	 */
+	@Override
+	protected Canvas getExpansionComponent(ListGridRecord record) {
+		return new LotGrid(record);
+	}
+}
+
+class LotGrid extends ListGrid {
+	/**
+	 * Initializes ProductGrid.
+	 */
+	public LotGrid(Record productRecord) {
+		setHeight(1000);
+		setWidth100();
+		setDrawAheadRatio(4);
+		setCanExpandRecords(true);
+
+		setAutoFetchData(true);
+		setDataSource(LotDS.getInstance());
+		fetchRelatedData(productRecord, StationDS.getInstance());    
+	}
+	
+	/* (non-Javadoc)
+	 * @see com.smartgwt.client.widgets.grid.ListGrid#getExpansionComponent(com.smartgwt.client.widgets.grid.ListGridRecord)
+	 */
+	@Override
+	protected Canvas getExpansionComponent(ListGridRecord record) {
+		return new DeliveryGrid(record);
+	}
+}
+
+class DeliveryGrid extends ListGrid {
+	/**
+	 * Initializes ProductGrid.
+	 */
+	public DeliveryGrid(Record lotRecord) {
+		setHeight(1000);
+		setWidth100();
+		setDrawAheadRatio(4);
+
+		setAutoFetchData(true);
+		setDataSource(DeliveryDS.getInstance());
+		fetchRelatedData(lotRecord, LotDS.getInstance());    
 	}
 }
