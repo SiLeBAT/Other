@@ -17,6 +17,8 @@
 package de.bund.bfr.crisis.client;
 
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.types.ListGridEditEvent;
+import com.smartgwt.client.types.RowEndEditAction;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -36,6 +38,13 @@ public class ProductGrid extends ListGrid {
 
 		setAutoFetchData(true);
 		setDataSource(ProductDS.getInstance());
+		
+        setCanEdit(true);    
+        setModalEditing(true);    
+        setEditEvent(ListGridEditEvent.CLICK);    
+        setListEndEditAction(RowEndEditAction.NEXT);    
+        setAutoSaveEdits(true);          
+        setCanRemoveRecords(true);  
 	}
 	
 	public void updateStation(Record stationRecord) {
@@ -63,7 +72,14 @@ class LotGrid extends ListGrid {
 
 		setAutoFetchData(true);
 		setDataSource(LotDS.getInstance());
-		fetchRelatedData(productRecord, StationDS.getInstance());    
+		fetchRelatedData(productRecord, StationDS.getInstance());  
+		
+        setCanEdit(true);    
+        setModalEditing(true);    
+        setEditEvent(ListGridEditEvent.CLICK);    
+        setListEndEditAction(RowEndEditAction.NEXT);    
+        setAutoSaveEdits(true);  
+        setCanRemoveRecords(true);  
 	}
 	
 	/* (non-Javadoc)
@@ -86,6 +102,13 @@ class DeliveryGrid extends ListGrid {
 
 		setAutoFetchData(true);
 		setDataSource(DeliveryDS.getInstance());
-		fetchRelatedData(lotRecord, LotDS.getInstance());    
+		fetchRelatedData(lotRecord, LotDS.getInstance());   
+		
+        setCanEdit(true);    
+        setModalEditing(true);    
+        setEditEvent(ListGridEditEvent.CLICK);    
+        setListEndEditAction(RowEndEditAction.NEXT);    
+        setAutoSaveEdits(true);  
+        setCanRemoveRecords(true);  
 	}
 }

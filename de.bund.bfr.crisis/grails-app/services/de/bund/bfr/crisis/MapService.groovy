@@ -20,7 +20,7 @@ class MapService {
 		// for empty search string, return all
 		if(!searchString) {
 			stations = Station.all
-			deliveries = Delivery.all
+			deliveries = Delivery.findAll { foodRecipes.size() > 0 }
 		}
 		else {
 			// find all stations containing the string (translates into SQL LIKE)
@@ -51,12 +51,9 @@ class MapService {
 	private Map<String, Object> collectProperties(object, ... properties) {
 		properties.collectEntries { propertyName ->
 			def value = object."$propertyName"
-			if(value) {
 				// take only ID for domain classes				
-				String name = ConverterUtil.trimProxySuffix(value.class.name)
-				if(grailsApplication.isArtefactOfType(DomainClassArtefactHandler.TYPE, name))
-					value = value.id
-			} 
+			if(value && GrailsUtil.isDomainClass(grailsApplication, value.class)) 
+				value = value.id
 			[(propertyName): value] 
 		}
 	}

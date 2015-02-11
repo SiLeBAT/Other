@@ -37,58 +37,54 @@ abstract class GWTRestController<T> {
 		this.type = this.class.genericSuperclass.actualTypeArguments[0]
 	}
 
-	def respondJson(dataObjects) {
-		render(contentType: "application/json") {
-			response = {
-				status = 0
-				data = dataObjects.collect { dataObject ->
-					[id: dataObject.id] + 
-					dataObject.properties.collectEntries { key, value ->
-						if(value instanceof PersistentCollection) {
-							return [(key): value*.id]
-						}
-						if(value != null) {
-							String name = ConverterUtil.trimProxySuffix(value.class.name)
-							if(grailsApplication.isArtefactOfType(DomainClassArtefactHandler.TYPE, name))
-								return [(key): value.id]
-						}
-						[(key): value]
-					}
+	protected respondJson(payload) {
+		// retain only foreign keys if one domain class references another
+		if(payload.data != null)		
+			payload.data = payload.data.collect { dataObject ->				
+				if(!GrailsUtil.isDomainClass(grailsApplication, dataObject.getClass()))
+					return dataObject 
+				[id: dataObject.id] +
+				dataObject.properties.collectEntries { key, value ->
+					if(value instanceof PersistentCollection) 
+						return [(key): value*.id]
+					if(value != null && GrailsUtil.isDomainClass(grailsApplication, value.getClass())) 
+						return [(key): value.id]
+					[(key): value]
 				}
 			}
+			
+		render(contentType: "application/json") {
+			response = payload
 		}
 	}
 
 	def fetch() {
 		println params
 		if(params.id)
-			respondJson([
-				this.type.findById(params.id)
-			])
+			respondJson([data: [this.type.findById(params.id)]])
 		else
-			respondJson(this.type.list([min: params._startRow, max: params._endRow]))
+			respondJson([data: this.type.list([min: params._startRow, max: params._endRow])])
 	}
 
-	def save(T instance) {
-		def project = projectService.save(params)
-		render(contentType: 'application/xml') {
-			response() {
-				status(0)
-				data {
-					record {
-						id(project.id)
-						name(project.name)
-						title(project.title)
-						description(project.description)
-						isPublic(project.isPublic)
-					}
-				}
-			}
-		}
+	def update() {
+		T instance = type.findById(params.id)
+		instance.properties = params
+		if (instance.validate(deepValidate: false)) {
+			instance.save(validate: false)
+			respondJson([data: [instance]])
+		} else
+			respondJson([status: -4, errors: instance.errors])
 	}
 
-	def remove(T instance) {
-		//		stationInstance.delete flush:true
-		respondJson([id: params.id])
+	def add() {
+		T instance = type.newInstance()
+		instance.properties = params
+		respondJson([data: [instance]])
+	}
+
+	def remove() {
+		T instance = type.findById(params.id)
+		instance.delete(flush:true)
+		respondJson([data: [[id: params.id]]])
 	}
 }

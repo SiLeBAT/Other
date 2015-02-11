@@ -44,11 +44,11 @@ public class GrailsDataSource extends RestDataSource {
 		// 1. fetch
 		OperationBinding fetch = createBinding(DSOperationType.FETCH, "fetch", DSProtocol.POSTPARAMS);
 		// 2. update
-		OperationBinding update = createBinding(DSOperationType.UPDATE, "save", DSProtocol.POSTPARAMS);
+		OperationBinding update = createBinding(DSOperationType.UPDATE, "update", DSProtocol.POSTPARAMS);
 		// 3. add
-		OperationBinding add = createBinding(DSOperationType.ADD, "save", DSProtocol.POSTPARAMS);
+		OperationBinding add = createBinding(DSOperationType.ADD, "add", DSProtocol.POSTPARAMS);
 		// 4. remove
-		OperationBinding remove = createBinding(DSOperationType.REMOVE, "delete", DSProtocol.POSTPARAMS);
+		OperationBinding remove = createBinding(DSOperationType.REMOVE, "remove", DSProtocol.POSTPARAMS);
 		setOperationBindings(fetch, update, add, remove);
 	}
 

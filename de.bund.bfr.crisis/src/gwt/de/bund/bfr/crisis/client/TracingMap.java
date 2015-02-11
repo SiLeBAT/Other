@@ -156,11 +156,16 @@ public class TracingMap extends MapWidget {
 		Scheduler.get().scheduleDeferred(new Command() {
 			public void execute() {
 				search("");
-				centerTheMap(-1);
+
+				Scheduler.get().scheduleDeferred(new Command() {
+					public void execute() {
+						centerTheMap(-1);
+					}
+				});
 			}
 		});
 	}
-	
+
 	public void fillMap(List<Station> stations, List<Delivery> deliveries) {
 		stationLayer.removeAllFeatures();
 
