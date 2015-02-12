@@ -20,7 +20,7 @@ class MapService {
 		// for empty search string, return all
 		if(!searchString) {
 			stations = Station.all
-			deliveries = Delivery.findAll { foodRecipes.size() > 0 }
+			deliveries = Delivery.findAllByRecipientIsNotNull()
 		}
 		else {
 			// find all stations containing the string (translates into SQL LIKE)

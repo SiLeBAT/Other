@@ -48,6 +48,7 @@ class BootStrap {
 				def delivery = bfr1.products.find { it.denomination == productName }.lots[0].deliveries[0]
 				def receivingLot = recipient.products.find { it.denomination == productName }.lots[0]
 				def recipe = new FoodRecipe(ingredient: delivery, mixRatio: 0.5, lot: receivingLot)
+				delivery.recipient = receivingLot.product.station
 				delivery.
 					addToFoodRecipes(recipe).
 					save(failOnError: true)

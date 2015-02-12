@@ -4,6 +4,8 @@ import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceFloatField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.widgets.form.validator.FloatRangeValidator;
+import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 
 public class DeliveryDS extends GrailsDataSource {
 
@@ -23,6 +25,7 @@ public class DeliveryDS extends GrailsDataSource {
 		addField(new DataSourceTextField("packagingType"));
 		addField(new DataSourceFloatField("amount"));
 		addField(new DataSourceTextField("unit"));
+		addField(new DataSourceTextField("recipient"));
 		
 		String[] fieldNames = { "deliveryDateDay", "deliveryDateMonth", "deliveryDateYear" };
 		for (String fieldName : fieldNames) 
@@ -32,5 +35,22 @@ public class DeliveryDS extends GrailsDataSource {
 		lotField.setHidden(true);
 		lotField.setForeignKey("lot.id");
 		addField(lotField);
+
+		IntegerRangeValidator dayValidator = new IntegerRangeValidator();
+		dayValidator.setMin(1);
+		dayValidator.setMax(31);
+		getField("deliveryDateDay").setValidators(dayValidator);
+		IntegerRangeValidator monthValidator = new IntegerRangeValidator();
+		monthValidator.setMin(1);
+		monthValidator.setMax(12);
+		getField("deliveryDateMonth").setValidators(monthValidator);
+		IntegerRangeValidator yearValidator = new IntegerRangeValidator();
+		yearValidator.setMin(1900);
+		yearValidator.setMax(2100);
+		getField("deliveryDateYear").setValidators(yearValidator);
+		
+		FloatRangeValidator amountValidator = new FloatRangeValidator();
+		amountValidator.setMin(0);
+		getField("amount").setValidators(amountValidator);
 	}
 }

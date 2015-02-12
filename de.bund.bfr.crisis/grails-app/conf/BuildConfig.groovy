@@ -72,9 +72,6 @@ grails.project.dependency.resolution = {
 		build 'com.google.gwt:gwt-servlet:2.7.0'
 
 		compile 'org.hsqldb:hsqldb:2.3.2'
-		
-		compile 'com.smartgwt:smartgwt:2.4'
-		compile 'com.smartgwt:smartgwt-skins:2.4'
 	}
 
 	plugins {
@@ -109,7 +106,7 @@ grails.project.dependency.resolution = {
 gwt {
 	version = "2.7.0"
 	run.args = {
-		jvmarg value: "-Xmx512m"
+		jvmarg value: "-Xmx1024m"
 	}
 	//	use.provided.deps = true
 	dependencies = [
@@ -118,8 +115,6 @@ gwt {
 		'com.google.gwt:gwt-dev:2.7.0',
 		'org.ow2.asm:asm:5.0.3',
 		'org.ow2.asm:asm-commons:5.0.3',
-		'org.ow2.asm:asm-util:5.0.3',
-		'com.smartgwt:smartgwt:2.4',
-		'com.smartgwt:smartgwt-skins:2.4'
+		'org.ow2.asm:asm-util:5.0.3'
 	]
 }

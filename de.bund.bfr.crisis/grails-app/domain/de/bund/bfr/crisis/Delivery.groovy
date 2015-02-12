@@ -16,13 +16,10 @@ class Delivery {
 	boolean furtherTraceback
 	Serial serial
 	String comment
+	Station recipient
 	
 	Station getStation() {
 		this.lot.product.station
-	}
-	
-	Station getRecipient() {
-		this.foodRecipes ? this.foodRecipes[0].lot.product.station : null
 	}
 	
     static constraints = {

@@ -21,70 +21,144 @@ import javax.persistence.Persistence;
 
 import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
 import org.codehaus.groovy.grails.commons.GrailsApplication
+import org.codehaus.groovy.grails.commons.GrailsDomainClass;
 import org.codehaus.groovy.grails.web.converters.ConverterUtil
+import org.h2.message.DbException;
 import org.hibernate.collection.internal.PersistentBag;
 import org.hibernate.collection.spi.PersistentCollection;
+import org.springframework.dao.DataIntegrityViolationException
 
 /**
  * @author heisea
  *
  */
 abstract class GWTRestController<T> {
-	GrailsApplication grailsApplication
-	Class<T> type
+	protected GrailsApplication grailsApplication
+	protected Class<T> type
+	protected GrailsDomainClass domainClass
+	protected Set<String> associationProperties
+
+	static int STATUS_VALIDATION_ERROR = -4 // com.smartgwt.client.rpc.RPCResponse.STATUS_VALIDATION_ERROR
 
 	public GWTRestController() {
 		this.type = this.class.genericSuperclass.actualTypeArguments[0]
 	}
 
+	/**
+	 * Sets the grailsApplication to the specified value.
+	 *
+	 * @param grailsApplication the grailsApplication to set
+	 */
+	public void setGrailsApplication(GrailsApplication grailsApplication) {
+		if (grailsApplication == null)
+			throw new NullPointerException("grailsApplication must not be null");
+
+		this.grailsApplication = grailsApplication;
+		String name = ConverterUtil.trimProxySuffix(type.name)
+		domainClass = grailsApplication.getArtefact(DomainClassArtefactHandler.TYPE, name)
+		associationProperties = domainClass.properties.findAll { it.association }*.name.toSet()
+	}
+
 	protected respondJson(payload) {
 		// retain only foreign keys if one domain class references another
-		if(payload.data != null)		
-			payload.data = payload.data.collect { dataObject ->				
-				if(!GrailsUtil.isDomainClass(grailsApplication, dataObject.getClass()))
-					return dataObject 
+		if(payload.data != null)
+			payload.data = payload.data.collect { dataObject ->
+				// if not instance of the type, we probably have an error message
+				if(!(type.isInstance(dataObject)))
+					return dataObject
+
 				[id: dataObject.id] +
 				dataObject.properties.collectEntries { key, value ->
-					if(value instanceof PersistentCollection) 
-						return [(key): value*.id]
-					if(value != null && GrailsUtil.isDomainClass(grailsApplication, value.getClass())) 
+					if(value != null && associationProperties.contains(key)) {
+						if(value instanceof Collection)
+							return [(key): value*.id]
 						return [(key): value.id]
+					}
 					[(key): value]
 				}
 			}
-			
-		render(contentType: "application/json") {
-			response = payload
-		}
+
+		render(contentType: "application/json") { response = payload }
 	}
 
+	def suggest() {		
+		println "suggest $params"
+		
+		def condition = params.find { key, value ->
+			!key.startsWith('_') &&					!key.startsWith('isc_') &&
+					!(key in [
+						'format',
+						'controller',
+						'action'
+					])
+		}
+		
+		def criteria = this.type.where {
+			if(params.get('_textMatchStyle') == 'exact')
+				eq(condition.key, condition.value)
+			else
+				ilike(condition.key, condition.value + '%')
+		}
+		respondJson([data: criteria.findAll()*."${condition.key}"])
+	}
+	
 	def fetch() {
-		println params
-		if(params.id)
-			respondJson([data: [this.type.findById(params.id)]])
+		if(params.get('_operationId') == 'suggest')
+			return suggest()
+//		
+		println "fetch $params"
+		def conditions = params.findAll { key, value ->
+			!key.startsWith('_') &&					!key.startsWith('isc_') &&
+					!(key in [
+						'format',
+						'controller',
+						'action'
+					])
+		}
+
+		if(conditions) {
+			def criteria = conditions.inject(this.type) { c, field, value ->
+				c.where { 
+					if(associationProperties.contains(field))
+						invokeMethod(field, { eq('id', value) })
+					else 
+						eq(field, value)
+				}
+			}
+			respondJson([data: criteria.findAll()])
+		}
 		else
 			respondJson([data: this.type.list([min: params._startRow, max: params._endRow])])
 	}
 
 	def update() {
-		T instance = type.findById(params.id)
+		println "update $params"
+		T instance = params.containsKey('id') ? type.findById(params.id) : type.newInstance()
 		instance.properties = params
 		if (instance.validate(deepValidate: false)) {
-			instance.save(validate: false)
+			instance.save(validate: false, flush: true)
 			respondJson([data: [instance]])
 		} else
-			respondJson([status: -4, errors: instance.errors])
+			respondJson([status: STATUS_VALIDATION_ERROR, errors: instance.errors])
 	}
 
 	def add() {
+		println "add $params"
 		T instance = type.newInstance()
 		instance.properties = params
 		respondJson([data: [instance]])
 	}
 
 	def remove() {
+		println "remove $params"
 		T instance = type.findById(params.id)
-		instance.delete(flush:true)
-		respondJson([data: [[id: params.id]]])
+		try {
+			instance.delete(flush:true)
+			respondJson([data: [[id: params.id]]])
+		} catch(DataIntegrityViolationException e) {
+			respondJson([status: STATUS_VALIDATION_ERROR, errors: 'This record is directly or indirectly referenced by another record'])
+		} catch(e) {
+			respondJson([status: STATUS_VALIDATION_ERROR, errors: e.message])
+		}
 	}
 }

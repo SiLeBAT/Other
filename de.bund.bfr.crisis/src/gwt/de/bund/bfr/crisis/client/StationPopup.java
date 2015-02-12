@@ -8,12 +8,17 @@ import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.HeaderControls;
+import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.HeaderControl;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.events.CloseClickEvent;
+import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
+import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
@@ -23,7 +28,7 @@ public class StationPopup extends Window {
 	private final IButton saveButton = new IButton();
 
 	private final IButton resetButton = new IButton();
-	
+
 	private final ProductGrid productGrid = new ProductGrid();
 
 	public StationPopup() {
@@ -40,6 +45,8 @@ public class StationPopup extends Window {
 		setMembersMargin(5);
 		setMargin(5);
 		setPadding(10);
+		setOpacity(95);
+		setCanDragResize(true);
 	}
 
 	private void initEditForm() {
@@ -49,6 +56,19 @@ public class StationPopup extends Window {
 		form.setCellPadding(5);
 		form.setWidth("100%");
 		form.setColWidths(100, 300);
+		form.setNumCols(4);
+		String[] fieldNames = StationDS.getInstance().getFieldNames(true);
+		ComboBoxItem[] fields = new ComboBoxItem[fieldNames.length];
+		for (int index = 0; index < fields.length; index++) {
+			fields[index] = new ComboBoxItem(fieldNames[index]);
+			fields[index].setOptionDataSource(StationDS.getInstance());
+			fields[index].setAlwaysFetchMissingValues(true);
+			fields[index].setOptionOperationId("suggest");
+			fields[index].setAllowEmptyValue(true);
+			fields[index].setAddUnknownValues(true);
+		}
+		form.setFields(fields);
+
 		saveButton.setTitle("SAVE");
 		saveButton.setTooltip("Save this station");
 		saveButton.addClickHandler(new ClickHandler() {
@@ -69,34 +89,31 @@ public class StationPopup extends Window {
 		buttons.setAlign(Alignment.CENTER);
 		buttons.addMember(resetButton);
 		buttons.addMember(saveButton);
+		buttons.setHeight(30);
 		VLayout dialog = new VLayout(10);
 		dialog.setPadding(10);
 		dialog.addMember(form);
 		dialog.addMember(buttons);
-		ScrollPanel scrollPanel = new ScrollPanel(productGrid);
-		scrollPanel.setWidth("800");
-		scrollPanel.setHeight("600");
-		dialog.addMember(scrollPanel);
+		dialog.addMember(productGrid.wrapWithActionButtons());
 		dialog.setWidth100();
 		// form dialog
 		this.setShowShadow(true);
-		this.setShowTitle(false);
-//		this.setIsModal(true);
+		// this.setIsModal(true);
 		this.setPadding(20);
 		this.setWidth(900);
 		this.setHeight(600);
 		this.setShowMinimizeButton(false);
+		this.setShowMaximizeButton(true);
 		this.setShowCloseButton(true);
 		this.setShowModalMask(true);
 		this.centerInPage();
-		HeaderControl closeControl = new HeaderControl(HeaderControl.CLOSE, new ClickHandler() {
+		this.addItem(dialog);
+		addCloseClickHandler(new CloseClickHandler() {
 			@Override
-			public void onClick(ClickEvent event) {
-				StationPopup.this.hide();
+			public void onCloseClick(CloseClickEvent event) {
+				hide();
 			}
 		});
-		this.setHeaderControls(HeaderControls.HEADER_LABEL, closeControl);
-		this.addItem(dialog);
 	}
 
 	public void show(String featureId, final int x, final int y) {

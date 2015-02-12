@@ -17,7 +17,7 @@ public class StationDS extends GrailsDataSource {
 		super("station");
 
 		String[] fieldNames =
-			{ "name", "vatNumber", "street", "city", "zipCode", "postOfficeBox", "county", "country", "houseNumber" };
+			{ "name", "vatNumber", "street", "houseNumber", "zipCode", "city", "postOfficeBox", "county", "country" };
 		for (String fieldName : fieldNames) 
 			addField(new DataSourceTextField(fieldName));
 	}

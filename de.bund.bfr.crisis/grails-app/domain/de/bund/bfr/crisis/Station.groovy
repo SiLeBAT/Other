@@ -7,7 +7,7 @@ class Station {
 	
 	String street, city, zipCode, postOfficeBox, county, country, houseNumber
 
-	BigDecimal latitude, longitude
+	double latitude, longitude
 	
 	String businessNumber, typeOfBusiness
 	
@@ -15,8 +15,6 @@ class Station {
 	String comment
 	
     static constraints = {
-		latitude scale: 16
-		longitude scale: 16
     }
 	
 	Collection<Product> products
