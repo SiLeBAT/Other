@@ -156,10 +156,10 @@ public class TracingMap extends MapWidget {
 
 		Scheduler.get().scheduleDeferred(new Command() {
 			public void execute() {
-				search("");
 
 				Scheduler.get().scheduleDeferred(new Command() {
 					public void execute() {
+						search("");
 						centerTheMap(-1);
 					}
 				});
