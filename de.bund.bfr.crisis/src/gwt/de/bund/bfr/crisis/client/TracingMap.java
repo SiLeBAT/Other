@@ -388,7 +388,11 @@ public class TracingMap extends MapWidget {
 					continue;
 
 				Bounds bounds = getMap().getExtent();
-				if (vf.getCenterLonLat() == null || !bounds.containsLonLat(vf.getCenterLonLat(), true))
+				if (vf.getCenterLonLat() == null)
+					continue;
+				if (bounds.getJSObject() == null)
+					continue;
+				if (!bounds.containsLonLat(vf.getCenterLonLat(), true))
 					continue;
 
 				int stationId = Integer.parseInt(vf.getFeatureId());
