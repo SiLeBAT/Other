@@ -17,7 +17,7 @@ import de.bund.bfr.crisis.Station
 class LegacyImporterService {
 	def stationTranslation = [Name: 'name', Strasse: 'street', Hausnummer: 'houseNumber', Postfach: 'postOfficeBox',
 		PLZ: 'zipCode', Ort: 'city', Bundesland: 'county', Land: 'country', Longitude: 'longitude', Latitude: 'latitude',
-		Betriebsnummer: 'businessNumber', Betriebsart: 'typeOfBusiness', VATnumber: 'vatNumber', Kommentar: 'comment']
+		Betriebsnummer: 'businessNumber', Betriebsart: 'typeOfBusiness', VATnumber: 'vatNumber', Kommentar: 'comment', ID: 'id']
 
 	def productTranslation = [Artikelnummer: 'itemNumber', Bezeichnung: 'denomination', Prozessierung: 'processing',
 		IntendedUse: 'intendedUse', Code: 'itemNumber', Kommentar: 'comment']
@@ -29,7 +29,7 @@ class LegacyImporterService {
 
 	def deliveryTranslation = [dd_day: 'deliveryDateDay', dd_month: 'deliveryDateMonth', dd_year: 'deliveryDateYear',
 		numPU: 'packagingUnits', typePU: 'packagingType', Unitmenge: 'amount', UnitEinheit: 'unit',
-		EndChain: 'isEnd', Explanation_EndChain: 'endExplanation', Further_Traceback: 'furtherTraceback', 
+		EndChain: 'isEnd', Explanation_EndChain: 'endExplanation', Further_Traceback: 'furtherTraceback',
 		Kommentar: 'comment']
 
 	def bulkImport(String url, String user = 'SA', String password = '', String driver = 'org.hsqldb.jdbc.JDBCDriver') {
@@ -44,7 +44,7 @@ class LegacyImporterService {
 
 		Map<Integer, Lot> legacyIDToLot = importLots(sql, legacyIDToProduct)
 
-		Map<Integer, Delivery> legacyIDToDelivery = importDelivery(sql, legacyIDToLot)
+		Map<Integer, Delivery> legacyIDToDelivery = importDelivery(sql, legacyIDToLot, legacyIDToStation)
 
 		List<GormValidationApi> newObjects = [legacyIDToStation, legacyIDToProduct, legacyIDToLot, legacyIDToDelivery]*.values().flatten()
 		if(!newObjects*.validate(deepValidate: false).every()) {
@@ -78,14 +78,16 @@ class LegacyImporterService {
 		legacyIDToRecipe
 	}
 
-	private Map<Integer, Delivery> importDelivery(Sql sql, Map<Integer, Lot> legacyIDToLot) {
+	private Map<Integer, Delivery> importDelivery(Sql sql, Map<Integer, Lot> legacyIDToLot, Map<Integer, Station> legacyIDToStation) {
 		Map<Integer, Delivery> legacyIDToDelivery = [:]
 		sql.eachRow('SELECT * from "Lieferungen"') { legacyDelivery ->
 			// find an existing delivery if the ChargenNr contains at least one alphanumeric character or create a new one
-			def delivery = insertOrUpdate(legacyDelivery, null, Delivery, deliveryTranslation)
+			Delivery delivery = insertOrUpdate(legacyDelivery, null, Delivery, deliveryTranslation)
+			if(legacyDelivery.'Empfänger' != null)
+				delivery.recipient = legacyIDToStation[legacyDelivery.'Empfänger']
 			def lot = legacyIDToLot[legacyDelivery.Charge]		
 			lot?.addToDeliveries(delivery)
-			legacyIDToDelivery[legacyDelivery.ID] = delivery
+			legacyIDToDelivery[legacyDelivery.ID] = delivery			
 		}
 		return legacyIDToDelivery
 	}
