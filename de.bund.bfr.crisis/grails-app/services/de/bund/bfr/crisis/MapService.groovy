@@ -73,6 +73,7 @@ class MapService {
 			return []
 
 		Station station = Station.findByName(searchString)
-		station?.id as JSON // station==null?null:station.id
+		String sid = ""+station?.id  // station==null?null:station.id
+		sid as JSON
 	}
 }

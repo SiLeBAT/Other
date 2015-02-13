@@ -225,9 +225,11 @@ public class TracingMap extends MapWidget {
 				public void onSuccess(String jsonResponse) {
 					if (!jsonResponse.equalsIgnoreCase("null")) {
 						Integer sid = Integer.valueOf(jsonResponse);
-						Station s = stations.get(sid);
-						Map map = getMap();
-						map.setCenter(new LonLat(s.getLongitude(), s.getLatitude()), 6);
+						if (sid != null) {
+							Station s = stations.get(sid);
+							Map map = getMap();
+							map.setCenter(new LonLat(s.getLongitude(), s.getLatitude()), 6);
+						}
 						logger.log(Level.SEVERE, "Received result " + sid);						
 					}
 				}
@@ -386,7 +388,7 @@ public class TracingMap extends MapWidget {
 					continue;
 
 				Bounds bounds = getMap().getExtent();
-				if (!bounds.containsLonLat(vf.getCenterLonLat(), true))
+				if (vf.getCenterLonLat() == null || !bounds.containsLonLat(vf.getCenterLonLat(), true))
 					continue;
 
 				int stationId = Integer.parseInt(vf.getFeatureId());
