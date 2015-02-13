@@ -56,6 +56,7 @@ import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 import com.google.gwt.user.client.ui.Widget;
+import com.smartgwt.client.core.JsObject;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -200,22 +201,45 @@ public class TracingMap extends MapWidget {
 
 	private void search(String searchString) {
 		// MyCallbackGIS myCallback = new MyCallbackGIS(this);
-		mapService.search(searchString, new AsyncCallback<String>() {
-			@Override
-			public void onSuccess(String jsonResponse) {
-				SearchResult searchResult = JsonUtils.unsafeEval(jsonResponse);
-				logger.log(Level.SEVERE, "Received result " + jsonResponse);
-				fillMap(JsoUtils.wrap(searchResult.getStations()),
-					JsoUtils.wrap(searchResult.getDeliveries()));
-			}
+		if (searchString == null || searchString.trim().isEmpty()) {
+			mapService.search(searchString, new AsyncCallback<String>() {
+				@Override
+				public void onSuccess(String jsonResponse) {
+					SearchResult searchResult = JsonUtils.unsafeEval(jsonResponse);
+					logger.log(Level.SEVERE, "Received result " + jsonResponse);
+					fillMap(JsoUtils.wrap(searchResult.getStations()),
+						JsoUtils.wrap(searchResult.getDeliveries()));
+				}
 
-			@Override
-			public void onFailure(Throwable e) {
-				com.google.gwt.user.client.Window.alert("Could not submit the search query to the server");
-				logger.log(Level.SEVERE,
-					"Could not submit the search query to the server", e);
-			}
-		});
+				@Override
+				public void onFailure(Throwable e) {
+					com.google.gwt.user.client.Window.alert("Could not submit the search query to the server");
+					logger.log(Level.SEVERE,
+						"Could not submit the search query to the server", e);
+				}
+			});
+		}
+		else {
+			mapService.getStationId(searchString, new AsyncCallback<String>() {
+				@Override
+				public void onSuccess(String jsonResponse) {
+					if (!jsonResponse.equalsIgnoreCase("null")) {
+						Integer sid = Integer.valueOf(jsonResponse);
+						Station s = stations.get(sid);
+						Map map = getMap();
+						map.setCenter(new LonLat(s.getLongitude(), s.getLatitude()), 6);
+						logger.log(Level.SEVERE, "Received result " + sid);						
+					}
+				}
+
+				@Override
+				public void onFailure(Throwable e) {
+					com.google.gwt.user.client.Window.alert("Could not submit the search query to the server");
+					logger.log(Level.SEVERE,
+						"Could not submit the search query to the server", e);
+				}
+			});
+		}
 	}
 
 	private void fetchMyStation(int stationId) {
@@ -383,7 +407,7 @@ public class TracingMap extends MapWidget {
 		Station station = this.stations.get(stationId);
 		Point point = station.getPoint();
 		point.transform(DEFAULT_PROJECTION, MAP_PROJ);
-		VectorFeature vf = new VectorFeature(point, createLabelStyle(String.valueOf(station.getId())));
+		VectorFeature vf = new VectorFeature(point, createLabelStyle(String.valueOf(station.getName()))); // station.getId()
 		labelLayer.addFeature(vf);
 	}
 
@@ -412,7 +436,7 @@ public class TracingMap extends MapWidget {
 		deliveryLayer.setStyleMap(new StyleMap(createDeliveryStyle(), dss, dss));
 		stationLayer = new Vector("stations");
 		labelLayer = new Vector("labels");
-		addClusterStrategy();
+		//addClusterStrategy();
 		map.addLayer(deliveryLayer);
 		map.addLayer(stationLayer);
 		map.addLayer(labelLayer);
@@ -656,8 +680,8 @@ public class TracingMap extends MapWidget {
 
 	private Style createStationStyle() {
 		Style stationStyle = new Style();
-		stationStyle.setFillColor("blue");
-		stationStyle.setPointRadius(12);
+		stationStyle.setFillColor("yellow");
+		stationStyle.setPointRadius(8);
 		stationStyle.setFillOpacity(1.0);
 		return stationStyle;
 	}
@@ -666,7 +690,9 @@ public class TracingMap extends MapWidget {
 		Style labelStyle = new Style();
 		labelStyle.setPointRadius(0);
 		labelStyle.setLabel(text);
-		labelStyle.setFontColor("#ff0000");
+		labelStyle.setFontColor("#000000");
+		labelStyle.setFontSize("10");
+		labelStyle.setFontWeight("bold");
 		return labelStyle;
 	}
 

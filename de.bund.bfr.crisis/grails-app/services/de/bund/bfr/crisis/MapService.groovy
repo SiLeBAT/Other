@@ -13,7 +13,7 @@ class MapService {
 	GrailsApplication grailsApplication
 
 	static expose = ["gwt:de.bund.bfr.crisis.client"]
-
+	
 	String search(String searchString) {
 		List<Station> stations
 		List<Delivery> deliveries
@@ -65,5 +65,14 @@ class MapService {
 
 		List<Station> stations = Station.findAllByNameIlike("%$searchString%")
 		stations*.name.unique() as JSON
+	}
+	
+	String getStationId(String searchString) {
+		// either return all, nothing, or LRU
+		if(!searchString)
+			return []
+
+		Station station = Station.findByName(searchString)
+		station?.id as JSON // station==null?null:station.id
 	}
 }
