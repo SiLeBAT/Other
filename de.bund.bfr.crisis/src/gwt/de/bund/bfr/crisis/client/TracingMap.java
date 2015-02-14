@@ -1,10 +1,14 @@
 package de.bund.bfr.crisis.client;
 
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -29,6 +33,7 @@ import org.gwtopenmaps.openlayers.client.filter.ComparisonFilter;
 import org.gwtopenmaps.openlayers.client.filter.ComparisonFilter.Types;
 import org.gwtopenmaps.openlayers.client.geometry.LineString;
 import org.gwtopenmaps.openlayers.client.geometry.Point;
+import org.gwtopenmaps.openlayers.client.geometry.Polygon;
 import org.gwtopenmaps.openlayers.client.layer.OSM;
 import org.gwtopenmaps.openlayers.client.layer.Vector;
 import org.gwtopenmaps.openlayers.client.layer.VectorOptions;
@@ -194,8 +199,6 @@ public class TracingMap extends MapWidget {
 			addDelivery2Feature(d.getId(), d.getStationId(), d.getRecipientId(), 30d);
 		}
 
-		addDeliveries();
-
 		centerTheMap(-1);
 	}
 
@@ -206,7 +209,6 @@ public class TracingMap extends MapWidget {
 				@Override
 				public void onSuccess(String jsonResponse) {
 					SearchResult searchResult = JsonUtils.unsafeEval(jsonResponse);
-					logger.log(Level.SEVERE, "Received result " + jsonResponse);
 					fillMap(JsoUtils.wrap(searchResult.getStations()),
 						JsoUtils.wrap(searchResult.getDeliveries()));
 				}
@@ -224,13 +226,18 @@ public class TracingMap extends MapWidget {
 				@Override
 				public void onSuccess(String jsonResponse) {
 					if (!jsonResponse.equalsIgnoreCase("null")) {
-						Integer sid = Integer.valueOf(jsonResponse);
-						if (sid != null) {
-							Station s = stations.get(sid);
-							Map map = getMap();
-							map.setCenter(new LonLat(s.getLongitude(), s.getLatitude()), 6);
+						JsArrayString searchResults = JsonUtils.unsafeEval(jsonResponse);
+						for (String searchResult : JsoUtils.wrap(searchResults)) {
+							Integer sid = Integer.valueOf(searchResult);
+							if (sid != null) {
+								Station s = stations.get(sid);
+								Map map = getMap();
+								LonLat lonLat = new LonLat(s.getLongitude(), s.getLatitude());
+								lonLat.transform(DEFAULT_PROJECTION.getProjectionCode(), map.getProjection());
+								addDeliveries(sid);
+								map.setCenter(lonLat, 9);
+							}
 						}
-						logger.log(Level.SEVERE, "Received result " + sid);						
 					}
 				}
 
@@ -351,10 +358,10 @@ public class TracingMap extends MapWidget {
 		return result;
 	}
 
-	private void setPopup(VectorFeature vf) {
+	private void setPopup(VectorFeature vf, String stationId) {
 		if (vf.getCluster() == null) {
 			Pixel pxLonLat = getMap().getPixelFromLonLat(vf.getCenterLonLat());
-			stationPopup.show(vf.getFeatureId(), pxLonLat.x(), pxLonLat.y());
+			stationPopup.show(stationId, pxLonLat.x(), pxLonLat.y());
 		} else {
 			Popup popup;
 			int count = vf.getAttributes().getAttributeAsInt("count");
@@ -375,45 +382,81 @@ public class TracingMap extends MapWidget {
 		}
 	}
 
-	private void addDeliveries() {
+	private void addDeliveries(Integer stationId) {
 		if (!showArrows)
 			return;
 
 		// logger.log(Level.SEVERE, "addDeliveries - Start");
 		try {
 			deliveryLayer.removeAllFeatures();
-			labelLayer.removeAllFeatures();
-			for (VectorFeature vf : stationLayer.getFeatures()) {
-				if (vf.getCluster() != null)
-					continue;
+			Set<VectorFeature> features = this.stationDeliveryFeatures.get(stationId);
+			if (features != null)
+				for (VectorFeature f : features)
+					deliveryLayer.addFeature(f);
+				/*
+				for (VectorFeature vf : stationLayer.getFeatures()) {
+					if (vf.getCluster() != null)
+						continue;
+					if (vf.getCenterLonLat() == null)
+						continue;
+					if (!bounds.containsLonLat(vf.getCenterLonLat(), true))
+						continue;
 
-				Bounds bounds = getMap().getExtent();
-				if (vf.getCenterLonLat() == null)
-					continue;
-				if (bounds.getJSObject() == null)
-					continue;
-				if (!bounds.containsLonLat(vf.getCenterLonLat(), true))
-					continue;
-
-				int stationId = Integer.parseInt(vf.getFeatureId());
-				Set<VectorFeature> features = this.stationDeliveryFeatures.get(stationId);
-				if (features != null)
-					for (VectorFeature f : features)
-						deliveryLayer.addFeature(f);
-				addLabel(stationId);
-			}
+					int stationId = Integer.parseInt(vf.getFeatureId());
+					Set<VectorFeature> features = this.stationDeliveryFeatures.get(stationId);
+					if (features != null)
+						for (VectorFeature f : features)
+							deliveryLayer.addFeature(f);
+					addLabel(stationId);
+				}
+				*/
 			// theMap.setLayerZIndex(labelLayer, 500);
 		} catch (Exception e) {
 			logger.log(Level.SEVERE,
 				"addDeliveries - exception: " + e.getMessage());
 		}
 	}
+	private void addLabels() {
+		int minLables2Show = 10;
+		labelLayer.removeAllFeatures();
+		Bounds bounds = getMap().getExtent();
+		if (bounds.getJSObject() != null) {
+			HashMap<Integer, List<Integer>> hm = new HashMap<Integer, List<Integer>>();
+			int maxSize = 0;
+			for (VectorFeature vf : stationLayer.getFeatures()) {
+				if (vf.getCenterLonLat() == null)
+					continue;
+				if (!bounds.containsLonLat(vf.getCenterLonLat(), true))
+					continue;
+				int stationId = Integer.parseInt(vf.getFeatureId());
+				int s = this.stationDeliveryFeatures.get(stationId).size();
+				if (!hm.containsKey(s)) hm.put(s, new ArrayList<Integer>());
+				hm.get(s).add(stationId);
+				if (s > maxSize) maxSize = s;
+			}
+			int lfd=0;
+			for (int i=maxSize;i>0;i--) {
+				if (hm.containsKey(i)) {
+					List<Integer> l = hm.get(i);
+					for (int stationId : l) {
+						addLabel(stationId);
+						lfd++;
+					}
+					if (lfd > minLables2Show) break;
+				}
+			}
+		}
+	}
 
 	private void addLabel(int stationId) {
 		Station station = this.stations.get(stationId);
+		String sn = station.getName(); // station.getId() + ""
 		Point point = station.getPoint();
 		point.transform(DEFAULT_PROJECTION, MAP_PROJ);
-		VectorFeature vf = new VectorFeature(point, createLabelStyle(String.valueOf(station.getName()))); // station.getId()
+		Bounds bounds = getMap().getExtent();		
+		Polygon rect = Station.getRectangle(point.getX(), point.getY(), sn.trim().length() * bounds.getWidth() / 250, bounds.getHeight() / 60); // sn.trim().length() * 0.7 * 
+		VectorFeature vf = new VectorFeature(rect, createLabelStyle(sn));
+		vf.setFeatureId("l"+String.valueOf(stationId));
 		labelLayer.addFeature(vf);
 	}
 
@@ -447,13 +490,14 @@ public class TracingMap extends MapWidget {
 		map.addLayer(stationLayer);
 		map.addLayer(labelLayer);
 
+		
 		map.addMapMoveEndListener(new MapMoveEndListener() {
 			@Override
 			public void onMapMoveEnd(MapMoveEndEvent eventObject) {
-				addDeliveries();
+				addLabels();
 			}
 		});
-
+		 
 		final SelectFeature selectFeature = new SelectFeature(new Vector[] {
 			stationLayer, deliveryLayer, labelLayer });
 		selectFeature.setAutoActivate(true);
@@ -463,11 +507,31 @@ public class TracingMap extends MapWidget {
 			public void onFeatureSelected(
 					FeatureSelectedEvent eventObject) {
 				VectorFeature vf = eventObject.getVectorFeature();
-				setPopup(vf);
+				setPopup(vf, vf.getFeatureId());
 				// map.addPopup(vf.getPopup());
 			}
 		});
 		stationLayer.addVectorFeatureUnselectedListener(new VectorFeatureUnselectedListener() {
+			/*
+			 * (non-Javadoc)
+			 * @see
+			 * org.gwtopenmaps.openlayers.client.event.VectorFeatureUnselectedListener#onFeatureUnselected(org.gwtopenmaps
+			 * .openlayers.client.event.VectorFeatureUnselectedListener.FeatureUnselectedEvent)
+			 */
+			@Override
+			public void onFeatureUnselected(FeatureUnselectedEvent eventObject) {
+				stationPopup.hide();
+			}
+		});
+		labelLayer.addVectorFeatureSelectedListener(new VectorFeatureSelectedListener() {
+			public void onFeatureSelected(
+					FeatureSelectedEvent eventObject) {
+				VectorFeature vf = eventObject.getVectorFeature();
+				setPopup(vf, vf.getFeatureId().substring(1));
+				// map.addPopup(vf.getPopup());
+			}
+		});
+		labelLayer.addVectorFeatureUnselectedListener(new VectorFeatureUnselectedListener() {
 			/*
 			 * (non-Javadoc)
 			 * @see
@@ -687,17 +751,19 @@ public class TracingMap extends MapWidget {
 	private Style createStationStyle() {
 		Style stationStyle = new Style();
 		stationStyle.setFillColor("yellow");
-		stationStyle.setPointRadius(8);
+		stationStyle.setPointRadius(10);
 		stationStyle.setFillOpacity(1.0);
 		return stationStyle;
 	}
 
 	private Style createLabelStyle(String text) {
 		Style labelStyle = new Style();
-		labelStyle.setPointRadius(0);
+		labelStyle.setPointRadius(16);
+		labelStyle.setFillColor("yellow");
 		labelStyle.setLabel(text);
 		labelStyle.setFontColor("#000000");
-		labelStyle.setFontSize("10");
+		labelStyle.setFontSize("15");
+		labelStyle.setFillOpacity(0.1);
 		labelStyle.setFontWeight("bold");
 		return labelStyle;
 	}

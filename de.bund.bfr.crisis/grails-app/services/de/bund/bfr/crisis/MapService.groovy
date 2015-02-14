@@ -6,6 +6,7 @@ import org.codehaus.groovy.grails.web.converters.ConverterUtil;
 
 import grails.transaction.Transactional
 import grails.converters.*
+import groovy.json.JsonBuilder
 
 //@Transactional(readOnly = true)
 class MapService {
@@ -74,6 +75,6 @@ class MapService {
 
 		Station station = Station.findByName(searchString)
 		String sid = ""+station?.id  // station==null?null:station.id
-		sid as JSON
+		[sid] as JSON
 	}
 }

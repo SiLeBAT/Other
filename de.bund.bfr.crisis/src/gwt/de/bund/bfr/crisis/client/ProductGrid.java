@@ -111,12 +111,12 @@ public class ProductGrid extends EditableGrid {
 
 class LotGrid extends EditableGrid {
 	/**
-	 * Initializes ProductGrid.
+	 * Initializes LotGrid.
 	 */
 	public LotGrid(Record productRecord) {
 		setCanExpandRecords(true);
 		setDataSource(LotDS.getInstance());
-		fetchRelatedData(productRecord, StationDS.getInstance());
+		fetchRelatedData(productRecord, ProductDS.getInstance());
 	}
 
 	/*
@@ -132,7 +132,7 @@ class LotGrid extends EditableGrid {
 
 class DeliveryGrid extends EditableGrid {
 	/**
-	 * Initializes ProductGrid.
+	 * Initializes DeliveryGrid.
 	 */
 	public DeliveryGrid(Record lotRecord) {
 		setDataSource(DeliveryDS.getInstance());

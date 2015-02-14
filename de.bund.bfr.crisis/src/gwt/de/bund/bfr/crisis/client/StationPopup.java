@@ -116,8 +116,8 @@ public class StationPopup extends Window {
 		});
 	}
 
-	public void show(String featureId, final int x, final int y) {
-		StationDS.getInstance().fetchData(new Criteria("id", featureId), new DSCallback() {
+	public void show(String stationId, final int x, final int y) {
+		StationDS.getInstance().fetchData(new Criteria("id", stationId), new DSCallback() {
 			@Override
 			public void execute(DSResponse response, Object rawData, DSRequest request) {
 				Record stationRecord = response.getData()[0];
