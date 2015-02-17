@@ -1,8 +1,6 @@
 package de.bund.bfr.crisis
 
 class Station {
-	int id
-	
 	String name, vatNumber
 	
 	String street, city, zipCode, postOfficeBox, county, country, houseNumber

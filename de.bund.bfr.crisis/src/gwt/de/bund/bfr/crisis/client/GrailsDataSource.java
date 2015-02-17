@@ -40,6 +40,10 @@ public class GrailsDataSource extends RestDataSource {
         pkField.setPrimaryKey(true);  
         addField(pkField);
         
+//        DataSourceIntegerField groupField = new DataSourceIntegerField("_group");  
+//        groupField.setHidden(true);  
+//        addField(groupField);
+        
 		// setup operations
 		// 1. fetch
 		OperationBinding fetch = createBinding(DSOperationType.FETCH, "fetch", DSProtocol.POSTPARAMS);

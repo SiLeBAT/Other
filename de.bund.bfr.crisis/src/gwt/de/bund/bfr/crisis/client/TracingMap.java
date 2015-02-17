@@ -1,14 +1,10 @@
 package de.bund.bfr.crisis.client;
 
-import java.awt.Font;
-import java.awt.FontMetrics;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -17,7 +13,6 @@ import org.gwtopenmaps.openlayers.client.LonLat;
 import org.gwtopenmaps.openlayers.client.Map;
 import org.gwtopenmaps.openlayers.client.MapOptions;
 import org.gwtopenmaps.openlayers.client.MapWidget;
-import org.gwtopenmaps.openlayers.client.Pixel;
 import org.gwtopenmaps.openlayers.client.Projection;
 import org.gwtopenmaps.openlayers.client.Style;
 import org.gwtopenmaps.openlayers.client.StyleMap;
@@ -27,7 +22,6 @@ import org.gwtopenmaps.openlayers.client.control.ScaleLine;
 import org.gwtopenmaps.openlayers.client.control.SelectFeature;
 import org.gwtopenmaps.openlayers.client.event.MapMoveEndListener;
 import org.gwtopenmaps.openlayers.client.event.VectorFeatureSelectedListener;
-import org.gwtopenmaps.openlayers.client.event.VectorFeatureUnselectedListener;
 import org.gwtopenmaps.openlayers.client.feature.VectorFeature;
 import org.gwtopenmaps.openlayers.client.filter.ComparisonFilter;
 import org.gwtopenmaps.openlayers.client.filter.ComparisonFilter.Types;
@@ -38,8 +32,6 @@ import org.gwtopenmaps.openlayers.client.geometry.Polygon;
 import org.gwtopenmaps.openlayers.client.layer.OSM;
 import org.gwtopenmaps.openlayers.client.layer.Vector;
 import org.gwtopenmaps.openlayers.client.layer.VectorOptions;
-import org.gwtopenmaps.openlayers.client.popup.FramedCloud;
-import org.gwtopenmaps.openlayers.client.popup.Popup;
 import org.gwtopenmaps.openlayers.client.strategy.ClusterStrategy;
 import org.gwtopenmaps.openlayers.client.strategy.Strategy;
 import org.gwtopenmaps.openlayers.client.style.Rule;
@@ -61,22 +53,6 @@ import com.google.gwt.user.client.ui.MultiWordSuggestOracle.MultiWordSuggestion;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
-import com.google.gwt.user.client.ui.Widget;
-import com.smartgwt.client.core.JsObject;
-import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.data.DSCallback;
-import com.smartgwt.client.data.DSRequest;
-import com.smartgwt.client.data.DSResponse;
-import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.HeaderControls;
-import com.smartgwt.client.widgets.Button;
-import com.smartgwt.client.widgets.HeaderControl;
-import com.smartgwt.client.widgets.Window;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 public class TracingMap extends MapWidget {
 
@@ -105,9 +81,10 @@ public class TracingMap extends MapWidget {
 					return replaceIgnoreCase(searchResult, "(" + query + ")", "<strong>$1</strong>");
 				}
 
-				private native String replaceIgnoreCase(String string, String searchString, String replacement) /*-{
-																												return string.replace(new RegExp(searchString, "ig"), replacement);
-																												}-*/;
+				private native String replaceIgnoreCase(String string, String searchString, String replacement)
+				/*-{
+					return string.replace(new RegExp(searchString, "ig"), replacement);
+				}-*/;
 
 				@Override
 				public void onFailure(Throwable arg0) {
@@ -321,32 +298,6 @@ public class TracingMap extends MapWidget {
 		stationLayer.setStyleMap(styleMap);
 	}
 
-	private Station getStation(String id) {
-		Station result = null;
-		int stationId = -1;
-		try {
-			stationId = Integer.parseInt(id);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		if (stationId >= 0)
-			result = stations.get(stationId);
-		return result;
-	}
-
-	private Delivery getDelivery(String id) {
-		Delivery result = null;
-		int deliveryId = -1;
-		try {
-			deliveryId = Integer.parseInt(id);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		if (deliveryId >= 0)
-			result = deliveries.get(deliveryId);
-		return result;
-	}
-
 	private void addDeliveries(Integer stationId) {
 		if (!showArrows)
 			return;
@@ -393,21 +344,24 @@ public class TracingMap extends MapWidget {
 					continue;
 				if (!bounds.containsLonLat(vf.getCenterLonLat(), true))
 					continue;
-				int stationId = Integer.parseInt(vf.getFeatureId());
+				int stationId = Integer.parseInt(vf.getFeatureId().substring(1));
 				int s = this.stationDeliveryFeatures.get(stationId).size();
-				if (!hm.containsKey(s)) hm.put(s, new ArrayList<Integer>());
+				if (!hm.containsKey(s))
+					hm.put(s, new ArrayList<Integer>());
 				hm.get(s).add(stationId);
-				if (s > maxSize) maxSize = s;
+				if (s > maxSize)
+					maxSize = s;
 			}
-			int lfd=0;
-			for (int i=maxSize;i>0;i--) {
+			int lfd = 0;
+			for (int i = maxSize; i > 0; i--) {
 				if (hm.containsKey(i)) {
 					List<Integer> l = hm.get(i);
 					for (int stationId : l) {
 						addLabel(stationId);
 						lfd++;
 					}
-					if (lfd > minLables2Show) break;
+					if (lfd > minLables2Show)
+						break;
 				}
 			}
 		}
@@ -420,19 +374,19 @@ public class TracingMap extends MapWidget {
 		point.transform(DEFAULT_PROJECTION, MAP_PROJ);
 		Bounds bounds = getMap().getExtent();
 		Polygon rect = getRectangle(point.getX(), point.getY(), sn.trim().length() * bounds.getWidth() / 250,
-				bounds.getHeight() / 60); // sn.trim().length() * 0.7 *
+			bounds.getHeight() / 60); // sn.trim().length() * 0.7 *
 		VectorFeature vf = new VectorFeature(rect, createLabelStyle(sn));
 		vf.setFeatureId("l" + String.valueOf(stationId));
 		labelLayer.addFeature(vf);
 	}
-	
+
 	public final Polygon getRectangle(double lon, double lat, double w, double h) {
 		List<LinearRing> linearRingList = new ArrayList<LinearRing>();
 		List<Point> points1 = new ArrayList<Point>();
-		points1.add(new Point(lon - w/2, lat - h/2));
-		points1.add(new Point(lon + w/2, lat - h/2));
-		points1.add(new Point(lon + w/2, lat + h/2));
-		points1.add(new Point(lon - w/2, lat + h/2));
+		points1.add(new Point(lon - w / 2, lat - h / 2));
+		points1.add(new Point(lon + w / 2, lat - h / 2));
+		points1.add(new Point(lon + w / 2, lat + h / 2));
+		points1.add(new Point(lon - w / 2, lat + h / 2));
 		linearRingList.add(new LinearRing(points1.toArray(new Point[points1.size()])));
 
 		Polygon p = new Polygon(linearRingList.toArray(new LinearRing[linearRingList.size()]));
@@ -481,7 +435,7 @@ public class TracingMap extends MapWidget {
 		selectFeature.setAutoActivate(true);
 		map.addControl(selectFeature);
 
-		stationLayer.addVectorFeatureSelectedListener(new VectorFeatureSelectedListener() {
+		VectorFeatureSelectedListener stationListener = new VectorFeatureSelectedListener() {
 			public void onFeatureSelected(FeatureSelectedEvent eventObject) {
 				VectorFeature vf = eventObject.getVectorFeature();
 				if (vf.getCluster() != null) {
@@ -491,11 +445,13 @@ public class TracingMap extends MapWidget {
 					map.zoomToExtent(clusterBounds);
 				} else {
 					StationPopup stationPopup = new StationPopup();
-					stationPopup.updateStation(vf.getFeatureId());
+					stationPopup.updateStation(eventObject.getVectorFeature().getFeatureId().substring(1));
 					stationPopup.show();
 				}
 			}
-		});
+		};
+		stationLayer.addVectorFeatureSelectedListener(stationListener);
+		labelLayer.addVectorFeatureSelectedListener(stationListener);
 
 		// Add select feature for visibleDeliveries
 		deliveryLayer.addVectorFeatureSelectedListener(new VectorFeatureSelectedListener() {
@@ -507,6 +463,7 @@ public class TracingMap extends MapWidget {
 				deliveryPopup.show();
 			}
 		});
+		
 
 		createSearchBox();
 	}
@@ -574,7 +531,7 @@ public class TracingMap extends MapWidget {
 		Point point = s.getPoint();
 		point.transform(DEFAULT_PROJECTION, MAP_PROJ);
 		VectorFeature vf = new VectorFeature(point, createStationStyle());
-		vf.setFeatureId(String.valueOf(s.getId()));
+		vf.setFeatureId("s" + s.getId());
 		return vf;
 	}
 
