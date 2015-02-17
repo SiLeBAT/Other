@@ -65,12 +65,6 @@ class EditableGrid extends ListGrid {
 		setCanDragReposition(true);
 		setCanDragSelect(true);
 
-		getField("id").setGroupValueFunction(new GroupValueFunction() {
-			public Object getGroupValue(Object value, ListGridRecord record, ListGridField field, String fieldName,
-					ListGrid grid) {
-				return record.getAttributeAsInt("_simgroup");
-			}
-		});
 	}
 
 	public Canvas wrapWithActionButtons() {
@@ -94,12 +88,21 @@ class EditableGrid extends ListGrid {
 				getGroupTree().closeAll();
 			}
 		});
+		
+
 		final IButton groupButton = new IButton("Group similar");
 		groupButton.addClickHandler(new ClickHandler() {
 			public void onClick(ClickEvent event) {
+				ListGridField[] fields = getFields();
+				fields[fields.length - 1].setGroupValueFunction(new GroupValueFunction() {
+					public Object getGroupValue(Object value, ListGridRecord record, ListGridField field, String fieldName,
+							ListGrid grid) {
+						return record.getAttributeAsInt("_simgroup");
+					}
+				});
 				if (groupButton.isSelected()) {
 					simGroupRecords();
-					setGroupByField("id");
+					setGroupByField(fields[fields.length - 1].getName());
 				}
 				else
 					ungroup();
