@@ -3,17 +3,11 @@ package de.bund.bfr.crisis.client;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.smartgwt.client.data.DataSource;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
  */
 public class TracingApp implements EntryPoint {
-	public final static DataSource StationDS =
-		new GrailsDataSourceBuilder("station").
-			addFields("name", "vatNumber", "street", "city", "zipCode", "postOfficeBox", "county", "country",
-				"houseNumber").build();
-
 	/**
 	 * This is the entry point method.
 	 */

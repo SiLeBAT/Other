@@ -27,6 +27,7 @@ import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -71,7 +72,14 @@ class EditableGrid extends ListGrid {
 				selectRecord(newRecord);
 			}
 		});     
+		IButton collapseButton = new IButton("Collapse all");
+		collapseButton.addClickHandler(new ClickHandler() {
+			public void onClick(ClickEvent event) {
+				collapseRecords(getRecordList());
+			}
+		});     
 		hLayout.addMember(addButton);
+		hLayout.addMember(collapseButton);
 		
 		layout.addMember(this);
 		layout.addMember(hLayout);
@@ -91,7 +99,10 @@ public class ProductGrid extends EditableGrid {
 	public ProductGrid() {
 		setCanExpandRecords(true);
 		setDataSource(ProductDS.getInstance());
-		setData();
+		
+		for (ListGridField field : getFields()) {
+			field.setOptionDataSource(ProductDS.getInstance());
+		}
 	}
 
 	public void updateStation(Record stationRecord) {

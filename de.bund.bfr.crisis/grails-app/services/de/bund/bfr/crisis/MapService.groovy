@@ -66,4 +66,13 @@ class MapService {
 		List<Station> stations = Station.findAllByNameIlike("%$searchString%")
 		stations*.name.unique() as JSON
 	}
+	
+	String getStationId(String searchString) {
+		// either return all, nothing, or LRU
+		if(!searchString)
+			return []
+
+		Station station = Station.findByName(searchString)
+		[station?.id as String] as JSON // station==null?null:station.id
+	}
 }

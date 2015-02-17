@@ -1,10 +1,14 @@
 package de.bund.bfr.crisis.client;
 
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -28,7 +32,9 @@ import org.gwtopenmaps.openlayers.client.feature.VectorFeature;
 import org.gwtopenmaps.openlayers.client.filter.ComparisonFilter;
 import org.gwtopenmaps.openlayers.client.filter.ComparisonFilter.Types;
 import org.gwtopenmaps.openlayers.client.geometry.LineString;
+import org.gwtopenmaps.openlayers.client.geometry.LinearRing;
 import org.gwtopenmaps.openlayers.client.geometry.Point;
+import org.gwtopenmaps.openlayers.client.geometry.Polygon;
 import org.gwtopenmaps.openlayers.client.layer.OSM;
 import org.gwtopenmaps.openlayers.client.layer.Vector;
 import org.gwtopenmaps.openlayers.client.layer.VectorOptions;
@@ -56,6 +62,7 @@ import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 import com.google.gwt.user.client.ui.Widget;
+import com.smartgwt.client.core.JsObject;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -141,8 +148,6 @@ public class TracingMap extends MapWidget {
 
 	private SuggestBox searchBox = new SuggestBox(new RpcSuggestOracle());
 
-	private StationPopup stationPopup = new StationPopup();
-
 	public TracingMap() {
 		this((MapServiceAsync) GWT.create(MapService.class));
 	}
@@ -156,12 +161,7 @@ public class TracingMap extends MapWidget {
 		Scheduler.get().scheduleDeferred(new Command() {
 			public void execute() {
 				search("");
-
-				Scheduler.get().scheduleDeferred(new Command() {
-					public void execute() {
-						centerTheMap(-1);
-					}
-				});
+				centerTheMap(-1);
 			}
 		});
 	}
@@ -193,34 +193,56 @@ public class TracingMap extends MapWidget {
 			addDelivery2Feature(d.getId(), d.getStationId(), d.getRecipientId(), 30d);
 		}
 
-		addDeliveries();
-
 		centerTheMap(-1);
 	}
 
 	private void search(String searchString) {
 		// MyCallbackGIS myCallback = new MyCallbackGIS(this);
-		mapService.search(searchString, new AsyncCallback<String>() {
-			@Override
-			public void onSuccess(String jsonResponse) {
-				SearchResult searchResult = JsonUtils.unsafeEval(jsonResponse);
-				logger.log(Level.SEVERE, "Received result " + jsonResponse);
-				fillMap(JsoUtils.wrap(searchResult.getStations()),
-					JsoUtils.wrap(searchResult.getDeliveries()));
-			}
+		if (searchString == null || searchString.trim().isEmpty()) {
+			mapService.search(searchString, new AsyncCallback<String>() {
+				@Override
+				public void onSuccess(String jsonResponse) {
+					SearchResult searchResult = JsonUtils.unsafeEval(jsonResponse);
+					fillMap(JsoUtils.wrap(searchResult.getStations()),
+						JsoUtils.wrap(searchResult.getDeliveries()));
+				}
 
-			@Override
-			public void onFailure(Throwable e) {
-				com.google.gwt.user.client.Window.alert("Could not submit the search query to the server");
-				logger.log(Level.SEVERE,
-					"Could not submit the search query to the server", e);
-			}
-		});
-	}
+				@Override
+				public void onFailure(Throwable e) {
+					com.google.gwt.user.client.Window.alert("Could not submit the search query to the server");
+					logger.log(Level.SEVERE,
+						"Could not submit the search query to the server", e);
+				}
+			});
+		}
+		else {
+			mapService.getStationId(searchString, new AsyncCallback<String>() {
+				@Override
+				public void onSuccess(String jsonResponse) {
+					if (!jsonResponse.equalsIgnoreCase("null")) {
+						JsArrayString searchResults = JsonUtils.unsafeEval(jsonResponse);
+						for (String searchResult : JsoUtils.wrap(searchResults)) {
+							Integer sid = Integer.valueOf(searchResult);
+							if (sid != null) {
+								Station s = stations.get(sid);
+								Map map = getMap();
+								LonLat lonLat = new LonLat(s.getLongitude(), s.getLatitude());
+								lonLat.transform(DEFAULT_PROJECTION.getProjectionCode(), map.getProjection());
+								addDeliveries(sid);
+								map.setCenter(lonLat, 9);
+							}
+						}
+					}
+				}
 
-	private void fetchMyStation(int stationId) {
-		// MyCallbackStation myCallback = new MyCallbackStation(this);
-		// mapService.getStationInfo(stationId, myCallback);
+				@Override
+				public void onFailure(Throwable e) {
+					com.google.gwt.user.client.Window.alert("Could not submit the search query to the server");
+					logger.log(Level.SEVERE,
+						"Could not submit the search query to the server", e);
+				}
+			});
+		}
 	}
 
 	private void addClusterStrategy() {
@@ -325,53 +347,33 @@ public class TracingMap extends MapWidget {
 		return result;
 	}
 
-	private void setPopup(VectorFeature vf) {
-		if (vf.getCluster() == null) {
-			Pixel pxLonLat = getMap().getPixelFromLonLat(vf.getCenterLonLat());
-			stationPopup.show(vf.getFeatureId(), pxLonLat.x(), pxLonLat.y());
-		} else {
-			Popup popup;
-			int count = vf.getAttributes().getAttributeAsInt("count");
-			String stationen = "";
-			for (VectorFeature vfs : vf.getCluster()) {
-				Station station = getStation(vfs.getFeatureId());
-				String name = "unknown";
-				if (station != null)
-					name = station.getName();
-				stationen += "<br>" + name;
-			}
-			popup = new FramedCloud("sidc" + count, vf.getCenterLonLat(), null,
-				"<h1>" + count + " Stationen</h1>" + stationen, null, true);
-			popup.setPanMapIfOutOfView(true); // this set the popup in a strategic
-			// way, and pans the map if needed.
-			popup.setAutoSize(true);
-			vf.setPopup(popup);
-		}
-	}
-
-	private void addDeliveries() {
+	private void addDeliveries(Integer stationId) {
 		if (!showArrows)
 			return;
 
 		// logger.log(Level.SEVERE, "addDeliveries - Start");
 		try {
 			deliveryLayer.removeAllFeatures();
-			labelLayer.removeAllFeatures();
-			for (VectorFeature vf : stationLayer.getFeatures()) {
-				if (vf.getCluster() != null)
-					continue;
-
-				Bounds bounds = getMap().getExtent();
-				if (!bounds.containsLonLat(vf.getCenterLonLat(), true))
-					continue;
-
-				int stationId = Integer.parseInt(vf.getFeatureId());
-				Set<VectorFeature> features = this.stationDeliveryFeatures.get(stationId);
-				if (features != null)
-					for (VectorFeature f : features)
-						deliveryLayer.addFeature(f);
-				addLabel(stationId);
-			}
+			Set<VectorFeature> features = this.stationDeliveryFeatures.get(stationId);
+			if (features != null)
+				for (VectorFeature f : features)
+					deliveryLayer.addFeature(f);
+			/*
+			 * for (VectorFeature vf : stationLayer.getFeatures()) {
+			 * if (vf.getCluster() != null)
+			 * continue;
+			 * if (vf.getCenterLonLat() == null)
+			 * continue;
+			 * if (!bounds.containsLonLat(vf.getCenterLonLat(), true))
+			 * continue;
+			 * int stationId = Integer.parseInt(vf.getFeatureId());
+			 * Set<VectorFeature> features = this.stationDeliveryFeatures.get(stationId);
+			 * if (features != null)
+			 * for (VectorFeature f : features)
+			 * deliveryLayer.addFeature(f);
+			 * addLabel(stationId);
+			 * }
+			 */
 			// theMap.setLayerZIndex(labelLayer, 500);
 		} catch (Exception e) {
 			logger.log(Level.SEVERE,
@@ -379,12 +381,62 @@ public class TracingMap extends MapWidget {
 		}
 	}
 
+	private void addLabels() {
+		int minLables2Show = 10;
+		labelLayer.removeAllFeatures();
+		Bounds bounds = getMap().getExtent();
+		if (bounds.getJSObject() != null) {
+			HashMap<Integer, List<Integer>> hm = new HashMap<Integer, List<Integer>>();
+			int maxSize = 0;
+			for (VectorFeature vf : stationLayer.getFeatures()) {
+				if (vf.getCenterLonLat() == null)
+					continue;
+				if (!bounds.containsLonLat(vf.getCenterLonLat(), true))
+					continue;
+				int stationId = Integer.parseInt(vf.getFeatureId());
+				int s = this.stationDeliveryFeatures.get(stationId).size();
+				if (!hm.containsKey(s)) hm.put(s, new ArrayList<Integer>());
+				hm.get(s).add(stationId);
+				if (s > maxSize) maxSize = s;
+			}
+			int lfd=0;
+			for (int i=maxSize;i>0;i--) {
+				if (hm.containsKey(i)) {
+					List<Integer> l = hm.get(i);
+					for (int stationId : l) {
+						addLabel(stationId);
+						lfd++;
+					}
+					if (lfd > minLables2Show) break;
+				}
+			}
+		}
+	}
+
 	private void addLabel(int stationId) {
 		Station station = this.stations.get(stationId);
+		String sn = station.getName(); // station.getId() + ""
 		Point point = station.getPoint();
 		point.transform(DEFAULT_PROJECTION, MAP_PROJ);
-		VectorFeature vf = new VectorFeature(point, createLabelStyle(String.valueOf(station.getId())));
+		Bounds bounds = getMap().getExtent();
+		Polygon rect = getRectangle(point.getX(), point.getY(), sn.trim().length() * bounds.getWidth() / 250,
+				bounds.getHeight() / 60); // sn.trim().length() * 0.7 *
+		VectorFeature vf = new VectorFeature(rect, createLabelStyle(sn));
+		vf.setFeatureId("l" + String.valueOf(stationId));
 		labelLayer.addFeature(vf);
+	}
+	
+	public final Polygon getRectangle(double lon, double lat, double w, double h) {
+		List<LinearRing> linearRingList = new ArrayList<LinearRing>();
+		List<Point> points1 = new ArrayList<Point>();
+		points1.add(new Point(lon - w/2, lat - h/2));
+		points1.add(new Point(lon + w/2, lat - h/2));
+		points1.add(new Point(lon + w/2, lat + h/2));
+		points1.add(new Point(lon - w/2, lat + h/2));
+		linearRingList.add(new LinearRing(points1.toArray(new Point[points1.size()])));
+
+		Polygon p = new Polygon(linearRingList.toArray(new LinearRing[linearRingList.size()]));
+		return p;
 	}
 
 	private void buildPanel() {
@@ -420,7 +472,7 @@ public class TracingMap extends MapWidget {
 		map.addMapMoveEndListener(new MapMoveEndListener() {
 			@Override
 			public void onMapMoveEnd(MapMoveEndEvent eventObject) {
-				addDeliveries();
+				addLabels();
 			}
 		});
 
@@ -430,54 +482,29 @@ public class TracingMap extends MapWidget {
 		map.addControl(selectFeature);
 
 		stationLayer.addVectorFeatureSelectedListener(new VectorFeatureSelectedListener() {
-			public void onFeatureSelected(
-					FeatureSelectedEvent eventObject) {
+			public void onFeatureSelected(FeatureSelectedEvent eventObject) {
 				VectorFeature vf = eventObject.getVectorFeature();
-				setPopup(vf);
-				// map.addPopup(vf.getPopup());
+				if (vf.getCluster() != null) {
+					Bounds clusterBounds = new Bounds();
+					for (VectorFeature child : vf.getCluster())
+						clusterBounds.extend(child.getGeometry().getBounds());
+					map.zoomToExtent(clusterBounds);
+				} else {
+					StationPopup stationPopup = new StationPopup();
+					stationPopup.updateStation(vf.getFeatureId());
+					stationPopup.show();
+				}
 			}
 		});
-		stationLayer.addVectorFeatureUnselectedListener(new VectorFeatureUnselectedListener() {
-			/*
-			 * (non-Javadoc)
-			 * @see
-			 * org.gwtopenmaps.openlayers.client.event.VectorFeatureUnselectedListener#onFeatureUnselected(org.gwtopenmaps
-			 * .openlayers.client.event.VectorFeatureUnselectedListener.FeatureUnselectedEvent)
-			 */
-			@Override
-			public void onFeatureUnselected(FeatureUnselectedEvent eventObject) {
-				stationPopup.hide();
-			}
-		});
+
 		// Add select feature for visibleDeliveries
 		deliveryLayer.addVectorFeatureSelectedListener(new VectorFeatureSelectedListener() {
-			public void onFeatureSelected(
-					FeatureSelectedEvent eventObject) {
-				VectorFeature[] svf = deliveryLayer
-					.getSelectedFeatures();
-				if (svf != null) {
-					for (int i = 0; i < svf.length; i++) {
-						/*
-						 * Popup popup; popup = new
-						 * FramedCloud("did"+svf[i].getFeatureId(),
-						 * svf[i].getCenterLonLat(), null,
-						 * "Bitte Lieferliste (Trace) uploaden", null,
-						 * true); popup.setPanMapIfOutOfView(true); //
-						 * this set the popup in a strategic way, and
-						 * pans the map if needed.
-						 * popup.setAutoSize(true);
-						 * svf[i].setPopup(popup);
-						 * theMap.addPopup(svf[i].getPopup());
-						 */
-						if (deliveries != null) {
-							Delivery d = getDelivery(svf[i]
-								.getFeatureId());
-							// if (d != null) addFileUploadForm(d);
-						}
-					}
-					// FormPanel form = getFileUploadForm();
-					// form.setVisible(true);
-				}
+			public void onFeatureSelected(FeatureSelectedEvent eventObject) {
+				Integer deliveryId = Integer.valueOf(eventObject.getVectorFeature().getFeatureId().substring(1));
+				Delivery delivery = deliveries.get(deliveryId);
+				DeliveryPopup deliveryPopup = new DeliveryPopup();
+				deliveryPopup.updateStations(delivery.getStationId(), delivery.getRecipientId());
+				deliveryPopup.show();
 			}
 		});
 
@@ -528,7 +555,7 @@ public class TracingMap extends MapWidget {
 
 		LineString arrow = new LineString(pointList.toArray(new Point[pointList.size()]));
 		VectorFeature vf = new VectorFeature(arrow);
-		vf.setFeatureId(String.valueOf(id));
+		vf.setFeatureId("d" + fromId);
 
 		Set<VectorFeature> fromFeatures = stationDeliveryFeatures.get(fromId);
 		if (fromFeatures == null)
@@ -656,17 +683,21 @@ public class TracingMap extends MapWidget {
 
 	private Style createStationStyle() {
 		Style stationStyle = new Style();
-		stationStyle.setFillColor("blue");
-		stationStyle.setPointRadius(12);
+		stationStyle.setFillColor("yellow");
+		stationStyle.setPointRadius(10);
 		stationStyle.setFillOpacity(1.0);
 		return stationStyle;
 	}
 
 	private Style createLabelStyle(String text) {
 		Style labelStyle = new Style();
-		labelStyle.setPointRadius(0);
+		labelStyle.setPointRadius(16);
+		labelStyle.setFillColor("yellow");
 		labelStyle.setLabel(text);
-		labelStyle.setFontColor("#ff0000");
+		labelStyle.setFontColor("#000000");
+		labelStyle.setFontSize("15");
+		labelStyle.setFillOpacity(0.1);
+		labelStyle.setFontWeight("bold");
 		return labelStyle;
 	}
 

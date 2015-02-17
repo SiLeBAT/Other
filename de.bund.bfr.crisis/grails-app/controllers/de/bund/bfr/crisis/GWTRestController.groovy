@@ -16,6 +16,8 @@
  ******************************************************************************/
 package de.bund.bfr.crisis;
 
+import grails.gorm.DetachedCriteria;
+
 import javax.management.InstanceOfQueryExp;
 import javax.persistence.Persistence;
 
@@ -117,12 +119,17 @@ abstract class GWTRestController<T> {
 		}
 
 		if(conditions) {
-			def criteria = conditions.inject(this.type) { c, field, value ->
-				c.where { 
-					if(associationProperties.contains(field))
-						invokeMethod(field, { eq('id', value) })
-					else 
-						eq(field, value)
+			def criteria = conditions.inject(this.type) { c, String field, value ->
+				c.where { criterion ->
+					GrailsDomainClass domainClazz = domainClass
+					 field.split('\\.').inject(criterion) { subCriterion, subField ->
+						def property = domainClazz.getPersistentProperty(subField)
+						if(property?.association) {
+							domainClass = property.getReferencedDomainClass()
+							return subCriterion.property(subField)
+						}
+						subCriterion.eq(subField, value)
+					}
 				}
 			}
 			respondJson([data: criteria.findAll()])

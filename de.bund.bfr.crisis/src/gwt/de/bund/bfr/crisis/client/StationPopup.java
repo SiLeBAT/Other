@@ -1,15 +1,11 @@
 package de.bund.bfr.crisis.client;
 
-import com.google.gwt.user.client.ui.ScrollPanel;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.HeaderControls;
-import com.smartgwt.client.types.TitleOrientation;
-import com.smartgwt.client.widgets.HeaderControl;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -18,7 +14,6 @@ import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
-import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
@@ -36,7 +31,17 @@ public class StationPopup extends Window {
 		initMySelf();
 		// form for editing
 		initEditForm();
-		hide();
+	}
+	
+	public void updateStation(String id) {
+		StationDS.getInstance().fetchData(new Criteria("id", id), new DSCallback() {
+			@Override
+			public void execute(DSResponse response, Object rawData, DSRequest request) {
+				Record stationRecord = response.getData()[0];
+				form.editRecord(stationRecord);
+				productGrid.updateStation(stationRecord);
+			}
+		});
 	}
 
 	private void initMySelf() {
@@ -47,6 +52,18 @@ public class StationPopup extends Window {
 		setPadding(10);
 		setOpacity(95);
 		setCanDragResize(true);
+		centerInPage();
+		// form dialog
+		this.setShowShadow(true);
+		// this.setIsModal(true);
+		this.setPadding(20);
+		this.setWidth(900);
+		this.setHeight(600);
+		this.setShowMinimizeButton(false);
+		this.setShowMaximizeButton(true);
+		this.setShowCloseButton(true);
+		this.setShowModalMask(true);
+		this.centerInPage();
 	}
 
 	private void initEditForm() {
@@ -96,37 +113,6 @@ public class StationPopup extends Window {
 		dialog.addMember(buttons);
 		dialog.addMember(productGrid.wrapWithActionButtons());
 		dialog.setWidth100();
-		// form dialog
-		this.setShowShadow(true);
-		// this.setIsModal(true);
-		this.setPadding(20);
-		this.setWidth(900);
-		this.setHeight(600);
-		this.setShowMinimizeButton(false);
-		this.setShowMaximizeButton(true);
-		this.setShowCloseButton(true);
-		this.setShowModalMask(true);
-		this.centerInPage();
 		this.addItem(dialog);
-		addCloseClickHandler(new CloseClickHandler() {
-			@Override
-			public void onCloseClick(CloseClickEvent event) {
-				hide();
-			}
-		});
-	}
-
-	public void show(String featureId, final int x, final int y) {
-		StationDS.getInstance().fetchData(new Criteria("id", featureId), new DSCallback() {
-			@Override
-			public void execute(DSResponse response, Object rawData, DSRequest request) {
-				Record stationRecord = response.getData()[0];
-				form.editRecord(stationRecord);
-				productGrid.updateStation(stationRecord);
-				centerInPage();
-				show();
-			}
-		});
-
 	}
 }

@@ -1,6 +1,11 @@
 package de.bund.bfr.crisis.client;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.gwtopenmaps.openlayers.client.geometry.LinearRing;
 import org.gwtopenmaps.openlayers.client.geometry.Point;
+import org.gwtopenmaps.openlayers.client.geometry.Polygon;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
