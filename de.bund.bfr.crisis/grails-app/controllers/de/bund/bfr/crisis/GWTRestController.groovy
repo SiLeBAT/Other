@@ -16,18 +16,14 @@
  ******************************************************************************/
 package de.bund.bfr.crisis;
 
-import grails.gorm.DetachedCriteria;
-
-import javax.management.InstanceOfQueryExp;
-import javax.persistence.Persistence;
-
 import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
 import org.codehaus.groovy.grails.commons.GrailsApplication
-import org.codehaus.groovy.grails.commons.GrailsDomainClass;
+import org.codehaus.groovy.grails.commons.GrailsDomainClass
 import org.codehaus.groovy.grails.web.converters.ConverterUtil
-import org.h2.message.DbException;
-import org.hibernate.collection.internal.PersistentBag;
-import org.hibernate.collection.spi.PersistentCollection;
+import org.grails.datastore.gorm.query.criteria.DetachedAssociationCriteria
+import org.grails.datastore.mapping.model.PersistentEntity
+import org.grails.datastore.mapping.model.types.Association;
+import org.grails.datastore.mapping.query.Query
 import org.springframework.dao.DataIntegrityViolationException
 
 /**
@@ -39,6 +35,7 @@ abstract class GWTRestController<T> {
 	protected Class<T> type
 	protected GrailsDomainClass domainClass
 	protected Set<String> associationProperties
+	protected Set<String> volatileProperties
 
 	static int STATUS_VALIDATION_ERROR = -4 // com.smartgwt.client.rpc.RPCResponse.STATUS_VALIDATION_ERROR
 
@@ -59,6 +56,7 @@ abstract class GWTRestController<T> {
 		String name = ConverterUtil.trimProxySuffix(type.name)
 		domainClass = grailsApplication.getArtefact(DomainClassArtefactHandler.TYPE, name)
 		associationProperties = domainClass.properties.findAll { it.association }*.name.toSet()
+		volatileProperties = domainClass.properties.findAll { !it.persistent }*.name.toSet()
 	}
 
 	protected respondJson(payload) {
@@ -70,12 +68,13 @@ abstract class GWTRestController<T> {
 					return dataObject
 
 				[id: dataObject.id] +
-				dataObject.properties.collectEntries { key, value ->
+				dataObject.properties.collectEntries { key, value ->					
 					if(value != null && associationProperties.contains(key)) {
 						if(value instanceof Collection)
 							return [(key): value*.id]
 						return [(key): value.id]
-					}
+					} else if(volatileProperties.contains(key))
+						return [:]
 					[(key): value]
 				}
 			}
@@ -119,19 +118,28 @@ abstract class GWTRestController<T> {
 		}
 
 		if(conditions) {
+			// resolve conditions, such as id=1, station.id=2, lot.product.id=3
 			def criteria = conditions.inject(this.type) { c, String field, value ->
+				// station.id=2 will also be mapped to station: [id: 2], which we ignore here
+				if(value instanceof Map)
+					return c
 				c.where { criterion ->
-					GrailsDomainClass domainClazz = domainClass
-					 field.split('\\.').inject(criterion) { subCriterion, subField ->
-						def property = domainClazz.getPersistentProperty(subField)
-						if(property?.association) {
-							domainClass = property.getReferencedDomainClass()
-							return subCriterion.property(subField)
+					PersistentEntity persistentEntity = persistentEntity
+					def lastCriteria = field.split('\\.').inject(criterion) { subCriterion, subField ->
+						def property = persistentEntity.getPropertyByName(subField)
+						if(property instanceof Association) {
+							persistentEntity = property.getAssociatedEntity()
+							def dac = new DetachedAssociationCriteria(property.associatedEntity.javaClass, property)
+							subCriterion.add(dac)																				
+							return dac
 						}
 						subCriterion.eq(subField, value)
 					}
+					if(!(lastCriteria instanceof Query.Equals))
+						lastCriteria = lastCriteria.eq('id', value)
 				}
 			}
+			
 			respondJson([data: criteria.findAll()])
 		}
 		else
