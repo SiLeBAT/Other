@@ -4,7 +4,6 @@
 	<classpathentry exported="true" kind="lib" path="lib/commons-logging-1.1.1.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
-	<classpathentry kind="src" path="lib"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="lib" path="lib/stratosphere-clients-0.4.jar"/>
 	<classpathentry kind="lib" path="lib/stratosphere-compiler-0.4.jar"/>

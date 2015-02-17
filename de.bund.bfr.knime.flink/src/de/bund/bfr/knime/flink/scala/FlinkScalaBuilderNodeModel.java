@@ -62,7 +62,7 @@ public class FlinkScalaBuilderNodeModel extends NodeModel {
 	protected PortObjectSpec[] configure(PortObjectSpec[] inSpecs) throws InvalidSettingsException {
 		try {
 			Path executableJar =
-				this.jarBuilder.getScriptJar(this.m_settings.getScript(), this.m_settings.getJarPaths());
+				this.jarBuilder.getScriptJar(this.m_settings);
 			FlinkProgramObjectSpec flinkProgramObject = new FlinkProgramObjectSpec();
 			flinkProgramObject.getProgram().setJarPath(executableJar.toAbsolutePath().toString());
 			flinkProgramObject.getProgram().setParameters(this.m_settings.getParameters());
@@ -79,7 +79,7 @@ public class FlinkScalaBuilderNodeModel extends NodeModel {
 	 */
 	@Override
 	protected PortObject[] execute(PortObject[] inObjects, ExecutionContext exec) throws Exception {
-		Path executableJar = this.jarBuilder.getScriptJar(this.m_settings.getScript(), this.m_settings.getJarPaths());
+		Path executableJar = this.jarBuilder.getScriptJar(this.m_settings);
 
 		FlinkProgramObject flinkProgramObject = new FlinkProgramObject();
 		flinkProgramObject.getProgram().setJarPath(executableJar.toAbsolutePath().toString());
@@ -152,7 +152,7 @@ public class FlinkScalaBuilderNodeModel extends NodeModel {
 
 		try {
 			// test compile
-			this.jarBuilder.getScriptJar(snippetSettings.getScript(), snippetSettings.getJarPaths());
+			this.jarBuilder.getScriptJar(snippetSettings);
 		} catch (Exception e) {
 			throw new InvalidSettingsException(e.getMessage());
 		}

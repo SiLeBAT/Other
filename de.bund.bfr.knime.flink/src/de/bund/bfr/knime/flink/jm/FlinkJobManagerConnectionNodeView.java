@@ -61,8 +61,6 @@ public class FlinkJobManagerConnectionNodeView extends NodeView<FlinkJobManagerC
 	 */
 	@Override
 	protected void onClose() {
-
-		// TODO things to do when closing the view
 	}
 
 	/**
@@ -70,8 +68,6 @@ public class FlinkJobManagerConnectionNodeView extends NodeView<FlinkJobManagerC
 	 */
 	@Override
 	protected void onOpen() {
-
-		// TODO things to do when opening the view
 	}
 
 }

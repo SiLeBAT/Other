@@ -752,7 +752,7 @@ public class TracingMap extends MapWidget {
 		}
 		return pointList;
 	}
-
+	
 	/**
 	 * @param panel
 	 */

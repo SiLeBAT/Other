@@ -6,6 +6,7 @@ import org.codehaus.groovy.grails.web.converters.ConverterUtil;
 
 import grails.transaction.Transactional
 import grails.converters.*
+import groovy.json.JsonBuilder
 
 //@Transactional(readOnly = true)
 class MapService {
@@ -13,7 +14,7 @@ class MapService {
 	GrailsApplication grailsApplication
 
 	static expose = ["gwt:de.bund.bfr.crisis.client"]
-
+	
 	String search(String searchString) {
 		List<Station> stations
 		List<Delivery> deliveries

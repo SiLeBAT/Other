@@ -55,9 +55,9 @@ object OutbreakAnalysis {
 
     // build sparse sales vector for product
     // the distribution over the sale areas is normalized to one
-    val products: DataSet[Product] = productSales.groupBy(0).reduceGroup[Product] { in: Iterator[(String, String, Double)] =>
+    val products: DataSet[Product] = productSales.groupBy(0).reduceGroup { in =>
       val list = in.toList
-      val totalSales: Double = list.map { _._3 }.sum
+      val totalSales: Double = list.map { salesLine => salesLine._3 }.sum
       val distribution = list.map { t => t._2 -> (t._3 / totalSales) }.toMap
       Product(list.head._1, distribution)
     }
@@ -98,15 +98,18 @@ object OutbreakAnalysis {
       }
 
     // now find the first rank with a cumulative distribution over the user-given threshold
-    val mclSetSize = mclCDF.map { _.indexWhere { _ >= minimalMCL } + 1 }
+    var findSetSizeParameters = new Configuration()
+    findSetSizeParameters.setDouble("minimalMCL", minimalMCL)
+    val mclSetSize = mclCDF.map(new FindSetSize).
+      withParameters(findSetSizeParameters)
 
     // create a pseudo-scenario (for code reusage) of the actual outbreak
-    val actualScenario = outbreaks.map { x => (x, 0) }.groupBy(1).reduceGroup { group =>
-      Scenario(ScenarioId("actual", 0), group.map { _._1 }.toMap.mapValues { _.toDouble })
+    val actualScenario = outbreaks.map { (_, 0) }.groupBy(1).reduceGroup { group =>
+      Scenario(ScenarioId("actual", 0), Map()) //group.map { _._1(0) }.toMap.mapValues { _.toDouble })
     }
 
     // score all products in respect to the actual outbreak
-    val productLBAs: DataSet[Score] = actualScenario.cross(products).map(new LBAScore)
+    val productLBAs: DataSet[Score] = actualScenario.crossWithHuge(products).map(new LBAScore)
 
     // rank the products
     val productRanks: DataSet[Rank] = productLBAs.groupBy("scenario.*").sortGroup("score", Order.DESCENDING).
@@ -163,7 +166,7 @@ object OutbreakAnalysis {
   
   def count(dataSet : DataSet[_]) : DataSet[Int] = {
     // WORKAROUND: getting count is currently clumsy in Flink; should be replaced with more compact code
-    dataSet.map { o => (1, 1) }.aggregate(Aggregations.SUM, 0).map { _._1 }
+    dataSet.map { o => (1, 1) }.sum(0).map { _._1 }
   }
 }
 
@@ -239,6 +242,21 @@ final class LBAScore extends RichMapFunction[(Scenario, Product), Score] {
       amountWithIndex._1 * Math.log(salesInRegion(amountWithIndex._2))
     }.sum
     return Score(product.name, scenario.id, logLH)
+  }
+}
+
+/**
+ * Finds the first index, at which the value is above the given threshold.
+ */
+final class FindSetSize extends RichMapFunction[List[Double], Integer] {
+  var minimalMCL: Double = 0d
+
+  override def open(config: Configuration): Unit = {
+    minimalMCL = config.getDouble("minimalMCL", 1)
+  }
+  
+  def map(mclCDF: List[Double]): Integer = {    
+    mclCDF.indexWhere { _ >= minimalMCL } + 1
   }
 }
 

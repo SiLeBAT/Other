@@ -19,7 +19,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 public class StationPopup extends Window {
 	private final DynamicForm form = new DynamicForm();
-
+	
 	private final IButton saveButton = new IButton();
 
 	private final IButton resetButton = new IButton();
@@ -114,5 +114,25 @@ public class StationPopup extends Window {
 		dialog.addMember(productGrid.wrapWithActionButtons());
 		dialog.setWidth100();
 		this.addItem(dialog);
+
+		addCloseClickHandler(new CloseClickHandler() {
+			@Override
+			public void onCloseClick(CloseClickEvent event) {
+				hide();
+			}
+		});
+	}
+
+	public void show(String stationId, final int x, final int y) {
+		StationDS.getInstance().fetchData(new Criteria("id", stationId), new DSCallback() {
+			@Override
+			public void execute(DSResponse response, Object rawData, DSRequest request) {
+				Record stationRecord = response.getData()[0];
+				form.editRecord(stationRecord);
+				productGrid.updateStation(stationRecord);
+				centerInPage();
+				show();
+			}
+		});
 	}
 }
