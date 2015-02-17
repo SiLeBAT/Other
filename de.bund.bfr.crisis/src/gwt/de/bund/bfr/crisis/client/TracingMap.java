@@ -418,7 +418,7 @@ public class TracingMap extends MapWidget {
 		deliveryLayer.setStyleMap(new StyleMap(createDeliveryStyle(), dss, dss));
 		stationLayer = new Vector("stations");
 		labelLayer = new Vector("labels");
-		addClusterStrategy();
+		//addClusterStrategy();
 		map.addLayer(deliveryLayer);
 		map.addLayer(stationLayer);
 		map.addLayer(labelLayer);
@@ -445,7 +445,7 @@ public class TracingMap extends MapWidget {
 					map.zoomToExtent(clusterBounds);
 				} else {
 					StationPopup stationPopup = new StationPopup();
-					stationPopup.updateStation(eventObject.getVectorFeature().getFeatureId().substring(1));
+					stationPopup.updateStation(vf.getFeatureId().substring(1));
 					stationPopup.show();
 				}
 			}
