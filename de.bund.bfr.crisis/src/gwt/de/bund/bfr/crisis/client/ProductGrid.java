@@ -23,6 +23,10 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.DSCallback;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.DragTrackerMode;
@@ -46,9 +50,9 @@ import com.smartgwt.client.widgets.grid.events.RecordDropHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
-class EditableGrid extends ListGrid {
+abstract class EditableGrid extends ListGrid {
 	Logger logger = Logger.getLogger(this.getClass().getSimpleName());
-	
+
 	/**
 	 * Initializes EditableGrid.
 	 */
@@ -68,30 +72,35 @@ class EditableGrid extends ListGrid {
 		setAlternateRecordStyles(true);
 		setShowAllRecords(true);
 		setBodyOverflow(Overflow.VISIBLE);
-		setOverflow(Overflow.VISIBLE);		
+		setOverflow(Overflow.VISIBLE);
 		setCanGroupBy(true);
-		
-//		setCanDrag(true);
+
+		// setCanDrag(true);
 		setCanReorderRecords(true);
 		setCanDragRecordsOut(true);
 		setCanAcceptDroppedRecords(true);
 		setRecordDropAppearance(RecordDropAppearance.OVER);
 		setDragTrackerMode(DragTrackerMode.RECORD);
-//        setDragDataAction(DragDataAction.NONE);
-		
-		this.addRecordDropHandler(new RecordDropHandler() {			
+		// setDragDataAction(DragDataAction.NONE);
+
+		this.addRecordDropHandler(new RecordDropHandler() {
 			@Override
 			public void onRecordDrop(RecordDropEvent event) {
+				if (event.getSourceWidget() != EditableGrid.this) {
+					SC.say("Merging is currently only allowed in the same widget");
+					return;
+				}
+
 				final ListGridRecord sourceRecord = event.getDropRecords()[0];
 				final ListGridRecord targetRecord = event.getTargetRecord();
 				logger.severe(sourceRecord.toString());
-				if(targetRecord != null && sourceRecord != targetRecord) {
-					String source = sourceRecord.toMap().toString(), target = targetRecord.toMap().toString(); 
-					SC.confirm("Are you sure to merge the given record\n" + source + "\ninto the record\n" + target + "?", new BooleanCallback() {						
+				if (targetRecord != null && sourceRecord != targetRecord) {
+					String source = sourceRecord.toMap().toString(), target = targetRecord.toMap().toString();
+					SC.confirm("Are you sure to merge the given record\n" + source + "\ninto the record\n" + target
+							+ "?", new BooleanCallback() {
 						@Override
 						public void execute(Boolean value) {
-							if(value != null) 
-								mergeRecords(sourceRecord, targetRecord);
+							if (value != null) mergeRecords(sourceRecord, targetRecord);
 						}
 					});
 				}
@@ -99,17 +108,25 @@ class EditableGrid extends ListGrid {
 		});
 	}
 
-	private void mergeRecords(ListGridRecord sourceRecord, ListGridRecord targetRecord) {
+	private void mergeRecords(final ListGridRecord sourceRecord, final ListGridRecord targetRecord) {
 		final String[] sourceAttributes = sourceRecord.getAttributes();
 		for (int index = 0; index < sourceAttributes.length; index++) {
 			String sourceValue = sourceRecord.getAttribute(sourceAttributes[index]);
 			String targetValue = targetRecord.getAttribute(sourceAttributes[index]);
-			if(targetValue == null || targetValue.isEmpty())
+			if (targetValue == null || targetValue.isEmpty())
 				targetRecord.setAttribute(sourceAttributes[index], sourceValue);
 		}
-		updateData(targetRecord);
+		moveChildren(sourceRecord, targetRecord, new DSCallback() {
+			@Override
+			public void execute(DSResponse dsResponse, Object data, DSRequest dsRequest) {
+				updateData(targetRecord);
+				removeData(sourceRecord);
+			}
+		});
 	}
-	
+
+	protected abstract void moveChildren(ListGridRecord sourceRecord, ListGridRecord targetRecord, DSCallback callback);
+
 	public Canvas wrapWithActionButtons() {
 		VLayout layout = new VLayout(5);
 		layout.setPadding(5);
@@ -131,23 +148,21 @@ class EditableGrid extends ListGrid {
 				getGroupTree().closeAll();
 			}
 		});
-		
 
 		final IButton groupButton = new IButton("Group similar");
 		groupButton.addClickHandler(new ClickHandler() {
 			public void onClick(ClickEvent event) {
 				ListGridField[] fields = getFields();
 				fields[fields.length - 1].setGroupValueFunction(new GroupValueFunction() {
-					public Object getGroupValue(Object value, ListGridRecord record, ListGridField field, String fieldName,
-							ListGrid grid) {
+					public Object getGroupValue(Object value, ListGridRecord record, ListGridField field,
+							String fieldName, ListGrid grid) {
 						return record.getAttributeAsInt("_simgroup");
 					}
 				});
 				if (groupButton.isSelected()) {
 					simGroupRecords();
 					setGroupByField(fields[fields.length - 1].getName());
-				}
-				else
+				} else
 					ungroup();
 			}
 		});
@@ -187,8 +202,8 @@ class EditableGrid extends ListGrid {
 				}
 			}
 		}
-		
-		for (Entry<Integer, Set<Integer>> cluster : clusters.entrySet()) 
+
+		for (Entry<Integer, Set<Integer>> cluster : clusters.entrySet())
 			records[cluster.getKey()].setAttribute("_simgroup", cluster.getValue().iterator().next());
 	}
 
@@ -197,8 +212,8 @@ class EditableGrid extends ListGrid {
 		String[] attr2 = listGridRecord2.getAttributes();
 		double sim = 0, weight = 0;
 		for (int fieldIndex = 0; fieldIndex < attr1.length; fieldIndex++)
-			if (attr1[fieldIndex] != null && !attr1[fieldIndex].isEmpty() &&
-				attr2[fieldIndex] != null && !attr2[fieldIndex].isEmpty()) {
+			if (attr1[fieldIndex] != null && !attr1[fieldIndex].isEmpty() && attr2[fieldIndex] != null
+					&& !attr2[fieldIndex].isEmpty()) {
 				sim += Similarities.getEditSim(attr1[fieldIndex], attr2[fieldIndex]);
 				weight += 1;
 			}
@@ -227,10 +242,28 @@ public class ProductGrid extends EditableGrid {
 		fetchRelatedData(stationRecord, StationDS.getInstance());
 	}
 
+	@Override
+	protected void moveChildren(final ListGridRecord sourceRecord, final ListGridRecord targetRecord,
+			final DSCallback callback) {
+		LotDS.getInstance().fetchData(new Criteria("product", sourceRecord.getAttribute("id")), new DSCallback() {
+			@Override
+			public void execute(DSResponse dsResponse, Object data, DSRequest dsRequest) {
+				for (Record record : dsResponse.getData()) {
+					record.setAttribute("product", targetRecord.getAttribute("id"));
+					LotDS.getInstance().updateData(record);
+				}
+				LotDS.getInstance().updateCaches(dsResponse);
+				callback.execute(dsResponse, data, dsRequest);
+			}
+		});
+	}
+
 	/*
 	 * (non-Javadoc)
+	 * 
 	 * @see
-	 * com.smartgwt.client.widgets.grid.ListGrid#getExpansionComponent(com.smartgwt.client.widgets.grid.ListGridRecord)
+	 * com.smartgwt.client.widgets.grid.ListGrid#getExpansionComponent(com.smartgwt
+	 * .client.widgets.grid.ListGridRecord)
 	 */
 	@Override
 	protected Canvas getExpansionComponent(ListGridRecord record) {
@@ -248,10 +281,43 @@ class LotGrid extends EditableGrid {
 		fetchRelatedData(productRecord, ProductDS.getInstance());
 	}
 
+	@Override
+	protected void moveChildren(final ListGridRecord sourceRecord, final ListGridRecord targetRecord,
+			final DSCallback callback) {
+		final String targetId = targetRecord.getAttribute("id");
+		DeliveryDS.getInstance().fetchData(new Criteria("lot", sourceRecord.getAttribute("id")), new DSCallback() {
+			@Override
+			public void execute(DSResponse dsResponse, Object data, DSRequest dsRequest) {
+				for (Record record : dsResponse.getData()) {
+					record.setAttribute("lot", targetId);
+					DeliveryDS.getInstance().updateData(record);
+				}
+				DeliveryDS.getInstance().updateCaches(dsResponse);
+
+				FoodRecipeDS.getInstance().fetchData(new Criteria("lot", sourceRecord.getAttribute("id")),
+						new DSCallback() {
+							@Override
+							public void execute(DSResponse dsResponse, Object data, DSRequest dsRequest) {
+								for (Record record : dsResponse.getData()) {
+									record.setAttribute("lot", targetId);
+									FoodRecipeDS.getInstance().updateData(record);
+								}
+
+								FoodRecipeDS.getInstance().updateCaches(dsResponse);
+
+								callback.execute(dsResponse, data, dsRequest);
+							}
+						});
+			}
+		});
+	}
+
 	/*
 	 * (non-Javadoc)
+	 * 
 	 * @see
-	 * com.smartgwt.client.widgets.grid.ListGrid#getExpansionComponent(com.smartgwt.client.widgets.grid.ListGridRecord)
+	 * com.smartgwt.client.widgets.grid.ListGrid#getExpansionComponent(com.smartgwt
+	 * .client.widgets.grid.ListGridRecord)
 	 */
 	@Override
 	protected Canvas getExpansionComponent(ListGridRecord record) {
@@ -266,5 +332,10 @@ class DeliveryGrid extends EditableGrid {
 	public DeliveryGrid(Record lotRecord) {
 		setDataSource(DeliveryDS.getInstance());
 		fetchRelatedData(lotRecord, LotDS.getInstance());
+	}
+
+	@Override
+	protected void moveChildren(ListGridRecord sourceRecord, ListGridRecord targetRecord, DSCallback callback) {
+		callback.execute(null, null, null);
 	}
 }

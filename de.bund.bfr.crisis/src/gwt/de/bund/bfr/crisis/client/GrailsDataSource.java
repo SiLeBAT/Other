@@ -63,7 +63,7 @@ public class GrailsDataSource extends RestDataSource {
 	protected Object transformRequest(DSRequest request) {
 		// FIXES the "null" values for null fields, by replacing them with empty strings; backend must ensure the correct type
 		JavaScriptObject jso = request.getData();
-		for (String fieldName : getFieldNames()) {
+		for (String fieldName : JSOHelper.getProperties(jso)) {
 			if (JSOHelper.getAttributeAsObject(jso, fieldName) == null) {
 				JSOHelper.setAttribute(jso, fieldName, "");
 			}

@@ -453,6 +453,7 @@ public class TracingMap extends MapWidget {
 					stationPopup.updateStation(vf.getFeatureId().substring(1));
 					stationPopup.show();
 				}
+				selectFeature.unSelect( eventObject.getVectorFeature());
 			}
 		};
 		stationLayer.addVectorFeatureSelectedListener(stationListener);
@@ -466,6 +467,7 @@ public class TracingMap extends MapWidget {
 				DeliveryPopup deliveryPopup = new DeliveryPopup();
 				deliveryPopup.updateStations(delivery.getStationId(), delivery.getRecipientId());
 				deliveryPopup.show();
+				selectFeature.unSelect( eventObject.getVectorFeature());
 			}
 		});
 		
