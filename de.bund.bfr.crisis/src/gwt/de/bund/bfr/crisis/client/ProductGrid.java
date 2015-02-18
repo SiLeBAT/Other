@@ -21,13 +21,18 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.DragTrackerMode;
 import com.smartgwt.client.types.ListGridEditEvent;
 import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.types.RecordDropAppearance;
 import com.smartgwt.client.types.RowEndEditAction;
 import com.smartgwt.client.types.SelectionType;
+import com.smartgwt.client.util.BooleanCallback;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -36,10 +41,14 @@ import com.smartgwt.client.widgets.grid.GroupValueFunction;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.RecordDropEvent;
+import com.smartgwt.client.widgets.grid.events.RecordDropHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 class EditableGrid extends ListGrid {
+	Logger logger = Logger.getLogger(this.getClass().getSimpleName());
+	
 	/**
 	 * Initializes EditableGrid.
 	 */
@@ -59,14 +68,48 @@ class EditableGrid extends ListGrid {
 		setAlternateRecordStyles(true);
 		setShowAllRecords(true);
 		setBodyOverflow(Overflow.VISIBLE);
-		setOverflow(Overflow.VISIBLE);
+		setOverflow(Overflow.VISIBLE);		
 		setCanGroupBy(true);
-		setCanDrag(true);
-		setCanDragReposition(true);
-		setCanDragSelect(true);
-
+		
+//		setCanDrag(true);
+		setCanReorderRecords(true);
+		setCanDragRecordsOut(true);
+		setCanAcceptDroppedRecords(true);
+		setRecordDropAppearance(RecordDropAppearance.OVER);
+		setDragTrackerMode(DragTrackerMode.RECORD);
+//        setDragDataAction(DragDataAction.NONE);
+		
+		this.addRecordDropHandler(new RecordDropHandler() {			
+			@Override
+			public void onRecordDrop(RecordDropEvent event) {
+				final ListGridRecord sourceRecord = event.getDropRecords()[0];
+				final ListGridRecord targetRecord = event.getTargetRecord();
+				logger.severe(sourceRecord.toString());
+				if(targetRecord != null && sourceRecord != targetRecord) {
+					String source = sourceRecord.toMap().toString(), target = targetRecord.toMap().toString(); 
+					SC.confirm("Are you sure to merge the given record\n" + source + "\ninto the record\n" + target + "?", new BooleanCallback() {						
+						@Override
+						public void execute(Boolean value) {
+							if(value != null) 
+								mergeRecords(sourceRecord, targetRecord);
+						}
+					});
+				}
+			}
+		});
 	}
 
+	private void mergeRecords(ListGridRecord sourceRecord, ListGridRecord targetRecord) {
+		final String[] sourceAttributes = sourceRecord.getAttributes();
+		for (int index = 0; index < sourceAttributes.length; index++) {
+			String sourceValue = sourceRecord.getAttribute(sourceAttributes[index]);
+			String targetValue = targetRecord.getAttribute(sourceAttributes[index]);
+			if(targetValue == null || targetValue.isEmpty())
+				targetRecord.setAttribute(sourceAttributes[index], sourceValue);
+		}
+		updateData(targetRecord);
+	}
+	
 	public Canvas wrapWithActionButtons() {
 		VLayout layout = new VLayout(5);
 		layout.setPadding(5);
@@ -173,6 +216,7 @@ public class ProductGrid extends EditableGrid {
 	public ProductGrid() {
 		setCanExpandRecords(true);
 		setDataSource(ProductDS.getInstance());
+		setCanDragRecordsOut(false);
 
 		for (ListGridField field : getFields()) {
 			field.setOptionDataSource(ProductDS.getInstance());

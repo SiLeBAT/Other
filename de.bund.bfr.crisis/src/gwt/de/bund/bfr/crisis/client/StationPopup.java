@@ -38,6 +38,7 @@ public class StationPopup extends Window {
 			@Override
 			public void execute(DSResponse response, Object rawData, DSRequest request) {
 				Record stationRecord = response.getData()[0];
+				setTitle(stationRecord.getAttribute("name"));
 				form.editRecord(stationRecord);
 				productGrid.updateStation(stationRecord);
 			}

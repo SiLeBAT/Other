@@ -16,12 +16,15 @@
  ******************************************************************************/
 package de.bund.bfr.crisis.client;
 
+import com.google.gwt.core.client.JavaScriptObject;
+import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.OperationBinding;
 import com.smartgwt.client.data.RestDataSource;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.DSProtocol;
+import com.smartgwt.client.util.JSOHelper;
 
 /**
  * @author heisea
@@ -35,15 +38,15 @@ public class GrailsDataSource extends RestDataSource {
 		setClientOnly(false);
 		setDataFormat(DSDataFormat.JSON);
 
-        DataSourceIntegerField pkField = new DataSourceIntegerField("id");  
-        pkField.setHidden(true);  
-        pkField.setPrimaryKey(true);  
-        addField(pkField);
-        
-//        DataSourceIntegerField groupField = new DataSourceIntegerField("_group");  
-//        groupField.setHidden(true);  
-//        addField(groupField);
-        
+		DataSourceIntegerField pkField = new DataSourceIntegerField("id");
+		pkField.setHidden(true);
+		pkField.setPrimaryKey(true);
+		addField(pkField);
+
+		// DataSourceIntegerField groupField = new DataSourceIntegerField("_group");
+		// groupField.setHidden(true);
+		// addField(groupField);
+
 		// setup operations
 		// 1. fetch
 		OperationBinding fetch = createBinding(DSOperationType.FETCH, "fetch", DSProtocol.POSTPARAMS);
@@ -54,6 +57,19 @@ public class GrailsDataSource extends RestDataSource {
 		// 4. remove
 		OperationBinding remove = createBinding(DSOperationType.REMOVE, "remove", DSProtocol.POSTPARAMS);
 		setOperationBindings(fetch, update, add, remove);
+	}
+
+	@Override
+	protected Object transformRequest(DSRequest request) {
+		// FIXES the "null" values for null fields, by replacing them with empty strings; backend must ensure the correct type
+		JavaScriptObject jso = request.getData();
+		for (String fieldName : getFieldNames()) {
+			if (JSOHelper.getAttributeAsObject(jso, fieldName) == null) {
+				JSOHelper.setAttribute(jso, fieldName, "");
+			}
+		}
+
+		return super.transformRequest(request);
 	}
 
 	private OperationBinding createBinding(DSOperationType operationType, String actionName, DSProtocol dataProtocol) {

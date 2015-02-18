@@ -41,6 +41,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.JsonUtils;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
@@ -138,7 +139,6 @@ public class TracingMap extends MapWidget {
 		Scheduler.get().scheduleDeferred(new Command() {
 			public void execute() {
 				search("");
-				centerTheMap(-1);
 			}
 		});
 	}
@@ -170,7 +170,12 @@ public class TracingMap extends MapWidget {
 			addDelivery2Feature(d.getId(), d.getStationId(), d.getRecipientId(), 30d);
 		}
 
-		centerTheMap(-1);
+		Scheduler.get().scheduleDeferred(new ScheduledCommand() {			
+			@Override
+			public void execute() {
+				centerTheMap(-1);
+			}
+		});
 	}
 
 	private void search(String searchString) {
