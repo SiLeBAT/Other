@@ -1,12 +1,13 @@
-package de.bund.bfr.flink.outbreakanalysis
+// Imports
+import org.apache.flink.api.scala._;
 
+import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConverters._
 import scala.io.Source
 
 import org.apache.flink.api.common.functions.RichFlatMapFunction
 import org.apache.flink.api.common.functions.RichGroupReduceFunction
 import org.apache.flink.api.common.functions.RichMapFunction
-import org.apache.flink.api.scala._
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.core.fs.FileSystem
 import org.apache.flink.core.fs.Path
@@ -14,10 +15,22 @@ import org.apache.flink.util.Collector
 import org.apache.flink.api.common.operators.Order
 import org.apache.flink.core.fs.FileSystem.WriteMode
 import org.apache.flink.api.java.aggregation.Aggregations
+import java.util.Random
+import java.util.TreeMap
 
-/**
- */
-object OutbreakAnalysis {
+// data holders
+// distribution represents the sparse sale or outbreak distribution of a particular product or scenario
+case class Product(name: String, distribution: Map[String, Double])
+case class ScenarioId(causingProduct: String, number: Int)
+case class Scenario(id: ScenarioId, distribution: Map[String, Double])
+case class Score(productName: String, scenario: ScenarioId, score: Double)
+case class Rank(productName: String, rank: Int)
+case class RankProbability(rank: Int, probability: Double)
+
+// Job class
+object Job {
+  private val env: ExecutionEnvironment = ExecutionEnvironment.getExecutionEnvironment
+  // Parsed input parameters; all parameters have been initialized
   private var salesPath: String = null.asInstanceOf[String]
   private var outbreakPath: String = null.asInstanceOf[String]
   private var numberOfScenarios: Integer = null.asInstanceOf[Integer]
@@ -28,9 +41,9 @@ object OutbreakAnalysis {
   private var productScoreOutputPath: Option[String] = None
   private var productRankOutputPath: Option[String] = None
   private var productSetOutputPath: Option[String] = None
-  private val env = ExecutionEnvironment.getExecutionEnvironment //createLocalEnvironment(2)
 
   def main(args: Array[String]) {
+    // Generated parameter extraction
     salesPath = args(0)
     outbreakPath = args(1)
     numberOfScenarios = args(2).toInt
@@ -46,21 +59,25 @@ object OutbreakAnalysis {
       productRankOutputPath = Option(args(8))
     if(args.length > 9 && args(9) != "")
       productSetOutputPath = Option(args(9))
-      
+    performTask
+  }
+ 
+
+  def performTask() {
     // outbreak line consists of area code, count 
-    val outbreaks: DataSet[(String, Int)] = env.readCsvFile(outbreakPath)
+    val outbreaks: DataSet[(String, Int)] = env.readCsvFile(outbreakPath, "\n")
 
     // sales line consists of ean, area code, count 
-    val productSales: DataSet[(String, String, Double)] = readSales()
+    val productSales: DataSet[(String, String, Double)] = env.readCsvFile(salesPath, "\n")
 
     // build sparse sales vector for product
     // the distribution over the sale areas is normalized to one
-    val products: DataSet[Product] = productSales.groupBy(0).reduceGroup[Product] { in: Iterator[(String, String, Double)] =>
-      val list = in.toList
-      val totalSales: Double = list.map { _._3 }.sum
-      val distribution = list.map { t => t._2 -> (t._3 / totalSales) }.toMap
-      Product(list.head._1, distribution)
-    }
+    val products: DataSet[Product] = productSales.groupBy(0).reduceGroup { in =>
+        val list = in.toList
+        val totalSales: Double = list.map { _._3 }.sum
+        val distribution = list.map { t => t._2 -> (t._3 / totalSales) }.toMap
+        Product(list.head._1, distribution)
+      }
 
     // now generate N scenarios for each product (N=numberOfScenarios, user-specified, usually 50)
     // use the MagicTable to draw M cases (M=numberOfOutbreaks)
@@ -98,15 +115,18 @@ object OutbreakAnalysis {
       }
 
     // now find the first rank with a cumulative distribution over the user-given threshold
-    val mclSetSize = mclCDF.map { _.indexWhere { _ >= minimalMCL } + 1 }
-
+    var findSetSizeParameters = new Configuration()
+    findSetSizeParameters.setDouble("minimalMCL", minimalMCL)
+    val mclSetSize = mclCDF.map(new FindSetSize).
+      withParameters(findSetSizeParameters)
+      
     // create a pseudo-scenario (for code reusage) of the actual outbreak
-    val actualScenario = outbreaks.map { x => (x, 0) }.groupBy(1).reduceGroup { group =>
+    val actualScenario: DataSet[Scenario] = outbreaks.map { x => (x, 0) }.groupBy(1).reduceGroup { group =>
       Scenario(ScenarioId("actual", 0), group.map { _._1 }.toMap.mapValues { _.toDouble })
     }
 
     // score all products in respect to the actual outbreak
-    val productLBAs: DataSet[Score] = actualScenario.cross(products).map(new LBAScore)
+    val productLBAs: DataSet[Score] = actualScenario.crossWithHuge(products).map(new LBAScore)
 
     // rank the products
     val productRanks: DataSet[Rank] = productLBAs.groupBy("scenario.*").sortGroup("score", Order.DESCENDING).
@@ -144,36 +164,11 @@ object OutbreakAnalysis {
     env.execute("Foodborne disease simulation")
   }
   
-  def readSales() : DataSet[(String, String, Double)] = {
-    // sale matrix; rows = area codes; columns = product names
-    // WORKAROUND: Flink currently does not support variable columns in csv.
-    // Manually read header from data source and configure input dataSet accordingly.
-    val input = new Path(salesPath)
-    val source = Source.fromInputStream(input.getFileSystem.open(input))
-    val header = source.getLines().next()
-    val saleMatrix: DataSet[String] = env.readTextFile(salesPath)
-    
-    var parameters = new Configuration()
-    parameters.setString("header", header)
-    parameters.setString("delimiter", delimiter)
-    // sales line consists of ean, area code, count 
-    saleMatrix.flatMap(new SplitIntoCells).
-      withParameters(parameters)
-  }
-  
   def count(dataSet : DataSet[_]) : DataSet[Int] = {
     // WORKAROUND: getting count is currently clumsy in Flink; should be replaced with more compact code
     dataSet.map { o => (1, 1) }.aggregate(Aggregations.SUM, 0).map { _._1 }
   }
 }
-
-// data holders, distribution represent the sparse sale or outbreak distributions
-case class Product(name: String, distribution: Map[String, Double])
-case class ScenarioId(causingProduct: String, number: Int)
-case class Scenario(id: ScenarioId, distribution: Map[String, Double])
-case class Score(productName: String, scenario: ScenarioId, score: Double)
-case class Rank(productName: String, rank: Int)
-case class RankProbability(rank: Int, probability: Double)
 
 /**
  * Splits a row in a matrix into cells
@@ -243,6 +238,21 @@ final class LBAScore extends RichMapFunction[(Scenario, Product), Score] {
 }
 
 /**
+ * Finds the first index, at which the value is above the given threshold.
+ */
+final class FindSetSize extends RichMapFunction[List[Double], Integer] {
+  var minimalMCL: Double = 0d
+
+  override def open(config: Configuration): Unit = {
+    minimalMCL = config.getDouble("minimalMCL", 1)
+  }
+  
+  def map(mclCDF: List[Double]): Integer = {    
+    mclCDF.indexWhere { _ >= minimalMCL } + 1
+  }
+}
+
+/**
  * Calculates the relative number of rank occurrences.
  */
 final class TotalRankDistribution extends RichGroupReduceFunction[Rank, RankProbability] {
@@ -276,3 +286,81 @@ final class FindProductSet extends RichGroupReduceFunction[(Rank, Int), List[Str
   }
 }
 
+class MagicTable(probabilities: Array[Double]) {
+
+  def mean = probabilities.length
+
+  def probs = probabilities
+
+  def random = new Random()
+
+  private var magicTablePos: Array[Int] = _
+
+  private var magicTableProbs: Array[Double] = _
+
+  if (probabilities == null) throw new IllegalArgumentException("No input probabilities given")
+
+  this.createTable()
+
+  private def createTable() {
+    // linearized magic table
+    this.magicTableProbs = Array.ofDim[Double](2 * this.mean)
+    this.magicTablePos = Array.ofDim[Int](2 * this.mean)
+    
+    // group probability indices
+    var rest = new TreeMap[Double, ListBuffer[Int]]()
+    for (index <- 0 until this.mean) {
+      val prob = this.probs(index)
+      var buffer = rest.get(prob)
+      if (buffer == null) {
+        buffer = new ListBuffer[Int]()
+        rest.put(prob, buffer)
+      }
+      buffer += index
+    }
+      
+    val mReciprocal = 1.0 / this.mean
+    for (t <- 0 until this.mean) {
+      // calculate corresponding probabilities
+      val upper = rest.firstKey
+      val index = rest.firstEntry().getValue.head
+      val lower = mReciprocal - upper
+      
+      // set probabilities in magic table
+      this.magicTableProbs(t) = upper
+      this.magicTableProbs(t + this.mean) = lower
+      
+      // set indices in magic table
+      this.magicTablePos(t) = index
+      val maxVal = rest.lastKey
+      val maxIndex = rest.lastEntry().getValue.remove(0)
+      this.magicTablePos(t + this.mean) = maxIndex
+      
+      // update rest
+      val newVal = maxVal - lower
+      var valueList = rest.get(newVal)
+      if (valueList == null) {     
+        valueList = new ListBuffer[Int]()
+        rest.put(newVal, valueList)
+      }      
+      valueList += maxIndex
+      
+      // clean up empty buckets
+      if (rest.get(upper).isEmpty) 
+        rest.remove(upper)
+        
+      if (rest.get(maxVal).isEmpty) 
+        rest.remove(maxVal)
+    }
+  }
+
+  def sampleIndex(): Int = {
+    var randomIndex = this.random.nextInt(this.mean)
+    
+    // choose cell (top or bottom)
+    if (this.random.nextDouble() > this.mean * this.magicTableProbs(randomIndex)) 
+      randomIndex += this.mean
+      
+    this.magicTablePos(randomIndex)
+  }
+}

@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Flink extension for KNIME Workbench
 Bundle-SymbolicName: de.bund.bfr.knime.flink; singleton:=true
-Bundle-Version: 0.9.0
+Bundle-Version: 0.9.1
 Bundle-ClassPath: flink.jar,
  lib/hadoop-hdfs-2.5.1.jar,
  lib/commons-logging-1.1.3.jar,
@@ -33,7 +33,13 @@ Bundle-ClassPath: flink.jar,
  lib/akka-slf4j_2.10-2.3.7.jar,
  lib/scopt_2.10-3.2.0.jar,
  lib/netty-3.8.0.Final.jar,
- lib/netty-all-4.0.24.Final.jar
+ lib/netty-all-4.0.24.Final.jar,
+ lib/flink-avro-0.9-SNAPSHOT.jar,
+ lib/flink-hbase-0.9-SNAPSHOT.jar,
+ lib/flink-spargel-0.9-SNAPSHOT.jar,
+ lib/flink-streaming-connectors-0.9-SNAPSHOT.jar,
+ lib/flink-streaming-core-0.9-SNAPSHOT.jar,
+ lib/flink-yarn-0.9-SNAPSHOT.jar
 Bundle-Activator: de.bund.bfr.knime.flink.FlinkNodePlugin
 Bundle-Vendor: Arvid Heise
 Require-Bundle: org.eclipse.core.runtime,
