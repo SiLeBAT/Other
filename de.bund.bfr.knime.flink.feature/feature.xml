@@ -16,6 +16,24 @@
       [Enter License Description here.]
    </license>
 
+   <requires>
+      <import plugin="org.eclipse.core.runtime"/>
+      <import plugin="org.knime.workbench.core"/>
+      <import plugin="org.knime.workbench.repository"/>
+      <import plugin="org.knime.base"/>
+      <import plugin="org.knime.jsnippets"/>
+      <import plugin="org.fife.rsyntaxtextarea"/>
+      <import plugin="org.eclipse.m2e.launching"/>
+      <import plugin="org.eclipse.m2e.core"/>
+      <import plugin="org.eclipse.core.resources"/>
+      <import plugin="org.junit"/>
+      <import plugin="org.eclipse.m2e.maven.runtime" version="1.4.0" match="greaterOrEqual"/>
+      <import plugin="org.slf4j.api"/>
+      <import plugin="org.apache.log4j"/>
+      <import plugin="org.apache.commons.lang3" version="3.2.1" match="greaterOrEqual"/>
+      <import plugin="com.google.guava" version="12.0.0" match="greaterOrEqual"/>
+   </requires>
+
    <plugin
          id="de.bund.bfr.knime.flink"
          download-size="0"
