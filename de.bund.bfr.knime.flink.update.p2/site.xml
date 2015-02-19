@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/de.bund.bfr.knime.flink.feature_0.9.1.jar" id="de.bund.bfr.knime.flink.feature" version="0.9.1">
+   <feature url="features/de.bund.bfr.knime.flink.feature_1.0.0.8.jar" id="de.bund.bfr.knime.flink.feature" version="1.0.0.8">
       <category name="other"/>
    </feature>
    <category-def name="other" label="Other"/>
