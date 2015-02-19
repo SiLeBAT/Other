@@ -2,7 +2,7 @@
 <feature
       id="de.bund.bfr.knime.flink.feature"
       label="Flink KNIME feature"
-      version="0.9.1">
+      version="1.0.0.8">
 
    <description url="http://www.example.com/description">
       [Enter Feature Description here.]
