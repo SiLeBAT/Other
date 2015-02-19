@@ -93,7 +93,7 @@ public class JarBuilder {
 		List<String> options = Lists.newArrayList("package", "-q");
 		if (javaHome != null && !javaHome.isEmpty()) {
 			options.add("-PCustomJDK");
-			options.add("-Djdk.home=\"" + new File(javaHome).getAbsolutePath() + "\"");
+			options.add("\"-Djdk.home=" + new File(javaHome).getAbsolutePath() + "\"");
 		}
 		this.invokeMaven(options.toArray(new String[0]), tempProject.toAbsolutePath().toString(),
 			"Cannot compile project (error code %s).");
