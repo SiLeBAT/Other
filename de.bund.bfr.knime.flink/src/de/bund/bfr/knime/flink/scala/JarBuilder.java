@@ -17,6 +17,7 @@
 package de.bund.bfr.knime.flink.scala;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -37,11 +38,14 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Enumeration;
+import java.util.List;
 
 import org.apache.maven.cli.MavenCli;
 import org.knime.core.util.crypto.HexUtils;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
+
+import com.google.common.collect.Lists;
 
 /**
  * Creates and caches the jars build from the Scala fragment. A hashing function identifies the same program to avoid
@@ -80,13 +84,18 @@ public class JarBuilder {
 			Files.delete(cachedJar);
 	}
 
-	public void buildJar(String partialScript, Path targetJar, Path[] additionalJars)
+	public void buildJar(String partialScript, Path targetJar, Path[] additionalJars, String javaHome)
 			throws IOException {
 		Path tempProject = this.createEmptyMavenProject(targetJar);
 		Path srcTarget = tempProject.resolve("src/main/scala/");
 		Files.createDirectories(srcTarget);
 		Files.write(srcTarget.resolve("Job.scala"), partialScript.getBytes(UTF8));
-		this.invokeMaven(new String[] { "package", "-q" }, tempProject.toAbsolutePath().toString(),
+		List<String> options = Lists.newArrayList("package", "-q");
+		if (javaHome != null && !javaHome.isEmpty()) {
+			options.add("-PCustomJDK");
+			options.add("-Djdk.home=\"" + new File(javaHome).getAbsolutePath() + "\"");
+		}
+		this.invokeMaven(options.toArray(new String[0]), tempProject.toAbsolutePath().toString(),
 			"Cannot compile project (error code %s).");
 		Files.move(this.findGeneratedJar(tempProject), targetJar);
 		this.deleteAll(tempProject);
@@ -95,10 +104,10 @@ public class JarBuilder {
 		}
 	}
 
-	public Path getScriptJar(String partialScript, Path... additionalJars) throws IOException {
-		Path cachedJar = this.getCachedJar(partialScript, additionalJars);
+	public Path getScriptJar(ScalaSnippetSettings settings) throws IOException {
+		Path cachedJar = this.getCachedJar(settings.getScript(), settings.getJarPaths());
 		if (!Files.exists(cachedJar))
-			this.buildJar(partialScript, cachedJar, additionalJars);
+			this.buildJar(settings.getScript(), cachedJar, settings.getJarPaths(), settings.getJavaHome());
 		return cachedJar;
 	}
 
@@ -161,22 +170,22 @@ public class JarBuilder {
 		});
 	}
 
-//	private void deleteInDir(Path dir, String filePattern) throws IOException {
-//		final Pattern pattern = Pattern.compile(filePattern);
-//		Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
-//			/*
-//			 * (non-Javadoc)
-//			 * @see java.nio.file.SimpleFileVisitor#visitFile(java.lang.Object,
-//			 * java.nio.file.attribute.BasicFileAttributes)
-//			 */
-//			@Override
-//			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-//				if (pattern.matcher(file.getFileName().toString()).matches())
-//					Files.delete(file);
-//				return super.visitFile(file, attrs);
-//			}
-//		});
-//	}
+	// private void deleteInDir(Path dir, String filePattern) throws IOException {
+	// final Pattern pattern = Pattern.compile(filePattern);
+	// Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
+	// /*
+	// * (non-Javadoc)
+	// * @see java.nio.file.SimpleFileVisitor#visitFile(java.lang.Object,
+	// * java.nio.file.attribute.BasicFileAttributes)
+	// */
+	// @Override
+	// public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+	// if (pattern.matcher(file.getFileName().toString()).matches())
+	// Files.delete(file);
+	// return super.visitFile(file, attrs);
+	// }
+	// });
+	// }
 
 	private Path findGeneratedJar(Path emptyMavenProject) throws IOException {
 		try (DirectoryStream<Path> files = Files.newDirectoryStream(emptyMavenProject.resolve("target"))) {

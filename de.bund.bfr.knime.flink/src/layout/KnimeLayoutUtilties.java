@@ -264,7 +264,7 @@ public class KnimeLayoutUtilties {
 		if (children.size() == 1 && first instanceof JPanel &&
 			((JPanel) children.get(0)).getBorder() instanceof TitledBorder) {
 			// group like box
-			beautify((JPanel) first);
+//			beautify((JPanel) first);
 			spanToRight.put(first, Boolean.TRUE);
 		} else if (first instanceof JLabel)
 			((JLabel) first).setHorizontalAlignment(SwingConstants.RIGHT);

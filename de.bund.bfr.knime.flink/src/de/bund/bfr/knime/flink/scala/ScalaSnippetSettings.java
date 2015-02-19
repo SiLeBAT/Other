@@ -47,6 +47,8 @@ public class ScalaSnippetSettings {
 
 	private static final String SCRIPT = "script";
 
+	private static final String JAVA_HOME = "java.home";
+
 	private static final String VERSION = "version";
 
 	/** Custom jar files. */
@@ -62,6 +64,8 @@ public class ScalaSnippetSettings {
 
 	/** The version of the java snippet. */
 	private String version = ScalaSnippet.VERSION_1_X;
+
+	private String javaHome = "";
 
 	/**
 	 * Create a new instance.
@@ -127,6 +131,7 @@ public class ScalaSnippetSettings {
 		this.jarFiles = settings.getStringArray(JAR_FILES);
 		this.parameters = this.loadParameters(settings, PARAMETERS, false);
 		this.version = settings.getString(VERSION);
+		this.javaHome = settings.getString(JAVA_HOME, "");
 	}
 
 	/**
@@ -147,6 +152,7 @@ public class ScalaSnippetSettings {
 			throw new IllegalStateException("Cannot happen in safe mode", e);
 		}
 		this.version = settings.getString(VERSION, ScalaSnippet.VERSION_1_X);
+		this.javaHome = settings.getString(JAVA_HOME, "");
 	}
 
 	/**
@@ -162,6 +168,7 @@ public class ScalaSnippetSettings {
 		settings.addStringArray(JAR_FILES, this.jarFiles);
 		this.saveParameters(settings, PARAMETERS, this.parameters);
 		settings.addString(VERSION, this.version);
+		settings.addString(JAVA_HOME, this.javaHome);
 	}
 
 	/**
@@ -241,5 +248,27 @@ public class ScalaSnippetSettings {
 			config.addString(String.format("type%d", index), vars.get(index).getType().name());
 			config.addBoolean(String.format("optional%d", index), vars.get(index).isOptional());
 		}
+	}
+
+	/**
+	 * Returns the javaHome.
+	 * 
+	 * @return the javaHome
+	 */
+	public String getJavaHome() {
+		return this.javaHome;
+	}
+
+	/**
+	 * Sets the javaHome to the specified value.
+	 * 
+	 * @param javaHome
+	 *        the javaHome to set
+	 */
+	public void setJavaHome(String javaHome) {
+		if (javaHome == null)
+			throw new NullPointerException("javaHome must not be null");
+
+		this.javaHome = javaHome;
 	}
 }

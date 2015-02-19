@@ -22,6 +22,7 @@ import java.awt.GridLayout;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
+import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -43,6 +44,8 @@ import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
+import org.knime.core.node.defaultnodesettings.DialogComponentFileChooser;
+import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.util.ViewUtils;
 
@@ -71,6 +74,8 @@ public class FlinkScalaBuilderNodeDialog extends NodeDialogPane {
 	private ScalaSnippet snippet;
 
 	private SnippetTextArea snippetTextArea;
+
+	private SettingsModelString jdkPath;
 
 	/**
 	 * New pane for configuring FlinkScalaBuilder node dialog.
@@ -147,7 +152,11 @@ public class FlinkScalaBuilderNodeDialog extends NodeDialogPane {
 	 * @return options panel or null if there are no additional options.
 	 */
 	protected JPanel createOptionsPanel() {
-		return null;
+		this.jdkPath = new SettingsModelString("java.home", "");
+		DialogComponentFileChooser fileChooser =
+			new DialogComponentFileChooser(this.jdkPath, "java.home", JFileChooser.OPEN_DIALOG, true);
+		fileChooser.setBorderTitle("JDK path (optional)");
+		return fileChooser.getComponentPanel();
 	}
 
 	/*
@@ -197,6 +206,8 @@ public class FlinkScalaBuilderNodeDialog extends NodeDialogPane {
 			this.snippet.getDocument().getGuardedSection(
 				ScalaSnippetDocument.Section.TaskStart).getEnd().getOffset() + 1);
 		this.snippetTextArea.requestFocusInWindow();
+		
+		this.jdkPath.setStringValue(this.settings.getJavaHome());
 	}
 
 	/**
@@ -224,6 +235,7 @@ public class FlinkScalaBuilderNodeDialog extends NodeDialogPane {
 		if (!parameterModel.validateValues())
 			throw new InvalidSettingsException("The parameter table has errors.");
 
+		s.setJavaHome(this.jdkPath.getStringValue());
 		s.saveSettings(settings);
 	}
 
