@@ -35,7 +35,6 @@ abstract class GWTRestController<T> {
 	protected Class<T> type
 	protected GrailsDomainClass domainClass
 	protected Set<String> associationProperties
-	protected Set<String> volatileProperties
 
 	static int STATUS_VALIDATION_ERROR = -4 // com.smartgwt.client.rpc.RPCResponse.STATUS_VALIDATION_ERROR
 
@@ -55,10 +54,12 @@ abstract class GWTRestController<T> {
 		this.grailsApplication = grailsApplication;
 		String name = ConverterUtil.trimProxySuffix(type.name)
 		domainClass = grailsApplication.getArtefact(DomainClassArtefactHandler.TYPE, name)
-		associationProperties = domainClass.properties.findAll { it.association }*.name.toSet()
-		volatileProperties = domainClass.properties.findAll { !it.persistent }*.name.toSet()
+		associationProperties = domainClass.properties.findAll { 
+			it.association ||
+			(!it.persistent && grailsApplication.getArtefact(DomainClassArtefactHandler.TYPE, ConverterUtil.trimProxySuffix(it.type.name)))
+		}*.name.toSet()
 	}
-
+		
 	protected respondJson(payload) {
 		// retain only foreign keys if one domain class references another
 		if(payload.data != null)
@@ -73,8 +74,7 @@ abstract class GWTRestController<T> {
 						if(value instanceof Collection)
 							return [(key): value*.id]
 						return [(key): value.id]
-					} else if(volatileProperties.contains(key))
-						return [:]
+					}
 					[(key): value]
 				}
 			}

@@ -10,8 +10,6 @@ import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.events.CloseClickEvent;
-import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -32,17 +30,25 @@ public class StationPopup extends Window {
 		// form for editing
 		initEditForm();
 	}
-	
+
 	public void updateStation(String id) {
 		StationDS.getInstance().fetchData(new Criteria("id", id), new DSCallback() {
 			@Override
 			public void execute(DSResponse response, Object rawData, DSRequest request) {
-				Record stationRecord = response.getData()[0];
-				setTitle(stationRecord.getAttribute("name"));
-				form.editRecord(stationRecord);
-				productGrid.updateStation(stationRecord);
+				updateStation(response.getData()[0]);
 			}
 		});
+	}
+
+	public void updateStation(Record stationRecord) {
+		setTitle(stationRecord.getAttribute("name"));
+		form.editRecord(stationRecord);
+		productGrid.setVisible(stationRecord.getAttribute("id").length() > 0);
+		productGrid.updateStation(stationRecord);
+	}
+	
+	public Record getStationRecord() {
+		return form.getValuesAsRecord();
 	}
 
 	private void initMySelf() {
@@ -92,7 +98,7 @@ public class StationPopup extends Window {
 		saveButton.addClickHandler(new ClickHandler() {
 			public void onClick(ClickEvent clickEvent) {
 				form.saveData();
-				StationPopup.this.hide();
+				StationPopup.this.close();
 			}
 		});
 		resetButton.setTitle("RESET");

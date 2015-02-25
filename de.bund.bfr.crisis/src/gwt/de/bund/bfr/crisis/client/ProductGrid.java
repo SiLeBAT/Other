@@ -16,8 +16,11 @@
  ******************************************************************************/
 package de.bund.bfr.crisis.client;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -27,6 +30,8 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.DataSource;
+import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.DragTrackerMode;
@@ -41,6 +46,11 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.events.VisibilityChangedEvent;
+import com.smartgwt.client.widgets.events.VisibilityChangedHandler;
+import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import com.smartgwt.client.widgets.grid.GroupValueFunction;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -56,7 +66,14 @@ abstract class EditableGrid extends ListGrid {
 	/**
 	 * Initializes EditableGrid.
 	 */
-	public EditableGrid() {
+	public EditableGrid(DataSource dataSource) {
+		setDataSource(dataSource);
+		List<ListGridField> listGridFields = new ArrayList<ListGridField>();
+		for (DataSourceField field : dataSource.getFields()) {
+			if (!field.getHidden()) listGridFields.add(new ListGridField(field.getName()));
+		}
+		setFields(listGridFields.toArray(new ListGridField[0]));
+
 		setHeight("*");
 		setWidth100();
 		setDrawAheadRatio(4);
@@ -142,12 +159,19 @@ abstract class EditableGrid extends ListGrid {
 				selectRecord(newRecord);
 			}
 		});
-		IButton collapseButton = new IButton("Collapse all");
-		collapseButton.addClickHandler(new ClickHandler() {
-			public void onClick(ClickEvent event) {
-				getGroupTree().closeAll();
-			}
-		});
+		hLayout.addMember(addButton);
+
+		if (getCanExpandRecords()) {
+			IButton collapseButton = new IButton("Collapse all");
+			collapseButton.addClickHandler(new ClickHandler() {
+				public void onClick(ClickEvent event) {
+					for (ListGridRecord record : getRecords())
+						expandRecord(record);
+					// getGroupTree().closeAll();
+				}
+			});
+			hLayout.addMember(collapseButton);
+		}
 
 		final IButton groupButton = new IButton("Group similar");
 		groupButton.addClickHandler(new ClickHandler() {
@@ -167,9 +191,6 @@ abstract class EditableGrid extends ListGrid {
 			}
 		});
 		groupButton.setActionType(SelectionType.CHECKBOX);
-
-		hLayout.addMember(addButton);
-		hLayout.addMember(collapseButton);
 		hLayout.addMember(groupButton);
 
 		layout.addMember(this);
@@ -229,8 +250,8 @@ public class ProductGrid extends EditableGrid {
 	 * Initializes ProductGrid.
 	 */
 	public ProductGrid() {
+		super(ProductDS.getInstance());
 		setCanExpandRecords(true);
-		setDataSource(ProductDS.getInstance());
 		setCanDragRecordsOut(false);
 
 		for (ListGridField field : getFields()) {
@@ -276,8 +297,8 @@ class LotGrid extends EditableGrid {
 	 * Initializes LotGrid.
 	 */
 	public LotGrid(Record productRecord) {
+		super(LotDS.getInstance());
 		setCanExpandRecords(true);
-		setDataSource(LotDS.getInstance());
 		fetchRelatedData(productRecord, ProductDS.getInstance());
 	}
 
@@ -330,8 +351,69 @@ class DeliveryGrid extends EditableGrid {
 	 * Initializes DeliveryGrid.
 	 */
 	public DeliveryGrid(Record lotRecord) {
-		setDataSource(DeliveryDS.getInstance());
+		super(DeliveryDS.getInstance());
 		fetchRelatedData(lotRecord, LotDS.getInstance());
+
+		final ComboBoxItem recipientSelect = new ComboBoxItem();
+		recipientSelect.setAddUnknownValues(false);
+		recipientSelect.setOptionDataSource(StationDS.getInstance());
+		recipientSelect.setPickListWidth(500);
+		recipientSelect.setValueField("id");
+		recipientSelect.setDisplayField("name");
+
+		LinkedHashMap<String, String> hashMap = new LinkedHashMap<String, String>();
+		hashMap.put("", "New station");
+		recipientSelect.setSpecialValues(hashMap);
+		recipientSelect.setSeparateSpecialValues(true);
+		recipientSelect.addChangeHandler(new ChangeHandler() {
+			@Override
+			public void onChange(ChangeEvent event) {
+				// new station clicked
+				if (event.getValue().toString().isEmpty()) {
+					event.cancel();
+					// request (prefilled) new station record from backend
+					StationDS.getInstance().addData(new Record(), new DSCallback() {
+						@Override
+						public void execute(DSResponse dsResponse, Object data, DSRequest dsRequest) {
+							// got them, now display the popup
+							final StationPopup stationPopup = new StationPopup();
+							stationPopup.updateStation(dsResponse.getData()[0]);
+							stationPopup.setShowModalMask(true);
+							stationPopup.setTitle("New station");
+							stationPopup.show();
+
+							stationPopup.addVisibilityChangedHandler(new VisibilityChangedHandler() {
+								@Override
+								public void onVisibilityChanged(VisibilityChangedEvent event) {
+									Record stationRecord = stationPopup.getStationRecord();
+									String id = stationRecord.getAttribute("id");
+									if (id != null && !id.isEmpty()) recipientSelect.setValue(id);
+									StationDS.getInstance().invalidateCache();
+								}
+							});
+						}
+					});
+				}
+			}
+		});
+
+		ListGrid pickListProperties = new ListGrid();
+		pickListProperties.setShowFilterEditor(true);
+		recipientSelect.setPickListProperties(pickListProperties);
+
+		String[] fieldNames = { "name", "vatNumber", "street", "houseNumber", "zipCode", "city" };
+		ListGridField[] fields = new ListGridField[fieldNames.length];
+		for (int index = 0; index < fieldNames.length; index++)
+			fields[index] = new ListGridField(fieldNames[index]);
+		fields[0].setWidth(100);
+		fields[2].setWidth(100);
+		recipientSelect.setPickListFields(fields);
+
+		ListGridField recipientField = getField("recipient");
+		recipientField.setDisplayField("recipientName");
+		recipientField.setEditorProperties(recipientSelect);
+		recipientField.setWidth(100);
+		setAutoFetchDisplayMap(true);
 	}
 
 	@Override

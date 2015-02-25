@@ -25,7 +25,6 @@ public class DeliveryDS extends GrailsDataSource {
 		addField(new DataSourceTextField("packagingType"));
 		addField(new DataSourceFloatField("amount"));
 		addField(new DataSourceTextField("unit"));
-		addField(new DataSourceTextField("recipient"));
 		
 		String[] fieldNames = { "deliveryDateDay", "deliveryDateMonth", "deliveryDateYear" };
 		for (String fieldName : fieldNames) 
@@ -35,6 +34,15 @@ public class DeliveryDS extends GrailsDataSource {
 		lotField.setHidden(true);
 		lotField.setForeignKey("lot.id");
 		addField(lotField);
+		
+		DataSourceField recipientField = new DataSourceTextField("recipient");
+		recipientField.setForeignKey("station.id");
+		recipientField.setDisplayField("name");
+		addField(recipientField);
+		DataSourceTextField recipientName = new DataSourceTextField("recipientName");
+		recipientName.setHidden(true);
+		recipientName.setCanEdit(false);
+		addField(recipientName);
 
 		IntegerRangeValidator dayValidator = new IntegerRangeValidator();
 		dayValidator.setMin(1);

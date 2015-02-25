@@ -72,9 +72,13 @@ grails.project.dependency.resolution = {
 		build 'com.google.gwt:gwt-servlet:2.7.0'
 
 		compile 'org.hsqldb:hsqldb:2.3.2'
+		
+//		compile 'org.apache.httpcomponents:httpclient:4.4', {
+//			force = true
+//		}
 	}
 
-	plugins {
+	plugins {		
 		// plugins for the build system only
 		build ":tomcat:7.0.55"
 
@@ -92,7 +96,9 @@ grails.project.dependency.resolution = {
 		compile ":resources:1.2.14"
 		
 //		compile ":smartgwt:0.2"
+		// we have a patched version in our lib folder, which is automatically included
 		compile ":extended-dependency-manager:0.5.5"
+	
 		compile ":gwt:1.0", { transitive=false }
 		
 		// Uncomment these to enable additional asset-pipeline capabilities

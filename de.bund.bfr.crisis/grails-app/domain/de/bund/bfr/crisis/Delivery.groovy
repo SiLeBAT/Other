@@ -22,6 +22,10 @@ class Delivery {
 		this.lot.product.station
 	}
 	
+	String getRecipientName() {
+		recipient?.name
+	}
+	
     static constraints = {
 		deliveryDateDay range: 1..31
 		deliveryDateMonth range: 1..12
