@@ -370,7 +370,6 @@ class DeliveryGrid extends EditableGrid {
 			public void onChange(ChangeEvent event) {
 				// new station clicked
 				if (event.getValue().toString().isEmpty()) {
-					event.cancel();
 					// request (prefilled) new station record from backend
 					StationDS.getInstance().addData(new Record(), new DSCallback() {
 						@Override
@@ -387,12 +386,18 @@ class DeliveryGrid extends EditableGrid {
 								public void onVisibilityChanged(VisibilityChangedEvent event) {
 									Record stationRecord = stationPopup.getStationRecord();
 									String id = stationRecord.getAttribute("id");
-									if (id != null && !id.isEmpty()) recipientSelect.setValue(id);
-									StationDS.getInstance().invalidateCache();
+									logger.severe("id " + id);
+									if (id != null && !id.isEmpty()) {
+										ListGridRecord selectedRecord = getSelectedRecord();
+										selectedRecord.setAttribute("recipient", id);
+										DeliveryDS.getInstance().updateData(selectedRecord);
+									}
+									DeliveryDS.getInstance().invalidateCache();
 								}
 							});
 						}
 					});
+					event.cancel();
 				}
 			}
 		});

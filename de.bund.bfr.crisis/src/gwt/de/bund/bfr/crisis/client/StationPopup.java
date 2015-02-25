@@ -41,9 +41,9 @@ public class StationPopup extends Window {
 	}
 
 	public void updateStation(Record stationRecord) {
-		setTitle(stationRecord.getAttribute("name"));
+		setTitle(stationRecord.getAttribute("name") == null ? "New Station" : stationRecord.getAttribute("name"));
 		form.editRecord(stationRecord);
-		productGrid.setVisible(stationRecord.getAttribute("id").length() > 0);
+		productGrid.setVisible(stationRecord.getAttribute("id") != null);
 		productGrid.updateStation(stationRecord);
 	}
 	
