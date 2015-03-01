@@ -37,7 +37,7 @@ public class DeliveryDS extends GrailsDataSource {
 		
 		DataSourceField recipientField = new DataSourceTextField("recipient");
 		recipientField.setForeignKey("station.id");
-		recipientField.setDisplayField("name");
+		recipientField.setDisplayField("recipientName");
 		addField(recipientField);
 		DataSourceTextField recipientName = new DataSourceTextField("recipientName");
 		recipientName.setHidden(true);

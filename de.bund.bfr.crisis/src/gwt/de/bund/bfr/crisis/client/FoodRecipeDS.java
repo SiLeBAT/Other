@@ -21,15 +21,24 @@ public class FoodRecipeDS extends GrailsDataSource {
 
 		addField(new DataSourceFloatField("mixtureRatio"));
 		
+		DataSourceField ingredientField = new DataSourceTextField("ingredient");
+		ingredientField.setForeignKey("delivery.id");
+		ingredientField.setHidden(true);
+		addField(ingredientField);
+		
 		DataSourceField lotField = new DataSourceTextField("lot");
 		lotField.setHidden(true);
 		lotField.setForeignKey("lot.id");
 		addField(lotField);
-		
-		DataSourceField ingredientField = new DataSourceTextField("ingredient");
-		ingredientField.setHidden(true);
-		ingredientField.setForeignKey("delivery.id");
-		addField(ingredientField);
+//		DataSourceTextField deliveringStation = new DataSourceTextField("deliveringStation");
+//		deliveringStation.setCanEdit(false);
+//		addField(deliveringStation);
+//		DataSourceTextField originalProduct = new DataSourceTextField("originalProduct");
+//		originalProduct.setCanEdit(false);
+//		addField(originalProduct);
+//		DataSourceTextField originalLot = new DataSourceTextField("originalLot");
+//		originalLot.setCanEdit(false);
+//		addField(originalLot);
 		
 		FloatRangeValidator mixtureRatioValidator = new FloatRangeValidator();
 		mixtureRatioValidator.setMin(0);

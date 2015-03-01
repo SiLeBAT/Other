@@ -68,17 +68,28 @@ abstract class GWTRestController<T> {
 				if(!(type.isInstance(dataObject)))
 					return dataObject
 
-				[id: dataObject.id] +
-				dataObject.properties.collectEntries { key, value ->					
+				def dataEntries = [id: dataObject.id]
+				dataEntries.putAll(dataObject.properties.collectEntries { key, value ->					
 					if(value != null && associationProperties.contains(key)) {
 						if(value instanceof Collection)
 							return [(key): value*.id]
 						return [(key): value.id]
 					}
 					[(key): value]
-				}
+				})
+				if(params.'_include') // key1=path1,key2=path2,...
+					dataEntries.putAll(params.'_include'.split(',').collectEntries { includeSpec ->
+						def parts = includeSpec.split('=')
+						def key = parts[0], path = parts[1]
+						def value = path.split('\\.').inject(dataObject) { object, segment ->
+							object?."$segment"
+						}
+						[(key): value]
+					})
+				dataEntries
 			}
 
+		println "response: $payload"
 		render(contentType: "application/json") { response = payload }
 	}
 

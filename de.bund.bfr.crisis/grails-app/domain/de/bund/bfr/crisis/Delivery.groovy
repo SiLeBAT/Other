@@ -19,7 +19,7 @@ class Delivery {
 	Station recipient
 	
 	Station getStation() {
-		this.lot.product.station
+		this?.lot?.product?.station
 	}
 	
 	String getRecipientName() {

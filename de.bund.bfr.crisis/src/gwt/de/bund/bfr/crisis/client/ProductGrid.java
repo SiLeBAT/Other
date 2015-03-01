@@ -26,6 +26,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import com.google.gwt.core.shared.GWT;
+import com.google.gwt.i18n.client.LocalizableResource.DefaultLocale;
+import com.google.gwt.i18n.client.Messages;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -44,13 +47,18 @@ import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.VisibilityChangedEvent;
 import com.smartgwt.client.widgets.events.VisibilityChangedHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.FormItemValueFormatter;
 import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
+import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
+import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.GroupValueFunction;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -58,6 +66,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordDropEvent;
 import com.smartgwt.client.widgets.grid.events.RecordDropHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 abstract class EditableGrid extends ListGrid {
@@ -145,13 +154,17 @@ abstract class EditableGrid extends ListGrid {
 	protected abstract void moveChildren(ListGridRecord sourceRecord, ListGridRecord targetRecord, DSCallback callback);
 
 	public Canvas wrapWithActionButtons() {
+		return wrapWithActionButtons(getDataSource().getID());
+	}
+
+	public Canvas wrapWithActionButtons(String newButtonName) {
 		VLayout layout = new VLayout(5);
 		layout.setPadding(5);
 
 		HLayout hLayout = new HLayout(10);
 		hLayout.setAlign(Alignment.CENTER);
 
-		IButton addButton = new IButton("Add new " + getDataSource().getID());
+		IButton addButton = new IButton("Add new " + newButtonName);
 		addButton.addClickHandler(new ClickHandler() {
 			public void onClick(ClickEvent event) {
 				ListGridRecord newRecord = new ListGridRecord();
@@ -246,6 +259,8 @@ abstract class EditableGrid extends ListGrid {
  * @author heisea
  */
 public class ProductGrid extends EditableGrid {
+	private Record stationRecord;
+
 	/**
 	 * Initializes ProductGrid.
 	 */
@@ -260,6 +275,7 @@ public class ProductGrid extends EditableGrid {
 	}
 
 	public void updateStation(Record stationRecord) {
+		this.stationRecord = stationRecord;
 		fetchRelatedData(stationRecord, StationDS.getInstance());
 	}
 
@@ -288,16 +304,19 @@ public class ProductGrid extends EditableGrid {
 	 */
 	@Override
 	protected Canvas getExpansionComponent(ListGridRecord record) {
-		return new LotGrid(record).wrapWithActionButtons();
+		return new LotGrid(stationRecord, record).wrapWithActionButtons();
 	}
 }
 
 class LotGrid extends EditableGrid {
+	private Record stationRecord;
+
 	/**
 	 * Initializes LotGrid.
 	 */
-	public LotGrid(Record productRecord) {
+	public LotGrid(Record stationRecord, Record productRecord) {
 		super(LotDS.getInstance());
+		this.stationRecord = stationRecord;
 		setCanExpandRecords(true);
 		fetchRelatedData(productRecord, ProductDS.getInstance());
 	}
@@ -342,7 +361,121 @@ class LotGrid extends EditableGrid {
 	 */
 	@Override
 	protected Canvas getExpansionComponent(ListGridRecord record) {
-		return new DeliveryGrid(record).wrapWithActionButtons();
+		Layout lotCanvas = new VLayout();
+		lotCanvas.setHeight("*");
+		lotCanvas.setWidth100();
+		Label recipeLabel = new Label("Recipe");
+		recipeLabel.setHeight(30);
+		lotCanvas.addMember(recipeLabel);
+		lotCanvas.addMember(new RecipeGrid(stationRecord, record).wrapWithActionButtons());
+		Label deliveriesLabel = new Label("Deliveries");
+		deliveriesLabel.setHeight(30);
+		lotCanvas.addMember(deliveriesLabel);
+		lotCanvas.addMember(new DeliveryGrid(record).wrapWithActionButtons());
+		return lotCanvas;
+	}
+}
+
+@DefaultLocale("en_US")
+interface RecipeDeliveryFormat extends Messages {
+	@DefaultMessage("{1}/{2} delivered at {3}/{4}/{5} from {0}")
+	String getDisplayValue(Object stationName, Object originalProduct, Object originalLot, Object deliveryDay,
+			Object deliveryMonth, Object deliveryYear);
+}
+
+class RecipeGrid extends EditableGrid {
+	private Record stationRecord;
+
+	/**
+	 * Initializes DeliveryGrid.
+	 * 
+	 * @param stationRecord
+	 */
+	public RecipeGrid(Record stationRecord, Record lotRecord) {
+		super(FoodRecipeDS.getInstance());
+		this.stationRecord = stationRecord;
+		Criteria criteria = new Criteria("lot", lotRecord.getAttribute("id"));
+		criteria.addCriteria(
+				"_include",
+				"deliveringStation=lot.product.station.name,originalProduct=lot.product.denomination,originalLot=lot.lotNumber,deliveryDateDay=ingredient.deliveryDateDay,deliveryDateMonth=ingredient.deliveryDateMonth,deliveryDateYear=ingredient.deliveryDateYear");
+		fetchData(criteria);
+		setCanDrag(false);
+
+		ListGridField[] standardFields = getFields();
+		List<ListGridField> allFields = new ArrayList<ListGridField>();
+		for (ListGridField standardField : standardFields) {
+			standardField.setWidth(50);
+			allFields.add(standardField);
+		}
+		ListGridField deliveryField = new ListGridField("ingredient");
+		allFields.add(deliveryField);
+		setFields(allFields.toArray(new ListGridField[0]));
+
+		final RecipeDeliveryFormat format = GWT.create(RecipeDeliveryFormat.class);
+		final Object[] defaultValues = { "Unnamed station", "Unnamed product", "Unnamed lot", "?", "?", "?" };
+		deliveryField.setCellFormatter(new CellFormatter() {
+			@Override
+			public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+				Object[] values = { record.getAttribute("deliveringStation"), record.getAttribute("originalProduct"),
+						record.getAttribute("originalLot"), record.getAttributeAsInt("deliveryDateDay"),
+						record.getAttributeAsInt("deliveryDateMonth"), record.getAttributeAsInt("deliveryDateYear") };
+				for (int index = 0; index < defaultValues.length; index++)
+					if (values[index] == null) values[index] = defaultValues[index];
+				return format.getDisplayValue(values[0], values[1], values[2], values[3], values[4], values[5]);
+			}
+		});
+
+		final ComboBoxItem deliverySelect = new ComboBoxItem();
+		Criteria suggestCriteria = new Criteria("recipient", stationRecord.getAttribute("id"));
+		suggestCriteria
+				.addCriteria("_include",
+						"deliveringStation=lot.product.station.name,originalProduct=lot.product.denomination,originalLot=lot.lotNumber");
+		// DeliveryDS.getInstance().fetchData(criteria, new DSCallback() {
+		// @Override
+		// public void execute(DSResponse dsResponse, Object data, DSRequest
+		// dsRequest) {
+		// LotDS.getInstance().fetchRecord(defaultValues, null);
+		// deliverySelect.setValueMap(null);
+		// }
+		// });
+		deliverySelect.setAddUnknownValues(false);
+		deliverySelect.setOptionDataSource(DeliveryDS.getInstance());
+		deliverySelect.setPickListCriteria(suggestCriteria);
+		deliverySelect.setPickListWidth(500);
+		deliverySelect.setValueField("id");
+		deliverySelect.setDisplayField("originalProduct");
+		deliverySelect.setValueFormatter(new FormItemValueFormatter() {  
+	            public String formatValue(Object value, Record record, DynamicForm form, FormItem item) {  
+					Object[] values = { record.getAttribute("deliveringStation"), record.getAttribute("originalProduct"),
+							record.getAttribute("originalLot"), record.getAttributeAsInt("deliveryDateDay"),
+							record.getAttributeAsInt("deliveryDateMonth"), record.getAttributeAsInt("deliveryDateYear") };
+					for (int index = 0; index < defaultValues.length; index++)
+						if (values[index] == null) values[index] = defaultValues[index];
+					return format.getDisplayValue(values[0], values[1], values[2], values[3], values[4], values[5]);
+	            }  
+	        });  
+		//
+		ListGrid pickListProperties = new ListGrid();
+		pickListProperties.setShowFilterEditor(true);
+		deliverySelect.setPickListProperties(pickListProperties);
+		//
+		String[] fieldNames = { "deliveringStation", "originalProduct", "originalLot", "deliveryDateDay", "deliveryDateMonth", "deliveryDateYear" };
+		ListGridField[] fields = new ListGridField[fieldNames.length];
+		for (int index = 0; index < fieldNames.length; index++)
+			fields[index] = new ListGridField(fieldNames[index]);
+		deliverySelect.setPickListFields(fields);
+
+		deliveryField.setEditorProperties(deliverySelect);
+		// setAutoFetchDisplayMap(true);
+	}
+
+	@Override
+	public Canvas wrapWithActionButtons() {
+		return super.wrapWithActionButtons("ingredient");
+	}
+
+	@Override
+	protected void moveChildren(ListGridRecord sourceRecord, ListGridRecord targetRecord, DSCallback callback) {
 	}
 }
 
@@ -386,7 +519,7 @@ class DeliveryGrid extends EditableGrid {
 								public void onVisibilityChanged(VisibilityChangedEvent event) {
 									Record stationRecord = stationPopup.getStationRecord();
 									String id = stationRecord.getAttribute("id");
-									logger.severe("id " + id);
+									logger.severe("new station id " + id);
 									if (id != null && !id.isEmpty()) {
 										ListGridRecord selectedRecord = getSelectedRecord();
 										selectedRecord.setAttribute("recipient", id);
