@@ -1,3 +1,5 @@
+import grails.util.Environment
+
 // locations to search for config files that get merged into the main config;
 // config files can be ConfigSlurper scripts, Java properties files, or classes
 // in the classpath in ConfigSlurper format
@@ -107,6 +109,17 @@ log4j.main = {
     //appenders {
     //    console name:'stdout', layout:pattern(conversionPattern: '%c{2} %m%n')
     //}
+	
+	if (Environment.current == Environment.PRODUCTION) {
+		// MOD for writing in logs of the Tomcat server
+		def catalinaBase = System.properties.getProperty('catalina.base')
+		if (!catalinaBase) catalinaBase = '.'   // just in case
+		def logDirectory = "${catalinaBase}/logs"
+		appenders {
+			rollingFile name:'stdout', file:"${logDirectory}/de.bund.bfr.crisis.log".toString(),  maxFileSize:'100MB'
+			rollingFile name:'stacktrace', file:"${logDirectory}/de.bund.bfr.crisis_stack.log".toString(), maxFileSize:'100MB'
+		 }	
+	}
 
     error  'org.codehaus.groovy.grails.web.servlet',        // controllers
            'org.codehaus.groovy.grails.web.pages',          // GSP

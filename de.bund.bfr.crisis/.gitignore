@@ -1,5 +1,6 @@
 .link_to_grails_plugins
 .settings
+logs
 target
 target-eclipse
 test/resources/importDB

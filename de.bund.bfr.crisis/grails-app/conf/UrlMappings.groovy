@@ -1,3 +1,6 @@
+import grails.util.Environment
+
+
 class UrlMappings {
 
 	static mappings = {
@@ -6,8 +9,13 @@ class UrlMappings {
                 // apply constraints here
             }
         }
+		if (Environment.current == Environment.PRODUCTION) {
+			"/"(controller: 'map', action: '/index')
+		}
+		else {
+			"/"(view:"/index")
+		}
 
-        "/"(view:"/index")
         "500"(view:'/error')
 	}
 }

@@ -13,6 +13,7 @@ import org.gwtopenmaps.openlayers.client.LonLat;
 import org.gwtopenmaps.openlayers.client.Map;
 import org.gwtopenmaps.openlayers.client.MapOptions;
 import org.gwtopenmaps.openlayers.client.MapWidget;
+import org.gwtopenmaps.openlayers.client.Pixel;
 import org.gwtopenmaps.openlayers.client.Projection;
 import org.gwtopenmaps.openlayers.client.Style;
 import org.gwtopenmaps.openlayers.client.StyleMap;
@@ -20,6 +21,8 @@ import org.gwtopenmaps.openlayers.client.control.LayerSwitcher;
 import org.gwtopenmaps.openlayers.client.control.OverviewMap;
 import org.gwtopenmaps.openlayers.client.control.ScaleLine;
 import org.gwtopenmaps.openlayers.client.control.SelectFeature;
+import org.gwtopenmaps.openlayers.client.event.EventHandler;
+import org.gwtopenmaps.openlayers.client.event.EventObject;
 import org.gwtopenmaps.openlayers.client.event.MapMoveEndListener;
 import org.gwtopenmaps.openlayers.client.event.VectorFeatureSelectedListener;
 import org.gwtopenmaps.openlayers.client.feature.VectorFeature;
@@ -36,6 +39,7 @@ import org.gwtopenmaps.openlayers.client.strategy.ClusterStrategy;
 import org.gwtopenmaps.openlayers.client.strategy.Strategy;
 import org.gwtopenmaps.openlayers.client.style.Rule;
 import org.gwtopenmaps.openlayers.client.style.SymbolizerPoint;
+import org.gwtopenmaps.openlayers.client.util.JSObject;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
@@ -48,6 +52,8 @@ import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle.MultiWordSuggestion;
@@ -71,8 +77,7 @@ public class TracingMap extends MapWidget {
 					List<Suggestion> suggestions = new ArrayList<>();
 					suggestions.add(new MultiWordSuggestion(request.getQuery(), request.getQuery()));
 					for (String searchResult : JsoUtils.wrap(searchResults))
-						suggestions.add(new MultiWordSuggestion(searchResult, highlightQuery(searchResult,
-							request.getQuery())));
+						suggestions.add(new MultiWordSuggestion(searchResult, highlightQuery(searchResult, request.getQuery())));
 
 					response.setSuggestions(suggestions);
 					callback.onSuggestionsReady(request, response);
@@ -99,9 +104,8 @@ public class TracingMap extends MapWidget {
 		}
 	}
 
-	private static final Projection DEFAULT_PROJECTION = new Projection(
-		"EPSG:4326"); // transform lonlat (provided in EPSG:4326) to OSM
-						// coordinate system (the map projection)
+	private static final Projection DEFAULT_PROJECTION = new Projection("EPSG:4326"); // transform lonlat (provided in EPSG:4326) to OSM
+																						// coordinate system (the map projection)
 
 	private Projection MAP_PROJ = null;
 
@@ -111,8 +115,7 @@ public class TracingMap extends MapWidget {
 
 	ClusterStrategy clusterStrategy = null; // AnimatedClusterStrategy
 
-	private Vector stationLayer = null, deliveryLayer = null,
-			labelLayer = null;
+	private Vector stationLayer = null, deliveryLayer = null, labelLayer = null;
 
 	private java.util.Map<Integer, Station> stations = new HashMap<>();
 
@@ -131,7 +134,7 @@ public class TracingMap extends MapWidget {
 	}
 
 	public TracingMap(MapServiceAsync mapService) {
-		super("100%", "100%", defaultMapOptions);
+		super("99%", "97%", defaultMapOptions);
 		this.mapService = mapService;
 		logger = Logger.getLogger(this.getClass().getSimpleName());
 		buildPanel();
@@ -162,15 +165,13 @@ public class TracingMap extends MapWidget {
 			this.deliveries.put(d.getId(), d);
 
 			boolean fromLarger = (d.getStationId() > d.getRecipientId());
-			String routeId = fromLarger ? d.getRecipientId() + "_" + d.getStationId() :
-				d.getStationId() + "_" + d.getRecipientId();
-			if (existingRoutes.contains(routeId))
-				continue;
+			String routeId = fromLarger ? d.getRecipientId() + "_" + d.getStationId() : d.getStationId() + "_" + d.getRecipientId();
+			if (existingRoutes.contains(routeId)) continue;
 
 			addDelivery2Feature(d.getId(), d.getStationId(), d.getRecipientId(), 30d);
 		}
 
-		Scheduler.get().scheduleDeferred(new ScheduledCommand() {			
+		Scheduler.get().scheduleDeferred(new ScheduledCommand() {
 			@Override
 			public void execute() {
 				centerTheMap(-1);
@@ -185,19 +186,16 @@ public class TracingMap extends MapWidget {
 				@Override
 				public void onSuccess(String jsonResponse) {
 					SearchResult searchResult = JsonUtils.unsafeEval(jsonResponse);
-					fillMap(JsoUtils.wrap(searchResult.getStations()),
-						JsoUtils.wrap(searchResult.getDeliveries()));
+					fillMap(JsoUtils.wrap(searchResult.getStations()), JsoUtils.wrap(searchResult.getDeliveries()));
 				}
 
 				@Override
 				public void onFailure(Throwable e) {
 					com.google.gwt.user.client.Window.alert("Could not submit the search query to the server");
-					logger.log(Level.SEVERE,
-						"Could not submit the search query to the server", e);
+					logger.log(Level.SEVERE, "Could not submit the search query to the server", e);
 				}
 			});
-		}
-		else {
+		} else {
 			mapService.getStationId(searchString, new AsyncCallback<String>() {
 				@Override
 				public void onSuccess(String jsonResponse) {
@@ -220,8 +218,7 @@ public class TracingMap extends MapWidget {
 				@Override
 				public void onFailure(Throwable e) {
 					com.google.gwt.user.client.Window.alert("Could not submit the search query to the server");
-					logger.log(Level.SEVERE,
-						"Could not submit the search query to the server", e);
+					logger.log(Level.SEVERE, "Could not submit the search query to the server", e);
 				}
 			});
 		}
@@ -304,16 +301,14 @@ public class TracingMap extends MapWidget {
 	}
 
 	private void addDeliveries(Integer stationId) {
-		if (!showArrows)
-			return;
+		if (!showArrows) return;
 
 		// logger.log(Level.SEVERE, "addDeliveries - Start");
 		try {
 			deliveryLayer.removeAllFeatures();
 			Set<VectorFeature> features = this.stationDeliveryFeatures.get(stationId);
-			if (features != null)
-				for (VectorFeature f : features)
-					deliveryLayer.addFeature(f);
+			if (features != null) for (VectorFeature f : features)
+				deliveryLayer.addFeature(f);
 			/*
 			 * for (VectorFeature vf : stationLayer.getFeatures()) {
 			 * if (vf.getCluster() != null)
@@ -332,8 +327,7 @@ public class TracingMap extends MapWidget {
 			 */
 			// theMap.setLayerZIndex(labelLayer, 500);
 		} catch (Exception e) {
-			logger.log(Level.SEVERE,
-				"addDeliveries - exception: " + e.getMessage());
+			logger.log(Level.SEVERE, "addDeliveries - exception: " + e.getMessage());
 		}
 	}
 
@@ -345,17 +339,13 @@ public class TracingMap extends MapWidget {
 			HashMap<Integer, List<Integer>> hm = new HashMap<Integer, List<Integer>>();
 			int maxSize = 0;
 			for (VectorFeature vf : stationLayer.getFeatures()) {
-				if (vf.getCenterLonLat() == null)
-					continue;
-				if (!bounds.containsLonLat(vf.getCenterLonLat(), true))
-					continue;
+				if (vf.getCenterLonLat() == null) continue;
+				if (!bounds.containsLonLat(vf.getCenterLonLat(), true)) continue;
 				int stationId = Integer.parseInt(vf.getFeatureId().substring(1));
 				int s = this.stationDeliveryFeatures.get(stationId).size();
-				if (!hm.containsKey(s))
-					hm.put(s, new ArrayList<Integer>());
+				if (!hm.containsKey(s)) hm.put(s, new ArrayList<Integer>());
 				hm.get(s).add(stationId);
-				if (s > maxSize)
-					maxSize = s;
+				if (s > maxSize) maxSize = s;
 			}
 			int lfd = 0;
 			for (int i = maxSize; i > 0; i--) {
@@ -365,11 +355,11 @@ public class TracingMap extends MapWidget {
 						addLabel(stationId);
 						lfd++;
 					}
-					if (lfd > minLables2Show)
-						break;
+					if (lfd > minLables2Show) break;
 				}
 			}
 		}
+		labelLayer.setIsVisible(false);
 	}
 
 	private void addLabel(int stationId) {
@@ -378,8 +368,7 @@ public class TracingMap extends MapWidget {
 		Point point = station.getPoint();
 		point.transform(DEFAULT_PROJECTION, MAP_PROJ);
 		Bounds bounds = getMap().getExtent();
-		Polygon rect = getRectangle(point.getX(), point.getY(), sn.trim().length() * bounds.getWidth() / 250,
-			bounds.getHeight() / 60); // sn.trim().length() * 0.7 *
+		Polygon rect = getRectangle(point.getX(), point.getY(), sn.trim().length() * bounds.getWidth() / 250, bounds.getHeight() / 60); // sn.trim().length() * 0.7 *
 		VectorFeature vf = new VectorFeature(rect, createLabelStyle(sn));
 		vf.setFeatureId("l" + String.valueOf(stationId));
 		labelLayer.addFeature(vf);
@@ -435,8 +424,7 @@ public class TracingMap extends MapWidget {
 			}
 		});
 
-		final SelectFeature selectFeature = new SelectFeature(new Vector[] {
-			stationLayer, deliveryLayer, labelLayer });
+		final SelectFeature selectFeature = new SelectFeature(new Vector[] { stationLayer, deliveryLayer, labelLayer });
 		selectFeature.setAutoActivate(true);
 		map.addControl(selectFeature);
 
@@ -453,11 +441,22 @@ public class TracingMap extends MapWidget {
 					stationPopup.updateStation(vf.getFeatureId().substring(1));
 					stationPopup.show();
 				}
-				selectFeature.unSelect( eventObject.getVectorFeature());
+				selectFeature.unSelect(eventObject.getVectorFeature());
 			}
 		};
 		stationLayer.addVectorFeatureSelectedListener(stationListener);
 		labelLayer.addVectorFeatureSelectedListener(stationListener);
+		map.getEvents().register("click", map, new EventHandler() {
+            @Override
+            public void onHandle(EventObject eventObject) {
+                 JSObject xy = eventObject.getJSObject().getProperty("xy");
+                 Pixel px = Pixel.narrowToPixel(xy);
+             	/*
+                 LonLat lonlat = mapPanel.getMap().getLonLatFromPixel(px);
+                 */
+                 if (px.x() < 20 && px.y() < 20) blink(new String[] {"465", "63"});
+            }
+        });
 
 		// Add select feature for visibleDeliveries
 		deliveryLayer.addVectorFeatureSelectedListener(new VectorFeatureSelectedListener() {
@@ -467,10 +466,9 @@ public class TracingMap extends MapWidget {
 				DeliveryPopup deliveryPopup = new DeliveryPopup();
 				deliveryPopup.updateStations(delivery.getStationId(), delivery.getRecipientId());
 				deliveryPopup.show();
-				selectFeature.unSelect( eventObject.getVectorFeature());
+				selectFeature.unSelect(eventObject.getVectorFeature());
 			}
 		});
-		
 
 		createSearchBox();
 	}
@@ -505,30 +503,25 @@ public class TracingMap extends MapWidget {
 			@Override
 			public void onKeyPress(KeyPressEvent event) {
 				int key = event.getNativeEvent().getKeyCode();
-				if (key == KeyCodes.KEY_ENTER)
-					search(searchBox.getText());
+				if (key == KeyCodes.KEY_ENTER) search(searchBox.getText());
 			}
 		});
 	}
 
 	private VectorFeature addDelivery2Feature(int id, int fromId, int toId, double angleInDegrees) {
-		List<Point> pointList =
-			getArcPoints(stations.get(fromId).getPoint(), stations.get(toId).getPoint(), angleInDegrees);
-		if (pointList == null)
-			return null;
+		List<Point> pointList = getArcPoints(stations.get(fromId).getPoint(), stations.get(toId).getPoint(), angleInDegrees);
+		if (pointList == null) return null;
 
 		LineString arrow = new LineString(pointList.toArray(new Point[pointList.size()]));
 		VectorFeature vf = new VectorFeature(arrow);
 		vf.setFeatureId("d" + fromId);
 
 		Set<VectorFeature> fromFeatures = stationDeliveryFeatures.get(fromId);
-		if (fromFeatures == null)
-			stationDeliveryFeatures.put(fromId, fromFeatures = new HashSet<VectorFeature>());
+		if (fromFeatures == null) stationDeliveryFeatures.put(fromId, fromFeatures = new HashSet<VectorFeature>());
 		fromFeatures.add(vf);
 
 		Set<VectorFeature> toFeatures = stationDeliveryFeatures.get(toId);
-		if (toFeatures == null)
-			stationDeliveryFeatures.put(toId, toFeatures = new HashSet<VectorFeature>());
+		if (toFeatures == null) stationDeliveryFeatures.put(toId, toFeatures = new HashSet<VectorFeature>());
 		toFeatures.add(vf);
 
 		return vf;
@@ -543,30 +536,21 @@ public class TracingMap extends MapWidget {
 	}
 
 	private List<Point> getArcPoints(Point pointA, Point pointB, double angleInDegrees) {
-		if (pointA == null || pointB == null)
-			return null;
+		if (pointA == null || pointB == null) return null;
 		double angle = Math.PI / 180 * angleInDegrees; // Bogenwinkel
-		double distAB = Math.sqrt((pointB.getX() - pointA.getX())
-			* (pointB.getX() - pointA.getX())
-			+ (pointB.getY() - pointA.getY())
-			* (pointB.getY() - pointA.getY()));
+		double distAB = Math.sqrt((pointB.getX() - pointA.getX()) * (pointB.getX() - pointA.getX()) + (pointB.getY() - pointA.getY()) * (pointB.getY() - pointA.getY()));
 		double r = distAB / 2 / Math.sin(angle);
 		Point[] pointMs = getCircleCentres(pointA, pointB, r);
 		Point pointM = null;
 		pointM = pointMs[0];
-		double angleA = Math.atan2(pointA.getY() - pointM.getY(), pointA.getX()
-			- pointM.getX());
-		double angleB = Math.atan2(pointB.getY() - pointM.getY(), pointB.getX()
-			- pointM.getX());
+		double angleA = Math.atan2(pointA.getY() - pointM.getY(), pointA.getX() - pointM.getX());
+		double angleB = Math.atan2(pointB.getY() - pointM.getY(), pointB.getX() - pointM.getX());
 		// Window.alert(pointA + " / " + pointB + " / " + pointM + " / " +
 		// (angleA/Math.PI*180) + " / " + (angleB/Math.PI*180) + " / " +
 		// ((angleB+2*Math.PI)/Math.PI*180));
-		if (Math.abs(angleB - angleA) < Math.PI)
-			return getArc(pointM, r, angleA, angleB, 20, true);
-		else if (Math.abs(angleB + 2 * Math.PI - angleA) < Math.PI)
-			return getArc(pointM, r, angleA, angleB + 2 * Math.PI, 20, true);
-		else if (Math.abs(angleB - angleA - 2 * Math.PI) < Math.PI)
-			return getArc(pointM, r, angleA + 2 * Math.PI, angleB, 20, true);
+		if (Math.abs(angleB - angleA) < Math.PI) return getArc(pointM, r, angleA, angleB, 20, true);
+		else if (Math.abs(angleB + 2 * Math.PI - angleA) < Math.PI) return getArc(pointM, r, angleA, angleB + 2 * Math.PI, 20, true);
+		else if (Math.abs(angleB - angleA - 2 * Math.PI) < Math.PI) return getArc(pointM, r, angleA + 2 * Math.PI, angleB, 20, true);
 		return getArc(pointM, r, angleA, angleB, 4, true);
 	}
 
@@ -599,39 +583,30 @@ public class TracingMap extends MapWidget {
 
 		// check for special cases:
 		if ((y1 == y2) && (x2 != x1)) { // y values identical
-			resultX1 = x1 + (x2 * x2 + x1 * x1 - 2 * x1 * x2)
-				/ (2 * x2 - 2 * x1);
+			resultX1 = x1 + (x2 * x2 + x1 * x1 - 2 * x1 * x2) / (2 * x2 - 2 * x1);
 			resultX2 = resultX1;
-			p1 = y1 * y1 - r * r + resultX1 * resultX1 - 2 * x1 * resultX1 + x1
-				* x1;
+			p1 = y1 * y1 - r * r + resultX1 * resultX1 - 2 * x1 * resultX1 + x1 * x1;
 			resultY1 = y1 + Math.sqrt(y1 * y1 - p1);
 			resultY2 = y1 - Math.sqrt(y1 * y1 - p1);
 		} else if ((x2 == x1) && (y2 != y1)) {// x values identical
-			resultY1 = y1 + (y2 * y2 + y1 * y1 - 2 * y1 * y2)
-				/ (2 * y2 - 2 * y1);
+			resultY1 = y1 + (y2 * y2 + y1 * y1 - 2 * y1 * y2) / (2 * y2 - 2 * y1);
 			resultY2 = resultY1;
-			q1 = x1 * x1 - r * r + resultY1 * resultY1 - 2 * y1 * resultY1 + y1
-				* y1;
+			q1 = x1 * x1 - r * r + resultY1 * resultY1 - 2 * y1 * resultY1 + y1 * y1;
 			resultX1 = x1 + Math.sqrt(x1 * x1 - q1);
 			resultX2 = x1 - Math.sqrt(x1 * x1 - q1);
 		} else if ((x2 == x1) && (y2 == y1)) {// centers identical
 			// Window.alert("Centers identical... ");
 		} else { // default case
 			// ok let's calculate the constants
-			c1 = (Math.pow(x2, 2.0) - Math.pow(x1, 2.0) - Math.pow(y1, 2.0) + Math
-				.pow(y2, 2.0)) / (2.0 * x2 - 2.0 * x1);
+			c1 = (Math.pow(x2, 2.0) - Math.pow(x1, 2.0) - Math.pow(y1, 2.0) + Math.pow(y2, 2.0)) / (2.0 * x2 - 2.0 * x1);
 			c2 = (y1 - y2) / (x2 - x1);
 			k1 = 1.0 + (1.0 / Math.pow(c2, 2.0));
 			k2 = 2.0 * x1 + (2.0 * y1) / (c2) + (2.0 * c1) / Math.pow(c2, 2.0);
-			k3 = Math.pow(x1, 2.0) + Math.pow(c1, 2.0) / Math.pow(c2, 2.0)
-				+ (2.0 * y1 * c1) / (c2) + Math.pow(y1, 2.0)
-				- Math.pow(r, 2.0);
+			k3 = Math.pow(x1, 2.0) + Math.pow(c1, 2.0) / Math.pow(c2, 2.0) + (2.0 * y1 * c1) / (c2) + Math.pow(y1, 2.0) - Math.pow(r, 2.0);
 			// looks weired? Oh lord have mercy on me! it's just the beginning!
 			// here the finish by using the pq formula:
-			resultX1 = ((k2 / k1) / 2.0)
-				+ Math.sqrt((Math.pow((k2 / k1), 2.0) / 4.0) - (k3 / k1));
-			resultX2 = (k2 / k1) / 2.0
-				- Math.sqrt((Math.pow((k2 / k1), 2.0) / 4.0) - (k3) / (k1));
+			resultX1 = ((k2 / k1) / 2.0) + Math.sqrt((Math.pow((k2 / k1), 2.0) / 4.0) - (k3 / k1));
+			resultX2 = (k2 / k1) / 2.0 - Math.sqrt((Math.pow((k2 / k1), 2.0) / 4.0) - (k3) / (k1));
 			resultY1 = 1.0 / (c2) * resultX1 - (c1 / c2);
 			resultY2 = 1.0 / (c2) * resultX2 - (c1 / c2);
 		}
@@ -641,16 +616,56 @@ public class TracingMap extends MapWidget {
 		 * + "\nresultX2: " + resultX2 + ", resultY2: " + resultY2 + "\n r: " +
 		 * r + ", distAB: " + distAB);
 		 */
-		return new Point[] { new Point(resultX1, resultY1),
-			new Point(resultX2, resultY2) };
+		return new Point[] { new Point(resultX1, resultY1), new Point(resultX2, resultY2) };
 	}
 
 	private Style createStationStyle() {
+		return createStationStyle("yellow");
+	}
+
+	private Style createStationStyle(String color) {
 		Style stationStyle = new Style();
-		stationStyle.setFillColor("yellow");
+		stationStyle.setFillColor(color);
 		stationStyle.setPointRadius(10);
 		stationStyle.setFillOpacity(1.0);
 		return stationStyle;
+	}
+
+	private void blink(String[] ids) {
+		if (ids != null && ids.length > 0) {
+			final VectorFeature[] vfs = new VectorFeature[ids.length];
+			for (int i = 0; i < ids.length; i++) {
+				String id = ids[i];
+				VectorFeature vf = this.stationLayer.getFeatureById("s" + id);
+				vfs[i] = vf;
+			}
+			final int interval = 1000;
+			Timer t = new Timer() {
+				public void run() {
+					for (VectorFeature vf : vfs) {
+						vf.setStyle(createStationStyle("red"));
+					}
+					stationLayer.redraw();
+					Timer t2 = new Timer() {
+						public void run() {
+							for (VectorFeature vf : vfs) {
+								vf.setStyle(createStationStyle());								
+							}
+							stationLayer.redraw();
+						}
+					};
+					t2.schedule(interval / 2);
+				}
+			};
+			t.scheduleRepeating(interval);
+
+			Map map = getMap();
+			// Center the Map
+			LonLat lonLat = new LonLat(13.377775, 52.516266); // Brandenburger Tor
+			// transform lonlat to OSM coordinate system
+			lonLat.transform(DEFAULT_PROJECTION.getProjectionCode(), map.getProjection());
+			map.setCenter(lonLat, 12);
+		}
 	}
 
 	private Style createLabelStyle(String text) {
@@ -695,8 +710,7 @@ public class TracingMap extends MapWidget {
 	 * Linestring) the startpoint (from Point) the endpoint (from Point) the
 	 * chord (from LineString)
 	 */
-	private List<Point> getArc(Point center, double radius, double alpha,
-			double omega, int segments, boolean clockwise) {
+	private List<Point> getArc(Point center, double radius, double alpha, double omega, int segments, boolean clockwise) {
 		List<Point> pointList = new ArrayList<Point>();
 		Point lastPoint = null;
 		for (int i = 0; i <= segments; i++) {

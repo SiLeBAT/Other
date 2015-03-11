@@ -10,7 +10,7 @@ grails.project.test.reports.dir = "target/test-reports"
 grails.project.work.dir = "target/work"
 grails.project.target.level = 1.7
 grails.project.source.level = 1.7
-//grails.project.war.file = "target/${appName}-${appVersion}.war"
+grails.project.war.file = "target/${appName}.war" // -${appVersion}
 
 grails.project.fork = [
 	// configure settings for compilation JVM, note that if you alter the Groovy version forked compilation is required
@@ -72,6 +72,7 @@ grails.project.dependency.resolution = {
 		build 'com.google.gwt:gwt-servlet:2.7.0'
 
 		compile 'org.hsqldb:hsqldb:2.3.2'
+		compile 'com.h2database:h2:1.4.186'
 		
 //		compile 'org.apache.httpcomponents:httpclient:4.4', {
 //			force = true
@@ -123,4 +124,11 @@ gwt {
 		'org.ow2.asm:asm-commons:5.0.3',
 		'org.ow2.asm:asm-util:5.0.3'
 	]
+}
+
+// Remove jars before the war is bundled
+grails.war.resources = { stagingDir ->
+  delete(file:"${stagingDir}/WEB-INF/lib/gwt-dev-2.7.0.jar")
+  delete(file:"${stagingDir}/WEB-INF/lib/validation-api-1.0.0.GA.jar")
+  delete(file:"${stagingDir}/WEB-INF/lib/validation-api-1.0.0.GA-sources.jar")
 }

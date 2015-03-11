@@ -1,6 +1,7 @@
 package de.bund.bfr.crisis.client;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.RootPanel;
 
@@ -20,6 +21,7 @@ public class TracingApp implements EntryPoint {
 		tracingMap.addChildrenToParent(panel);
 //		panel.add(new StationView(StationDS), 50, 50);
 		container.add(panel);
+		Window.enableScrolling(false);
 	}
 
 }

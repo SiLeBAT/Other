@@ -15,6 +15,7 @@ class BootStrap {
 		if (Environment.current == Environment.DEVELOPMENT) {
 //			legacyImporterService.bulkImportFromHSQLFile('test/resources/importTest/DB')
 //			legacyImporterService.bulkImportFromHSQLFile('test/resources/importDB/EHEC/DB')
+			
 			new User(name: 'Dr. Armin Weiser', email: 'armin.weiser@bfr.bund.de').save()
 			new User(name: 'Arvid Heise', email: 'arvid.heise@bfr.bund.de').save()
 			
@@ -57,6 +58,7 @@ class BootStrap {
 					addToFoodRecipes(recipe).
 					save(failOnError: true)
 			}
+			
 		}
     }
     def destroy = {
