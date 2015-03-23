@@ -7,6 +7,9 @@ class Serial {
 	
 	String rejectReason
 	
+	Serial(String serial) {
+		this.serial = serial
+	}
     static constraints = {
     }
 }

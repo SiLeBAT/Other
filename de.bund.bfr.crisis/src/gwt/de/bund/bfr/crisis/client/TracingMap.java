@@ -342,10 +342,12 @@ public class TracingMap extends MapWidget {
 				if (vf.getCenterLonLat() == null) continue;
 				if (!bounds.containsLonLat(vf.getCenterLonLat(), true)) continue;
 				int stationId = Integer.parseInt(vf.getFeatureId().substring(1));
-				int s = this.stationDeliveryFeatures.get(stationId).size();
-				if (!hm.containsKey(s)) hm.put(s, new ArrayList<Integer>());
-				hm.get(s).add(stationId);
-				if (s > maxSize) maxSize = s;
+				if (this.stationDeliveryFeatures.containsKey(stationId)) {
+					int s = this.stationDeliveryFeatures.get(stationId).size();
+					if (!hm.containsKey(s)) hm.put(s, new ArrayList<Integer>());
+					hm.get(s).add(stationId);
+					if (s > maxSize) maxSize = s;					
+				}
 			}
 			int lfd = 0;
 			for (int i = maxSize; i > 0; i--) {
@@ -359,7 +361,7 @@ public class TracingMap extends MapWidget {
 				}
 			}
 		}
-		labelLayer.setIsVisible(false);
+		labelLayer.setIsVisible(true);
 	}
 
 	private void addLabel(int stationId) {
@@ -454,7 +456,7 @@ public class TracingMap extends MapWidget {
              	/*
                  LonLat lonlat = mapPanel.getMap().getLonLatFromPixel(px);
                  */
-                 if (px.x() < 20 && px.y() < 20) blink(new String[] {"465", "63"});
+                 if (px.x() < 20 && px.y() < 20) blink(new String[] {"12", "13"});
             }
         });
 
@@ -658,13 +660,14 @@ public class TracingMap extends MapWidget {
 				}
 			};
 			t.scheduleRepeating(interval);
-
+/*
 			Map map = getMap();
 			// Center the Map
 			LonLat lonLat = new LonLat(13.377775, 52.516266); // Brandenburger Tor
 			// transform lonlat to OSM coordinate system
 			lonLat.transform(DEFAULT_PROJECTION.getProjectionCode(), map.getProjection());
 			map.setCenter(lonLat, 12);
+			*/
 		}
 	}
 
