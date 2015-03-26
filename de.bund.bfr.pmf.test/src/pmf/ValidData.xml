@@ -1,0 +1,116 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<numl level="1" version="1" xmlns="http://www.numl.org/numl/level1/version1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.numl.org/numl/level1/version1 https://numl.googlecode.com/svn/trunk/NUMLSchema.xsd" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:pmf="http://sourceforge.net/projects/microbialmodelingexchange/files/PMF-ML" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <ontologyTerms>
+    <ontologyTerm id="salmonellaConcentration" term="concentration" sourceTermId="SBO:0000196" ontologyURI="http://www.ebi.ac.uk/sbo/">
+      <annotation>
+        <pmf:metadata xmlns="http://www.sbml.org/sbml/level3/version1/core">
+          <listOfUnitDefinitions>
+            <unitDefinition id="pmf_log10_cfu_g" name="log10(cfu/g)">
+              <annotation>
+                <pmf:metadata>
+                  <pmf:transformation name="log10" xlink:href="http://sourceforge.net/projects/microbialmodelingexchange/files/PMF-ML" />
+                </pmf:metadata>
+              </annotation>
+              <listOfUnits>
+                <unit kind="item" exponent="1" scale="1" multiplier="1" />
+                <unit kind="gram" exponent="-1" scale="1" multiplier="1" />
+              </listOfUnits>
+            </unitDefinition>
+          </listOfUnitDefinitions>
+          <listOfCompartments>
+            <compartment id="culture_broth_broth_culture_culture_medium" name="culture broth, broth culture, culture medium" />
+          </listOfCompartments>
+          <listOfSpecies>
+            <species id="salmonella_spp" name="salmonella spp" compartment="culture_broth_broth_culture_culture_medium" constant="false" boundaryCondition="true" substanceUnits="pmf_log10_cfu_g" hasOnlySubstanceUnits="false" />
+          </listOfSpecies>
+        </pmf:metadata>
+      </annotation>
+    </ontologyTerm>
+    <ontologyTerm id="staphylococcusConcentration" term="concentration" sourceTermId="SBO:0000196" ontologyURI="http://www.ebi.ac.uk/sbo/">
+      <annotation>
+        <pmf:metadata xmlns="http://www.sbml.org/sbml/level3/version1/core">
+          <listOfUnitDefinitions>
+            <unitDefinition id="pmf_log10_cfu_g" name="log10(cfu/g)">
+              <annotation>
+                <pmf:metadata>
+                  <pmf:transformation name="log10" xlink:href="http://sourceforge.net/projects/microbialmodelingexchange/files/PMF-ML" />
+                </pmf:metadata>
+              </annotation>
+              <listOfUnits>
+                <unit kind="item" exponent="1" scale="1" multiplier="1" />
+                <unit kind="gram" exponent="-1" scale="1" multiplier="1" />
+              </listOfUnits>
+            </unitDefinition>
+          </listOfUnitDefinitions>
+          <listOfCompartments>
+            <compartment id="culture_broth_broth_culture_culture_medium" name="culture broth, broth culture, culture medium" />
+          </listOfCompartments>
+          <listOfSpecies>
+            <species id="staphylococcus_aureus" name="staphylococcus aureus" compartment="culture_broth_broth_culture_culture_medium" constant="false" boundaryCondition="true" substanceUnits="pmf_log10_cfu_g" hasOnlySubstanceUnits="false" />
+          </listOfSpecies>
+        </pmf:metadata>
+      </annotation>
+    </ontologyTerm>
+    <ontologyTerm id="timeInHours" term="time" sourceTermId="SBO:0000345" ontologyURI="http://www.ebi.ac.uk/sbo/">
+      <annotation>
+        <pmf:metadata xmlns="http://www.sbml.org/sbml/level3/version1/core">
+          <listOfUnitDefinitions>
+            <unitDefinition id="h" name="h">
+              <listOfUnits>
+                <unit kind="second" exponent="1" scale="1" multiplier="3600" />
+              </listOfUnits>
+            </unitDefinition>
+          </listOfUnitDefinitions>
+        </pmf:metadata>
+      </annotation>
+    </ontologyTerm>
+  </ontologyTerms>
+  <resultComponent id="resultComponent1">
+    <annotation>
+      <pmf:metadata>
+        <dc:identifier>salmonella_and_staphylococcus_demo</dc:identifier>
+        <dc:title>Salmonella and Staphylococcus experiments</dc:title>
+        <dc:description>Artificially generated</dc:description>
+        <dc:type>Primary model</dc:type>
+        <dc:creator>BfR</dc:creator>
+        <dcterms:created>2014</dcterms:created>
+        <dc:language>en</dc:language>
+        <dcterms:hasVersion>V1.0</dcterms:hasVersion>
+      </pmf:metadata>
+    </annotation>
+    <dimensionDescription>
+      <compositeDescription indexType="double" name="Time" ontologyTerm="timeInHours">
+        <tupleDescription>
+          <atomicDescription name="Salmonella concentration" valueType="double" ontologyTerm="salmonellaConcentration" />
+          <atomicDescription name="Staphylococcus concentration" valueType="double" ontologyTerm="staphylococcusConcentration" />
+        </tupleDescription>
+      </compositeDescription>
+    </dimensionDescription>
+    <dimension>
+      <compositeValue indexValue="0">
+        <tuple>
+          <atomicValue>3.13</atomicValue>
+          <atomicValue>3.60</atomicValue>
+        </tuple>
+      </compositeValue>
+      <compositeValue indexValue="2.66">
+        <tuple>
+          <atomicValue>3.11</atomicValue>
+          <atomicValue>3.6</atomicValue>
+        </tuple>
+      </compositeValue>
+      <compositeValue indexValue="9.33">
+        <tuple>
+          <atomicValue>5.76</atomicValue>
+          <atomicValue>2.1</atomicValue>
+        </tuple>
+      </compositeValue>
+      <compositeValue indexValue="13.33">
+        <tuple>
+          <atomicValue>7.35</atomicValue>
+          <atomicValue>3.9</atomicValue>
+        </tuple>
+      </compositeValue>
+    </dimension>
+  </resultComponent>
+</numl>
