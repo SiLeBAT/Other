@@ -18,6 +18,7 @@
 package de.bund.bfr.numl
 
 import groovy.xml.NamespaceBuilder
+import groovy.xml.StreamingMarkupBuilder
 
 import org.apache.log4j.Level
 
@@ -29,25 +30,27 @@ class NuMLWriter {
 	Map<String, String> namespaces = [:]
 
 	def write(NuMLDocument doc, def writable) {
-		writable.withWriter { writer ->
-			write(doc, writer)
+		writable.withWriter("UTF-8") { writer ->
+			writeInternal(doc, writer)
 			writer
 		}
 	}
 
 	String toString(NuMLDocument doc) {
-		write(doc, new StringWriter()).toString()
+		writeInternal(doc, new StringWriter()).toString()
 	}
 
-	def write(NuMLDocument doc, Writer writer) {
+	private def writeInternal(NuMLDocument doc, Writer writer) {
 		if(doc.invalidSettings.find { it.level.isGreaterOrEqual(Level.ERROR) })
 			throw new NuMLException("Invalid NuML document").with { it.messages = doc.invalidSettings; it }
 
 		def builder = NodeBuilder.newInstance()
-		//		builder.mkp.xmlDeclaration(version: '1.0')
 		def nb = NamespaceBuilder.newInstance(namespaces, builder)
 		nb.namespace("http://www.numl.org/numl/level${doc.level}/version${doc.version}")
 		def root = doc.write(nb)
+		
+		writer << new StreamingMarkupBuilder().bind { mkp.pi( xml:[ version:'1.0', encoding:'UTF-8' ] ) }
+		writer << "\n"
 		def printer = new XmlNodePrinter(writer.newPrintWriter())
 		printer.preserveWhitespace = true
 		printer.print(root)

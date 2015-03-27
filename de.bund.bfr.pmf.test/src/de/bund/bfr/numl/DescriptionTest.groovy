@@ -46,7 +46,6 @@ public class DescriptionTest {
 				new AtomicDescription(name: 'concentration')
 				]))
 		assertNotNull(root.toString())
-		println root
 	}
 	
 }
