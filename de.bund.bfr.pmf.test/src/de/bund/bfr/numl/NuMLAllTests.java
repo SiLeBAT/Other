@@ -7,6 +7,6 @@ import org.junit.runners.Suite.SuiteClasses;
 @RunWith(Suite.class)
 @SuiteClasses({ DescriptionTest.class, NuMLReaderTest.class,
 		NuMLWriterReaderTest.class, NuMLWriterTest.class })
-public class NuMLTests {
+public class NuMLAllTests {
 
 }

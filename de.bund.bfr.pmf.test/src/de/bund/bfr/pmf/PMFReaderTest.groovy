@@ -73,8 +73,6 @@ class PMFReaderTest {
 		assertNotNull(doc)
 		assertEquals(1, doc.models.size())
 		assertEquals(1, doc.dataSets.size())
-		
-		println reader.getParseMessages(Level.ERROR).join('\n')
 		assertEquals(0, reader.getParseMessages(Level.ERROR).size())
 		
 		// check parsed values for correctness

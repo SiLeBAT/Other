@@ -23,7 +23,7 @@ import static org.junit.Assert.*;
  * 
  */
 public class DescriptionTest {
-	
+
 	@Test
 	void shouldReturnInvalidSettings() {
 		def root = new CompositeDescription(name: 'TimeSeries', description:
@@ -34,7 +34,7 @@ public class DescriptionTest {
 		// no indexType for root and concentration
 		assertEquals(2, root.invalidSettings.size())
 	}
-	
+
 	/**
 	 * A rather soft test for debugging.
 	 */
@@ -47,5 +47,4 @@ public class DescriptionTest {
 				]))
 		assertNotNull(root.toString())
 	}
-	
 }

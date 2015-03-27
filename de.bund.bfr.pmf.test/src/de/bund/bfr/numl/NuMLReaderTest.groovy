@@ -22,7 +22,7 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class NuMLReaderTest {
-	
+
 	@Test
 	public void shouldParseValidTimeConcentration() throws URISyntaxException {
 		String resourceFile =
@@ -34,7 +34,7 @@ public class NuMLReaderTest {
 		assertNotNull(doc.resultComponents[0].dimension[0d])
 		assertEquals(3, doc.resultComponents[0].dimension[0d].size())
 	}
-	
+
 	@Test
 	public void shouldNotParseInvalidTimeConcentration() throws URISyntaxException {
 		String resourceFile =
@@ -45,5 +45,4 @@ public class NuMLReaderTest {
 		assertEquals(4, doc.invalidSettings.size())
 		assertEquals(9, parser.parseMessages.size())
 	}
-
 }
