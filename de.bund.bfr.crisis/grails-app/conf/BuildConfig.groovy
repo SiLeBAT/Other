@@ -3,7 +3,7 @@ import grails.util.Environment;
 // PROXY: When using a proxy, please use grails add-proxy and set-proxy commands
 // In case of failure, see proxy comment in grails.project.dependency.resolution
 
-grails.servlet.version = "3.0" // Change depending on target container compliance (2.5 or 3.0)
+grails.servlet.version = "2.5" // Change depending on target container compliance (2.5 or 3.0)
 grails.project.class.dir = "target/classes"
 grails.project.test.class.dir = "target/test-classes"
 grails.project.test.reports.dir = "target/test-reports"
