@@ -37,7 +37,7 @@ import org.xml.sax.SAXParseException
  * Instead {@link #getParseMessages(Level)} returns a list of warnings and errors.
  */
 class NuMLReader {
-	private XmlParser parser = new XmlParser(XmlUtil.newSAXParser(XMLConstants.W3C_XML_SCHEMA_NS_URI, true, false,
+	private XmlParser parser = new XmlParser(XmlUtil.newSAXParser("http://www.w3.org/2001/XMLSchema", true, false,
 	NuMLReader.class.getResource("/NUMLSchema.xsd").toURI().toURL()))
 
 	NuMLDocument document
