@@ -82,6 +82,9 @@ public class MyTab21NodeModel extends NodeModel {
             final ExecutionContext exec) throws Exception {
     	long ttt = System.currentTimeMillis();
     	
+    	// Expected data Wirkstoffe: "Gruppe","Name","Kurz","cutoff","Sort"
+    	// Expected data Datensatz: "Programm_kurz", "Serovar_Schreibweise", Wirkstoffe
+    	
     	// Wirkstoffe cutoffs einlesen
     	HashMap<String, Wirkstoff> wss = new HashMap<String, Wirkstoff>();
     	HashMap<Integer, Wirkstoff> ws = new HashMap<Integer, Wirkstoff>();
@@ -96,6 +99,7 @@ public class MyTab21NodeModel extends NodeModel {
         			else if (cns[i].equalsIgnoreCase("Name")) w.setName(((StringCell) dc).getStringValue());
         			else if (cns[i].equalsIgnoreCase("Kurz")) w.setKurz(((StringCell) dc).getStringValue());
         			else if (cns[i].equalsIgnoreCase("cutoff")) w.setCutoff(((DoubleCell) dc).getDoubleValue());
+        			else if (cns[i].equalsIgnoreCase("cutoffcj")) w.setCutoff2(((DoubleCell) dc).getDoubleValue());
         			else if (cns[i].equalsIgnoreCase("Sort")) w.setIndexSort(((IntCell) dc).getIntValue());
         	    }
     		}
@@ -105,7 +109,7 @@ public class MyTab21NodeModel extends NodeModel {
     		}
     	}
     	System.err.println("Wirkstoffe:\t" + (System.currentTimeMillis()-ttt));
-    	
+
     	// dataset einlesen
     	// preTab
     	HashMap<String, Programm> ps = new HashMap<String, Programm>();
@@ -126,6 +130,17 @@ public class MyTab21NodeModel extends NodeModel {
     		Programm p = new Programm();
     		rowIndex++; xrow = ew.createRow(rowIndex);
     		colIndex = 0;
+    		int dtsci = dts.findColumnIndex("Programm_kurz");
+    		if (dtsci >= 0) {
+				DataCell dc = row.getCell(dtsci);
+				if (!dc.isMissing()) p.setName(((StringValue) dc).getStringValue());
+    		}
+    		dtsci = dts.findColumnIndex("Serovar_Schreibweise");
+    		if (dtsci >= 0) {
+				DataCell dc = row.getCell(dtsci);
+				if (!dc.isMissing()) p.setSerovarName(((StringValue) dc).getStringValue());
+    		}
+
     		for (int i=0;i<dts.getNumColumns();i++) {
     			DataCell dc = row.getCell(i);
         	    if (!dc.isMissing()) {
@@ -153,11 +168,8 @@ public class MyTab21NodeModel extends NodeModel {
         	    		XSSFCell cell = xrow.createCell(colIndex); cell.setCellValue(dc.toString()); colIndex++;
         	    	}
 
-        			if (cns[i].equalsIgnoreCase("Programm_kurz")) {
-        				p.setName(((StringValue) dc).getStringValue());
-        			}
-        			else if (wss.containsKey(cns[i])) {
-        				boolean isPositiv = p.addWirkstoff(wss.get(cns[i]), ((DoubleValue) dc).getDoubleValue());
+        			if (wss.containsKey(cns[i])) {
+        				boolean isPositiv = p.addWirkstoff(wss.get(cns[i]), ((DoubleValue) dc).getDoubleValue(), erreger.getStringValue());
         	    		XSSFCell cell = xrow.createCell(colIndex); cell.setCellValue(isPositiv); colIndex++;
         			}
         	    }

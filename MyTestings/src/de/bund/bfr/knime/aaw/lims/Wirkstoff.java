@@ -4,7 +4,7 @@ public class Wirkstoff {
 
 	private String name, gruppe, kurz;
 	private Integer indexSort;
-	private double cutoff, cutoffL, cutoffH;
+	private double cutoff, cutoff2, rangeLow, rangeHigh;
 
 	public Integer getIndexSort() {
 		return indexSort;
@@ -12,6 +12,14 @@ public class Wirkstoff {
 
 	public void setIndexSort(Integer indexSort) {
 		this.indexSort = indexSort;
+	}
+
+	public double getCutoff2() {
+		return cutoff2;
+	}
+
+	public void setCutoff2(double cutoff2) {
+		this.cutoff2 = cutoff2;
 	}
 
 	public double getCutoff() {
@@ -22,20 +30,20 @@ public class Wirkstoff {
 		this.cutoff = cutoff;
 	}
 
-	public double getCutoffL() {
-		return cutoffL;
+	public double getRangeLow() {
+		return rangeLow;
 	}
 
-	public void setCutoffL(double cutoffL) {
-		this.cutoffL = cutoffL;
+	public void setRangeLow(double rangeLow) {
+		this.rangeLow = rangeLow;
 	}
 
-	public double getCutoffH() {
-		return cutoffH;
+	public double getRangeHigh() {
+		return rangeHigh;
 	}
 
-	public void setCutoffH(double cutoffH) {
-		this.cutoffH = cutoffH;
+	public void setRangeHigh(double rangeHigh) {
+		this.rangeHigh = rangeHigh;
 	}
 
 	public String getName() {

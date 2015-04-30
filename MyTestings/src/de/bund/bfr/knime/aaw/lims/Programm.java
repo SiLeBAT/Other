@@ -8,6 +8,7 @@ import java.util.List;
 public class Programm {
 
 	private String name;
+	private String serovarName;
 	private int numSamples;
 	private HashMap<String, List<Double>> wirkstoffVals;
 	private HashMap<Integer, Integer> numResistentArr;
@@ -31,6 +32,14 @@ public class Programm {
 			return numResistentArr.get(i);
 		else
 			return 0;
+	}
+
+	public String getSerovarName() {
+		return serovarName;
+	}
+
+	public void setSerovarName(String serovarName) {
+		this.serovarName = serovarName;
 	}
 
 	public String getName() {
@@ -75,12 +84,16 @@ public class Programm {
 		else if (value >= 0.5 && value < 0.6) return 0.5;
 		else return value;
 	}
-	public boolean addWirkstoff(Wirkstoff w, double value) {
+	public boolean addWirkstoff(Wirkstoff w, double value, String erreger) {
 		boolean result = false;
 		double cValue = checkValue(value); 
+		double co = w.getCutoff(); // all agents and C. coli
+		if (erreger.equals("CA") && serovarName != null && !serovarName.replaceAll("\\s+","").equalsIgnoreCase("C.coli")) { // C. hyointestinalis, C. jejuni, C. coli, C. lari
+			co = w.getCutoff2();
+		}
 		String kurz = w.getKurz();
 		int increment = 0;
-		if (cValue > w.getCutoff()) {
+		if (cValue > co) {
 			increment = 1;
 			groupResistance.add(w.getGruppe());
 			result = true;
