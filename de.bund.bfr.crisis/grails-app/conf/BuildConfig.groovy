@@ -72,7 +72,7 @@ grails.project.dependency.resolution = {
 		build 'com.google.gwt:gwt-servlet:2.7.0'
 
 		compile 'org.hsqldb:hsqldb:2.3.2'
-		compile 'com.h2database:h2:1.4.186'
+		compile 'com.h2database:h2:1.4.187'
 		
 //		compile 'org.apache.httpcomponents:httpclient:4.4', {
 //			force = true

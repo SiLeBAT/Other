@@ -1,3 +1,8 @@
+import java.beans.Introspector;
+import java.sql.Driver;
+import java.sql.DriverManager;
+import java.util.Enumeration;
+
 import grails.util.Environment
 import de.bund.bfr.LegacyImporterService
 import de.bund.bfr.crisis.Delivery
@@ -63,5 +68,23 @@ class BootStrap {
 		}
     }
     def destroy = {
+		net.sf.ehcache.CacheManager manager = net.sf.ehcache.CacheManager.getInstance();
+		if (manager != null) {
+			manager.shutdown();
+		}
+		
+		
+		try {
+			Introspector.flushCaches();
+			for (Enumeration<Driver> e = DriverManager.getDrivers(); e.hasMoreElements();) {
+				Driver driver = (Driver) e.nextElement();
+				if (driver.getClass().getClassLoader() == getClass().getClassLoader()) {
+					DriverManager.deregisterDriver(driver);
+				}
+			}
+		} catch (Throwable e) {
+			System.err.println("Failllled to cleanup ClassLoader for webapp");
+			e.printStackTrace();
+		}
     }
 }

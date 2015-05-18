@@ -35,7 +35,7 @@ environments {
     production {
         dataSource {
 			//dbdir = "${System.properties['catalina.base']}/db/prodDb"
-			dbdir = "/tmp/bbkdb/prodDb"
+			dbdir = "/home/knime/bbkdb/prodDb"
 			
             dbCreate = "validate"
             url = "jdbc:h2:file:${dbdir};MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE;MV_STORE=FALSE"
