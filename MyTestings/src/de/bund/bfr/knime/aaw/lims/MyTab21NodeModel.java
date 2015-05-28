@@ -178,6 +178,7 @@ public class MyTab21NodeModel extends NodeModel {
         				if (!dc.getType().isCompatible(DoubleValue.class)) {
         					p.addParameter(wss.get(cns[i]), ((StringValue) dc).getStringValue());
         					containsStrings = true;
+            	    		XSSFCell cell = xrow.createCell(colIndex); cell.setCellValue(""); colIndex++;
         				}
         				else {
             				boolean isPositiv = p.addWirkstoff(wss.get(cns[i]), ((DoubleValue) dc).getDoubleValue(), erreger.getStringValue());
