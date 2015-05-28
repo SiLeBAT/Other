@@ -16,10 +16,12 @@ public class Programm {
 	private HashSet<String> groupResistance;
 	private HashMap<String, Integer> groupResistanceCount;
 	private HashMap<String, Integer> numPostive;
+	private HashMap<String, List<String>> parameterVals;
 
 	public Programm() {
 		numSamples = 1;
 		wirkstoffVals = new HashMap<String, List<Double>>();
+		parameterVals = new HashMap<String, List<String>>();
 		groupResistance = new HashSet<String>();
 		numResistentArr = new HashMap<Integer, Integer>();
 		maxResi = 0;
@@ -74,6 +76,10 @@ public class Programm {
 		return wirkstoffVals;
 	}
 
+	public HashMap<String, List<String>> getParameterVals() {
+		return parameterVals;
+	}
+
 	private double checkValue(double value) {
 		if (value >= 0.008 && value < 0.009) return 0.008;
 		else if (value >= 0.01 && value < 0.02) return 0.015;
@@ -83,6 +89,11 @@ public class Programm {
 		else if (value >= 0.25 && value < 0.26) return 0.25;
 		else if (value >= 0.5 && value < 0.6) return 0.5;
 		else return value;
+	}
+	public void addParameter(Wirkstoff w, String value) {
+		List<String> al = new ArrayList<String>();
+		al.add(value);
+		parameterVals.put(w.getKurz(), al);
 	}
 	public boolean addWirkstoff(Wirkstoff w, double value, String erreger) {
 		boolean result = false;
@@ -160,12 +171,38 @@ public class Programm {
 				wirkstoffVals.put(kurz, al);
 			}
 		}
+
+		HashMap<String, List<String>> ppv = p.getParameterVals();
+		if (ppv != null) {
+			for (String kurz : ppv.keySet()) {
+				if (!parameterVals.containsKey(kurz))
+					parameterVals.put(kurz, new ArrayList<String>());
+				List<String> al = parameterVals.get(kurz);
+				al.addAll(ppv.get(kurz));
+				parameterVals.put(kurz, al);
+			}
+		}
 	}
 
 	public HashMap<Double, Integer> getFrequencyMap(String kurz) {
+		if (!wirkstoffVals.containsKey(kurz)) return null;
 		HashMap<Double, Integer> frequencymap = new HashMap<Double, Integer>();
 		List<Double> la = wirkstoffVals.get(kurz);
 		for (Double val : la) {
+			if (frequencymap.containsKey(val)) {
+				frequencymap.put(val, frequencymap.get(val) + 1);
+			} else {
+				frequencymap.put(val, 1);
+			}
+		}
+		return frequencymap;
+	}
+
+	public HashMap<String, Integer> getParamFrequencyMap(String kurz) {
+		if (!parameterVals.containsKey(kurz)) return null;
+		HashMap<String, Integer> frequencymap = new HashMap<String, Integer>();
+		List<String> la = parameterVals.get(kurz);
+		for (String val : la) {
 			if (frequencymap.containsKey(val)) {
 				frequencymap.put(val, frequencymap.get(val) + 1);
 			} else {

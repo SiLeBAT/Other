@@ -1,10 +1,13 @@
 package de.bund.bfr.knime.aaw.lims;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.SortedSet;
@@ -56,6 +59,7 @@ public class MyTab21NodeModel extends NodeModel {
 	static final String BLSUBFOLDER = "blsubfolder";
 	static final String JAHR = "jahr";
 	static final String KRITERIEN_JAHR = "kriterienjahr";
+	static final String PPID = "pruefplanid";
 	
     private final SettingsModelString baseFolder = new SettingsModelString(BASE_FOLDER, "C:/Dokumente und Einstellungen/Weiser/Desktop/tawak/");
     private final SettingsModelString erreger = new SettingsModelString(ERREGER, "SA");
@@ -64,6 +68,7 @@ public class MyTab21NodeModel extends NodeModel {
     private final SettingsModelString blSubFolder = new SettingsModelString(BLSUBFOLDER, "");
     private final SettingsModelInteger jahr = new SettingsModelInteger(JAHR, 2013);
     private final SettingsModelInteger kriterienJahr = new SettingsModelInteger(KRITERIEN_JAHR, 2013);
+    private final SettingsModelString pruefPlanId = new SettingsModelString(PPID, "");
 
     private boolean doAutosize = false;
 	
@@ -125,6 +130,7 @@ public class MyTab21NodeModel extends NodeModel {
        			cell = xrow.createCell(colIndex); cell.setCellValue(cn + "_Res"); colIndex++;
        		}
     	}
+    	boolean containsStrings = false;
     	for (DataRow row : inData[0]) {
     		exec.checkCanceled();
     		Programm p = new Programm();
@@ -169,8 +175,14 @@ public class MyTab21NodeModel extends NodeModel {
         	    	}
 
         			if (wss.containsKey(cns[i])) {
-        				boolean isPositiv = p.addWirkstoff(wss.get(cns[i]), ((DoubleValue) dc).getDoubleValue(), erreger.getStringValue());
-        	    		XSSFCell cell = xrow.createCell(colIndex); cell.setCellValue(isPositiv); colIndex++;
+        				if (!dc.getType().isCompatible(DoubleValue.class)) {
+        					p.addParameter(wss.get(cns[i]), ((StringValue) dc).getStringValue());
+        					containsStrings = true;
+        				}
+        				else {
+            				boolean isPositiv = p.addWirkstoff(wss.get(cns[i]), ((DoubleValue) dc).getDoubleValue(), erreger.getStringValue());
+            	    		XSSFCell cell = xrow.createCell(colIndex); cell.setCellValue(isPositiv); colIndex++;
+        				}
         			}
         	    }
         	    else {
@@ -184,18 +196,14 @@ public class MyTab21NodeModel extends NodeModel {
     		}
     	}
     	System.err.println("preTab0:\t" + (System.currentTimeMillis()-ttt));
-    	String pfn = getFilename(baseFolder.getStringValue(), "preTab21");
+    	String pfn = getFilename(baseFolder.getStringValue(), "preTab" + (containsStrings ? "_ESBL" : "21"));
 
-    	ew.setStyle(true, 0, true, true, false, true, null); // RowHeader
+    	ew.setStyle(0, 0, null, null, true, true, false, true, null, null); // RowHeader
     	if (doAutosize) ew.autoSizeColumn(5);
     	ew.save(pfn);
     	System.err.println("preTab1:\t" + (System.currentTimeMillis()-ttt));
     	
     	// Ergebnisse berechnen und ausgeben
-    	// Tab1
-    	LinkedHashSet<List<Object>> tab1 = new LinkedHashSet<List<Object>>();
-   		List<Integer> tab1Borders = new ArrayList<Integer>();
-   		List<Integer> tab1BordersV = new ArrayList<Integer>();
     	SortedSet<String> pkeys = new TreeSet<String>(ps.keySet());
 		int maxResi = 0;
 		for (String pkey : pkeys) {
@@ -203,155 +211,302 @@ public class MyTab21NodeModel extends NodeModel {
 			if (p.getMaxResi() > maxResi) maxResi = p.getMaxResi();
 		}
    		SortedSet<Integer> wkeys = new TreeSet<Integer>(ws.keySet());
-   		for (Integer wkey : wkeys) {
-   			Wirkstoff w = ws.get(wkey);
-   			boolean hasWKey = false;
-   			for (String pkey : pkeys) {
-   				Programm p = ps.get(pkey);
-   				HashMap<String, Integer> pw = p.getNumPositive();
-   				if (pw.containsKey(w.getKurz())) {
-   					hasWKey = true;
-   					break;
-   				}
-   			}
-   			if (!hasWKey) ws.remove(wkey);
-   		}
-   		wkeys = new TreeSet<Integer>(ws.keySet());
-
-   		List<Object> tab1Row = new ArrayList<Object>();
-		tab1Row.add("");
-		tab1BordersV.add(0);
-    	for (String pkey : pkeys) {
-    		tab1Row.add(pkey); tab1Row.add(pkey + " (#Positiv)"); tab1Row.add(pkey + " (%Positiv)");
-    		tab1BordersV.add(tab1Row.size()-1);
-    	}
-		tab1.add(tab1Row);
-		
-   		for (Integer wkey : wkeys) {
-   			Wirkstoff w = ws.get(wkey);
-   			tab1Row = new ArrayList<Object>();
-   			String kurz = w.getKurz();
-   			tab1Row.add(kurz);
-   			for (String pkey : pkeys) {
-   				Programm p = ps.get(pkey);
-   				HashMap<String, Integer> pw = p.getNumPositive();
-   				int num = pw.containsKey(kurz) ? pw.get(kurz) : 0;
-	   	   		tab1Row.add(p.getNumSamples()); tab1Row.add(num); tab1Row.add(100.0 * num / p.getNumSamples());   				
-   			}
-   			tab1.add(tab1Row);
-   		}
-   		
-		tab1Borders.add(tab1.size() - 1);
-   		for (int i=0;i<=maxResi;i++) {
-   	   		tab1Row = new ArrayList<Object>();
-   	   		tab1Row.add(i == 0 ? "Sensibel" : i + "x resistent");
-   			for (String pkey : pkeys) {
-   				Programm p = ps.get(pkey);
-   				int num = p.getNumResistent(i);
-   	   	   		tab1Row.add(p.getNumSamples()); tab1Row.add(num); tab1Row.add(100.0 * num / p.getNumSamples());   				
-   			}
+    	if (containsStrings) {
+    		// Tab1
+   	    	LinkedHashSet<List<Object>> tab1 = new LinkedHashSet<List<Object>>();
+        	List<String> doubleList = new ArrayList<String>();
+        	int dblListStart = 0;int dblListEnd = 10;
+        	for (int i=dblListStart;i<=dblListEnd;i++) doubleList.add("<2^" + i);
+        	doubleList.add(">=2^" + dblListEnd);
+        	List<String> stringList = new ArrayList<String>();
+        	stringList.add("+");stringList.add("-");
+        	for (String pkey : pkeys) {
+        		Programm p = ps.get(pkey);
+       	   		for (Integer wkey : wkeys) {
+       	   			Wirkstoff w = ws.get(wkey);
+       	   			String kurz = w.getKurz();
+    	   	   		HashMap<String, Integer> pFrequencymap = p.getParamFrequencyMap(kurz);
+    	   	   		if (pFrequencymap != null) {
+    	   	   			for (String str : pFrequencymap.keySet()) if (!stringList.contains(str)) stringList.add(str);
+    	   	   		}
+       	   		}
+        	}
+   	   		List<Object> tab1Row = new ArrayList<Object>();
+   	   		tab1Row.add(""); tab1Row.add("Total"); tab1Row.add("#Positiv"); tab1Row.add("%Positiv");
+   	   		for (String str : stringList) tab1Row.add(str);
+   	   		for (String str : doubleList) tab1Row.add(str);
    	   		tab1.add(tab1Row);
-   		}
-    	System.err.println("tab1:\t" + (System.currentTimeMillis()-ttt));
+   	   		LinkedHashMap<String, LinkedHashMap<String, Integer>> hmGesamt = new LinkedHashMap<>();
+        	HashSet<Integer> dlrl = new HashSet<>();
+        	int rowIndexx = 0;
+        	// Tab3
+    		for (String pkey : pkeys) {
+    			Programm p = ps.get(pkey);
+       	    	LinkedHashSet<List<Object>> tab3 = new LinkedHashSet<List<Object>>();
+       	   		List<Object> tab3Row = new ArrayList<Object>();
+       	   		tab3Row.add(""); tab3Row.add("Total"); tab3Row.add("#Positiv"); tab3Row.add("%Positiv");
+       	   		for (String str : stringList) tab3Row.add(str);
+       	   		for (String str : doubleList) tab3Row.add(str);
+       			tab3.add(tab3Row);
+       	   		for (Integer wkey : wkeys) {
+       	   			Wirkstoff w = ws.get(wkey);
+       	   			String kurz = w.getKurz();
+       	   			if (!hmGesamt.containsKey(kurz)) hmGesamt.put(kurz, new LinkedHashMap<String, Integer>());
+       	   			LinkedHashMap<String, Integer> hmKurz = hmGesamt.get(kurz);
+       	   			rowIndexx++;
+       	   			tab3Row = new ArrayList<Object>();
+       	   			tab3Row.add(kurz);
+       				HashMap<String, Integer> pw = p.getNumPositive();
+       				int num = pw.containsKey(kurz) ? pw.get(kurz) : 0;
+       				tab3Row.add(p.getNumSamples()); tab3Row.add(num); tab3Row.add(100.0 * num / p.getNumSamples()); 
+       				if (!hmKurz.containsKey("Total")) hmKurz.put("Total", 0);
+       				hmKurz.put("Total", hmKurz.get("Total") + p.getNumSamples());
+       				if (!hmKurz.containsKey("#Positiv")) hmKurz.put("#Positiv", 0);
+       				hmKurz.put("#Positiv", hmKurz.get("#Positiv") + num);
+    	   	   		HashMap<Double, Integer> frequencymap = p.getFrequencyMap(kurz);
+    	   	   		HashMap<String, Integer> pFrequencymap = p.getParamFrequencyMap(kurz);
+    	   	   		for (String str : stringList)  {
+           				if (!hmKurz.containsKey(str)) hmKurz.put(str, 0);
+	    	   	   		if (pFrequencymap != null && pFrequencymap.containsKey(str)) {
+	    	   	   			tab3Row.add(pFrequencymap.get(str));
+	           				hmKurz.put(str, hmKurz.get(str) + pFrequencymap.get(str));
+	    	   	   		}
+	    	   	   		else tab3Row.add("");
+    	   	   		}
+    	   	   		HashMap<String, Integer> hm = new HashMap<>();
+	    	   	   	if (frequencymap != null) {
+	    	   	   		for (int i = 1;i<doubleList.size() - 1;i++)  {
+	    	   	   			int count = 0;
+	    	   	   			for (Double dbl : frequencymap.keySet()) {
+	    	   	   				if (dbl.doubleValue() < Math.pow(2, dblListStart+i) && dbl.doubleValue() >= Math.pow(2, dblListStart+i-1)) count += frequencymap.get(dbl);
+	    	   	   			}
+		    	   	   		hm.put(doubleList.get(i), count);
+	    	   	   		}
+		   	   			int count = 0;
+		   	   			for (Double dbl : frequencymap.keySet()) {
+		   	   				if (dbl.doubleValue() < Math.pow(2, dblListStart)) count += frequencymap.get(dbl);
+		   	   			}
+	    	   	   		hm.put(doubleList.get(0), count);
+		   	   			count = 0;
+		   	   			for (Double dbl : frequencymap.keySet()) {
+		   	   				if (dbl.doubleValue() >= Math.pow(2, dblListStart + doubleList.size() - 2)) count += frequencymap.get(dbl);
+		   	   			}
+	    	   	   		hm.put(doubleList.get(doubleList.size()-1), count);
+	    	   	   	}
+    	   	   		for (String str : doubleList) {
+           				if (!hmKurz.containsKey(str)) hmKurz.put(str, 0);
+        	   	   		if (hm.containsKey(str) && hm.get(str) > 0) {
+        	   	   			tab3Row.add(hm.get(str));
+        	   				dlrl.add(rowIndexx);
+	           				hmKurz.put(str, hmKurz.get(str) + hm.get(str));
+        	   	   		}
+        	   	   		else tab3Row.add("");
+    	   	   		}
+    	   			tab3.add(tab3Row);
+       			}
+       	   		
+       	    	String fn = getFilename(baseFolder.getStringValue(), "ESBL_" + p.getName());
+       	    	ew = new ExcelWriter(tab3);
+       	    	ew.setStyle(0, 0, null, null, true, true, false, true, null, null); // RowHeader
+       	    	ew.setStyle(null, null, 0, 0, true, false, true, false, null, null); // ColumnHeader
+       	    	ew.setStyle(null, null, 3, 3, false, false, true, false, null, null); // TrennBorder
+       	    	ew.setStyle(null, null, 3 + stringList.size(), 3 + stringList.size(), false, false, true, false, null, null); // LastColumnBorder1
+       	    	ew.setStyle(null, null, 3 + stringList.size() + (4-dblListStart), 3 + stringList.size() + (4-dblListStart), false, false, true, false, null, null); // LimitBorder (>=8)
+       	    	for (Integer dlr : dlrl)
+       	    		ew.setStyle(dlr, dlr, 3 + stringList.size() + (5-dblListStart), null, false, false, false, false, null, Color.RED); // LimitBorder (>=8)
+       	    	ew.setStyle(null, null, 3 + stringList.size() + doubleList.size(), 3 + stringList.size() + doubleList.size(), false, false, true, false, null, null); // LastColumnBorder2
+       	    	ew.setStyle(tab3.size() - 1, tab3.size() - 1, null, null, false, false, false, true, null, null); // LastRowBorder
+       	    	ew.autoSizeColumns(tab3Row.size());
+       	    	ew.save(fn);
+       		}
+        	System.err.println("tab3:\t" + (System.currentTimeMillis()-ttt));
+        	for (String kurz : hmGesamt.keySet()) {
+        		tab1Row = new ArrayList<Object>();
+        		tab1Row.add(kurz);
+        		LinkedHashMap<String, Integer> hmKurz = hmGesamt.get(kurz);
+        		tab1Row.add(hmKurz.get("Total")); tab1Row.add(hmKurz.get("#Positiv")); tab1Row.add(100.0 * hmKurz.get("#Positiv") / hmKurz.get("Total")); 
+   	   			for (String str : hmKurz.keySet()) {
+   	   				if (!str.equals("Total") && !str.equals("#Positiv")) {
+   	   					if (hmKurz.get(str) > 0) {
+   	   						tab1Row.add(hmKurz.get(str));
+   	   					}
+   	   					else tab1Row.add("");
+   	   				}
+   	   			}
 
-    	// Tab2
-    	LinkedHashSet<List<Object>> tab2 = new LinkedHashSet<List<Object>>();
-   		List<Integer> tab2Borders = new ArrayList<Integer>();
-   		List<Object> tab2Row = new ArrayList<Object>();
-   		tab2Row.add("Gruppe"); tab2Row.add("Sum"); tab2Row.add("percent"); tab2Row.add("totalCount"); tab2Row.add("Programm");
-		tab2.add(tab2Row);
-    	for (String pkey : pkeys) {
-    		Programm p = ps.get(pkey);
-       		HashMap<String, Integer> pgrc = p.getGroupResistanceCount();
-    		if (pgrc != null) {
-    			SortedSet<String> grkeys = new TreeSet<String>(pgrc.keySet());
-    			int sum = 0;
-    			for (String group : grkeys) {
-    				tab2Row = new ArrayList<Object>();
-    				tab2Row.add(group); tab2Row.add(pgrc.get(group)); tab2Row.add(100.0 * pgrc.get(group) / p.getNumSamples());
-    				tab2Row.add(p.getNumSamples()); tab2Row.add(p.getName());
-    				tab2.add(tab2Row);
-    				sum += pgrc.get(group);
-    			}
-    			tab2Row = new ArrayList<Object>();
-    			tab2Row.add("Sum"); tab2Row.add(sum); tab2Row.add(100.0 * sum / p.getNumSamples());
-				tab2Row.add(p.getNumSamples()); tab2Row.add(p.getName());
-    			tab2Borders.add(tab2.size());
-    			tab2.add(tab2Row);
-    		}
-    	}
-    	System.err.println("tab2:\t" + (System.currentTimeMillis()-ttt));
-
-    	// Tab3
-    	List<Double> doubleList = new ArrayList<Double>();
-    	doubleList.add(0.008);doubleList.add(0.015);doubleList.add(0.03125);doubleList.add(0.0625);doubleList.add(0.125);doubleList.add(0.25);
-    	doubleList.add(0.5);doubleList.add(1.0);doubleList.add(2.0);doubleList.add(4.0);doubleList.add(8.0);doubleList.add(16.0);
-    	doubleList.add(32.0);doubleList.add(64.0);doubleList.add(128.0);doubleList.add(256.0);doubleList.add(512.0);
-    	doubleList.add(1024.0);doubleList.add(2048.0);
-		for (String pkey : pkeys) {
-			Programm p = ps.get(pkey);
-   	    	LinkedHashSet<List<Object>> tab3 = new LinkedHashSet<List<Object>>();
-   	   		List<Object> tab3Row = new ArrayList<Object>();
-   	   		tab3Row.add(""); tab3Row.add("Total"); tab3Row.add("#Positiv"); tab3Row.add("%Positiv");
-   	   		for (Double dbl : doubleList) tab3Row.add(dbl);
-   			tab3.add(tab3Row);
-   	   		for (Integer wkey : wkeys) {
-   	   			Wirkstoff w = ws.get(wkey);
-   	   			String kurz = w.getKurz();
-   	   			tab3Row = new ArrayList<Object>();
-   	   			tab3Row.add(kurz);
-   				HashMap<String, Integer> pw = p.getNumPositive();
-   				int num = pw.containsKey(kurz) ? pw.get(kurz) : 0;
-   				tab3Row.add(p.getNumSamples()); tab3Row.add(num); tab3Row.add(100.0 * num / p.getNumSamples()); 
-	   	   		HashMap<Double, Integer> frequencymap = p.getFrequencyMap(kurz);
-	   	   		if (frequencymap != null) {
-			   	   	for (Double dbl : doubleList) {
-			   	   		if (frequencymap.containsKey(dbl)) tab3Row.add(frequencymap.get(dbl));
-			   	   		else tab3Row.add("");
-			   	   	}	   	   			
-	   	   		}
-	   			tab3.add(tab3Row);
-   			}
-   	   		
-   	   		for (int i=0;i<=maxResi;i++) {
-   	   			tab3Row = new ArrayList<Object>();
-   	   			tab3Row.add(i == 0 ? "Sensibel" : i + "x resistent");
-   				int num = p.getNumResistent(i);
-   				tab3Row.add(p.getNumSamples()); tab3Row.add(num); tab3Row.add(100.0 * num / p.getNumSamples());   				
-   	   	   		tab3.add(tab3Row);
-   	   		}
-   	    	String fn = getFilename(baseFolder.getStringValue(), "MHKs_" + p.getName());
-   	    	ew = new ExcelWriter(tab3);
-   	    	ew.setStyle(true, 0, true, true, false, true, null); // RowHeader
-   	    	ew.setStyle(false, 0, true, false, true, false, null); // ColumnHeader
-   	    	ew.setStyle(false, 3, false, false, true, false, null); // TrennBorder
-   	    	ew.setStyle(false, 3 + doubleList.size(), false, false, true, false, null); // LastColumnBorder
-   	    	ew.setStyle(true, tab3.size() - maxResi - 2, false, false, false, true, null); // LastRowBorder
-   	    	ew.setStyle(true, tab3.size() - 1, false, false, false, true, null); // LastRowBorder
-   	    	if (doAutosize) ew.autoSizeColumns(tab1Row.size());
+	   	   		tab1.add(tab1Row);
+        	}
+   	    	String fn = getFilename(baseFolder.getStringValue(), "ESBL_gesamt");
+   	    	ew = new ExcelWriter(tab1);
+   	    	ew.setStyle(0, 0, null, null, true, true, false, true, null, null); // RowHeader
+   	    	ew.setStyle(null, null, 0, 0, true, false, true, false, null, null); // ColumnHeader
+   	    	ew.setStyle(null, null, 3, 3, false, false, true, false, null, null); // TrennBorder
+   	    	ew.setStyle(null, null, 3 + stringList.size(), 3 + stringList.size(), false, false, true, false, null, null); // LastColumnBorder1
+   	    	ew.setStyle(null, null, 3 + stringList.size() + (4-dblListStart), 3 + stringList.size() + (4-dblListStart), false, false, true, false, null, null); // LimitBorder (>=8)
+   	    	for (Integer dlr : dlrl)
+   	    		ew.setStyle(dlr, dlr, 3 + stringList.size() + (5-dblListStart), null, false, false, false, false, null, Color.RED); // LimitBorder (>=8)
+   	    	ew.setStyle(null, null, 3 + stringList.size() + doubleList.size(), 3 + stringList.size() + doubleList.size(), false, false, true, false, null, null); // LastColumnBorder2
+   	    	ew.setStyle(tab1.size() - 1, tab1.size() - 1, null, null, false, false, false, true, null, null); // LastRowBorder
+   	    	ew.autoSizeColumns(tab1Row.size());
    	    	ew.save(fn);
-   		}
-    	System.err.println("tab3:\t" + (System.currentTimeMillis()-ttt));
+        	System.err.println("tab1:\t" + (System.currentTimeMillis()-ttt));
+        }
+    	else {
+       		for (Integer wkey : wkeys) {
+       			Wirkstoff w = ws.get(wkey);
+       			boolean hasWKey = false;
+       			for (String pkey : pkeys) {
+       				Programm p = ps.get(pkey);
+       				HashMap<String, Integer> pw = p.getNumPositive();
+       				if (pw.containsKey(w.getKurz())) {
+       					hasWKey = true;
+       					break;
+       				}
+       			}
+       			if (!hasWKey) ws.remove(wkey);
+       		}
+       		wkeys = new TreeSet<Integer>(ws.keySet());
+        	// Tab1
+        	LinkedHashSet<List<Object>> tab1 = new LinkedHashSet<List<Object>>();
+       		List<Integer> tab1Borders = new ArrayList<Integer>();
+       		List<Integer> tab1BordersV = new ArrayList<Integer>();
 
-    	String fn = getFilename(baseFolder.getStringValue(), "Tab21");
-    	ew = new ExcelWriter(tab1);
-    	ew.setStyle(true, 0, true, true, false, true, null); // RowHeader
-    	ew.setStyle(false, 0, true, false, true, false, null); // ColumnHeader
-    	for (int bl : tab1Borders) ew.setStyle(true, bl, false, false, false, true, null); // TrennBorder
-    	for (int bl : tab1BordersV) ew.setStyle(false, bl, false, false, true, false, null); // TrennBorder
-    	ew.setStyle(true, tab1.size() - 1, false, false, false, true, null); // LastRowBorder
-    	if (doAutosize) ew.autoSizeColumns(tab1Row.size());
-    	ew.save(fn);
-    	fn = getFilename(baseFolder.getStringValue(), "WGruppen");
-    	ew = new ExcelWriter(tab2);
-    	for (int bl : tab2Borders) ew.setStyle(true, bl, false, false, false, true, null); // TrennBorder
-    	ew.setStyle(true, 0, true, true, false, true, null); // RowHeader
-    	ew.setStyle(false, 0, true, false, true, false, null); // ColumnHeader
-    	ew.setStyle(false, 4, false, false, true, false, null); // LastColumnBorder
-    	ew.setStyle(false, 2, false, false, false, false, "#.###"); // DoubleColumn
-    	if (doAutosize) ew.autoSizeColumns(tab2Row.size());
-    	ew.save(fn);
-    	System.err.println("excelwriting:\t" + (System.currentTimeMillis()-ttt));
+       		List<Object> tab1Row = new ArrayList<Object>();
+    		tab1Row.add("");
+    		tab1BordersV.add(0);
+        	for (String pkey : pkeys) {
+        		tab1Row.add(pkey); tab1Row.add(pkey + " (#Positiv)"); tab1Row.add(pkey + " (%Positiv)");
+        		tab1BordersV.add(tab1Row.size()-1);
+        	}
+    		tab1.add(tab1Row);
+    		
+       		for (Integer wkey : wkeys) {
+       			Wirkstoff w = ws.get(wkey);
+       			tab1Row = new ArrayList<Object>();
+       			String kurz = w.getKurz();
+       			tab1Row.add(kurz);
+       			for (String pkey : pkeys) {
+       				Programm p = ps.get(pkey);
+       				HashMap<String, Integer> pw = p.getNumPositive();
+       				int num = pw.containsKey(kurz) ? pw.get(kurz) : 0;
+    	   	   		tab1Row.add(p.getNumSamples()); tab1Row.add(num); tab1Row.add(100.0 * num / p.getNumSamples());   				
+       			}
+       			tab1.add(tab1Row);
+       		}
+       		
+    		tab1Borders.add(tab1.size() - 1);
+       		for (int i=0;i<=maxResi;i++) {
+       	   		tab1Row = new ArrayList<Object>();
+       	   		tab1Row.add(i == 0 ? "Sensibel" : i + "x resistent");
+       			for (String pkey : pkeys) {
+       				Programm p = ps.get(pkey);
+       				int num = p.getNumResistent(i);
+       	   	   		tab1Row.add(p.getNumSamples()); tab1Row.add(num); tab1Row.add(100.0 * num / p.getNumSamples());   				
+       			}
+       	   		tab1.add(tab1Row);
+       		}
+        	System.err.println("tab1:\t" + (System.currentTimeMillis()-ttt));
+
+        	// Tab2
+        	LinkedHashSet<List<Object>> tab2 = new LinkedHashSet<List<Object>>();
+       		List<Integer> tab2Borders = new ArrayList<Integer>();
+       		List<Object> tab2Row = new ArrayList<Object>();
+       		tab2Row.add("Gruppe"); tab2Row.add("Sum"); tab2Row.add("percent"); tab2Row.add("totalCount"); tab2Row.add("Programm");
+    		tab2.add(tab2Row);
+        	for (String pkey : pkeys) {
+        		Programm p = ps.get(pkey);
+           		HashMap<String, Integer> pgrc = p.getGroupResistanceCount();
+        		if (pgrc != null) {
+        			SortedSet<String> grkeys = new TreeSet<String>(pgrc.keySet());
+        			int sum = 0;
+        			for (String group : grkeys) {
+        				tab2Row = new ArrayList<Object>();
+        				tab2Row.add(group); tab2Row.add(pgrc.get(group)); tab2Row.add(100.0 * pgrc.get(group) / p.getNumSamples());
+        				tab2Row.add(p.getNumSamples()); tab2Row.add(p.getName());
+        				tab2.add(tab2Row);
+        				sum += pgrc.get(group);
+        			}
+        			tab2Row = new ArrayList<Object>();
+        			tab2Row.add("Sum"); tab2Row.add(sum); tab2Row.add(100.0 * sum / p.getNumSamples());
+    				tab2Row.add(p.getNumSamples()); tab2Row.add(p.getName());
+        			tab2Borders.add(tab2.size());
+        			tab2.add(tab2Row);
+        		}
+        	}
+        	System.err.println("tab2:\t" + (System.currentTimeMillis()-ttt));
+
+        	// Tab3
+        	List<Double> doubleList = new ArrayList<Double>();
+        	doubleList.add(0.008);doubleList.add(0.015);doubleList.add(0.03125);doubleList.add(0.0625);doubleList.add(0.125);doubleList.add(0.25);
+        	doubleList.add(0.5);doubleList.add(1.0);doubleList.add(2.0);doubleList.add(4.0);doubleList.add(8.0);doubleList.add(16.0);
+        	doubleList.add(32.0);doubleList.add(64.0);doubleList.add(128.0);doubleList.add(256.0);doubleList.add(512.0);
+        	doubleList.add(1024.0);doubleList.add(2048.0);
+    		for (String pkey : pkeys) {
+    			Programm p = ps.get(pkey);
+       	    	LinkedHashSet<List<Object>> tab3 = new LinkedHashSet<List<Object>>();
+       	   		List<Object> tab3Row = new ArrayList<Object>();
+       	   		tab3Row.add(""); tab3Row.add("Total"); tab3Row.add("#Positiv"); tab3Row.add("%Positiv");
+       	   		for (Double dbl : doubleList) tab3Row.add(dbl);
+       			tab3.add(tab3Row);
+       	   		for (Integer wkey : wkeys) {
+       	   			Wirkstoff w = ws.get(wkey);
+       	   			String kurz = w.getKurz();
+       	   			tab3Row = new ArrayList<Object>();
+       	   			tab3Row.add(kurz);
+       				HashMap<String, Integer> pw = p.getNumPositive();
+       				int num = pw.containsKey(kurz) ? pw.get(kurz) : 0;
+       				tab3Row.add(p.getNumSamples()); tab3Row.add(num); tab3Row.add(100.0 * num / p.getNumSamples()); 
+    	   	   		HashMap<Double, Integer> frequencymap = p.getFrequencyMap(kurz);
+    	   	   		if (frequencymap != null) {
+    			   	   	for (Double dbl : doubleList) {
+    			   	   		if (frequencymap.containsKey(dbl)) tab3Row.add(frequencymap.get(dbl));
+    			   	   		else tab3Row.add("");
+    			   	   	}	   	   			
+    	   	   		}
+    	   			tab3.add(tab3Row);
+       			}
+       	   		
+       	   		for (int i=0;i<=maxResi;i++) {
+       	   			tab3Row = new ArrayList<Object>();
+       	   			tab3Row.add(i == 0 ? "Sensibel" : i + "x resistent");
+       				int num = p.getNumResistent(i);
+       				tab3Row.add(p.getNumSamples()); tab3Row.add(num); tab3Row.add(100.0 * num / p.getNumSamples());   				
+       	   	   		tab3.add(tab3Row);
+       	   		}
+       	    	String fn = getFilename(baseFolder.getStringValue(), "MHKs_" + p.getName());
+       	    	ew = new ExcelWriter(tab3);
+       	    	ew.setStyle(0, 0, null, null, true, true, false, true, null, null); // RowHeader
+       	    	ew.setStyle(null, null, 0, 0, true, false, true, false, null, null); // ColumnHeader
+       	    	ew.setStyle(null, null, 3, 3, false, false, true, false, null, null); // TrennBorder
+       	    	ew.setStyle(null, null, 3 + doubleList.size(), 3 + doubleList.size(), false, false, true, false, null, null); // LastColumnBorder
+       	    	ew.setStyle(tab3.size() - maxResi - 2, tab3.size() - maxResi - 2, null, null, false, false, false, true, null, null); // LastRowBorder
+       	    	ew.setStyle(tab3.size() - 1, tab3.size() - 1, null, null, false, false, false, true, null, null); // LastRowBorder
+       	    	if (doAutosize) ew.autoSizeColumns(tab3Row.size());
+       	    	ew.save(fn);
+       		}
+        	System.err.println("tab3:\t" + (System.currentTimeMillis()-ttt));
+
+        	String fn = getFilename(baseFolder.getStringValue(), "Tab21");
+        	ew = new ExcelWriter(tab1);
+        	ew.setStyle(0, 0, null, null, true, true, false, true, null, null); // RowHeader
+        	ew.setStyle(null, null, 0, 0, true, false, true, false, null, null); // ColumnHeader
+        	for (int bl : tab1Borders) ew.setStyle(bl, bl, null, null, false, false, false, true, null, null); // TrennBorder
+        	for (int bl : tab1BordersV) ew.setStyle(null, null, bl, bl, false, false, true, false, null, null); // TrennBorder
+        	ew.setStyle(tab1.size() - 1, tab1.size() - 1, null, null, false, false, false, true, null, null); // LastRowBorder
+        	if (doAutosize) ew.autoSizeColumns(tab1Row.size());
+        	ew.save(fn);
+        	fn = getFilename(baseFolder.getStringValue(), "WGruppen");
+        	ew = new ExcelWriter(tab2);
+        	for (int bl : tab2Borders) ew.setStyle(bl, bl, null, null, false, false, false, true, null, null); // TrennBorder
+        	ew.setStyle(0, 0, null, null, true, true, false, true, null, null); // RowHeader
+        	ew.setStyle(null, null, 0, 0, true, false, true, false, null, null); // ColumnHeader
+        	ew.setStyle(null, null, 4, 4, false, false, true, false, null, null); // LastColumnBorder
+        	ew.setStyle(null, null, 2, 2, false, false, false, false, "#.###", null); // DoubleColumn
+        	if (doAutosize) ew.autoSizeColumns(tab2Row.size());
+        	ew.save(fn);
+        	System.err.println("excelwriting:\t" + (System.currentTimeMillis()-ttt));    		
+    	}
+
     	    	    	
     	BufferedDataContainer buf2 = exec.createDataContainer(getSpec2());
 
@@ -372,6 +527,9 @@ public class MyTab21NodeModel extends NodeModel {
     	//baseFolder = "G:/Abteilung-4/43/Forschung/EFSA CFP_EFSA_BIOMO_2011_01/Tauschordner_AK_AW/";
     	String ser = serovar.getStringValue().replace(":", "_");
     	String filename = baseFolder + bfrProgramm.getStringValue() + "_" + erreger.getStringValue() + "_" + jahr.getIntValue();
+        if (pruefPlanId.getStringValue() != null && !pruefPlanId.getStringValue().isEmpty()) {
+        	filename += "_" + pruefPlanId.getStringValue();
+        }
     	if (blSubFolder.getStringValue() != null && !blSubFolder.getStringValue().isEmpty()) {
     		filename += "/" + blSubFolder.getStringValue();
     	}
@@ -427,6 +585,7 @@ public class MyTab21NodeModel extends NodeModel {
     	blSubFolder.saveSettingsTo(settings);
     	jahr.saveSettingsTo(settings);
     	kriterienJahr.saveSettingsTo(settings);
+    	pruefPlanId.saveSettingsTo(settings);
     }
 
     /**
@@ -442,6 +601,7 @@ public class MyTab21NodeModel extends NodeModel {
     	blSubFolder.loadSettingsFrom(settings);
     	jahr.loadSettingsFrom(settings);
     	kriterienJahr.loadSettingsFrom(settings);
+    	if (settings.containsKey(PPID)) pruefPlanId.loadSettingsFrom(settings);
     }
 
     /**
@@ -457,6 +617,7 @@ public class MyTab21NodeModel extends NodeModel {
     	blSubFolder.validateSettings(settings);
     	jahr.validateSettings(settings);
     	kriterienJahr.validateSettings(settings);
+    	if (settings.containsKey(PPID)) pruefPlanId.validateSettings(settings);
     }
     
     /**

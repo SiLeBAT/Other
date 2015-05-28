@@ -23,7 +23,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 public class MyTab21NodeDialog extends DefaultNodeSettingsPane {
 
 	private final DialogComponentFileChooser folderDialog;
-	private final DialogComponentString erregerDialog, bfrProgrammDialog, serovarDialog, blSubFolderDialog;
+	private final DialogComponentString erregerDialog, bfrProgrammDialog, serovarDialog, blSubFolderDialog, pruefPlanIdDialog;
 	private final DialogComponentNumberEdit jahrDialog, kriterienJahrDialog;
     private final SettingsModelString baseFolder = new SettingsModelString(MyTab21NodeModel.BASE_FOLDER, "C:/Dokumente und Einstellungen/Weiser/Desktop/tawak/");
     private final SettingsModelString blSubFolder = new SettingsModelString(MyTab21NodeModel.BLSUBFOLDER, "");
@@ -32,6 +32,7 @@ public class MyTab21NodeDialog extends DefaultNodeSettingsPane {
     private final SettingsModelString serovar = new SettingsModelString(MyTab21NodeModel.SEROVAR, "");
     private final SettingsModelInteger jahr = new SettingsModelInteger(MyTab21NodeModel.JAHR, 2013);
     private final SettingsModelInteger kriterienJahr = new SettingsModelInteger(MyTab21NodeModel.KRITERIEN_JAHR, 2013);
+    private final SettingsModelString pruefPlanId = new SettingsModelString(MyTab21NodeModel.PPID, "");
 
     /**
      * New pane for configuring the MyTab21 node.
@@ -43,6 +44,7 @@ public class MyTab21NodeDialog extends DefaultNodeSettingsPane {
     	bfrProgrammDialog = new DialogComponentString(bfrProgramm, MyTab21NodeModel.BFR_PROGRAMM);
     	serovarDialog = new DialogComponentString(serovar, MyTab21NodeModel.SEROVAR);
     	blSubFolderDialog = new DialogComponentString(blSubFolder, MyTab21NodeModel.BLSUBFOLDER);
+    	pruefPlanIdDialog = new DialogComponentString(pruefPlanId, MyTab21NodeModel.PPID);
     	
     	jahrDialog = new DialogComponentNumberEdit(jahr, MyTab21NodeModel.JAHR);
     	kriterienJahrDialog = new DialogComponentNumberEdit(kriterienJahr, MyTab21NodeModel.KRITERIEN_JAHR);
@@ -56,6 +58,7 @@ public class MyTab21NodeDialog extends DefaultNodeSettingsPane {
     	addDialogComponent(blSubFolderDialog);
     	addDialogComponent(jahrDialog);
     	addDialogComponent(kriterienJahrDialog);
+    	addDialogComponent(pruefPlanIdDialog);
     }
 }
 
