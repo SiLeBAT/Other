@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -33,9 +35,11 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.workflow.NodeContainer;
 import org.knime.core.node.workflow.WorkflowManager;
+import org.knime.core.util.FileUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -53,9 +57,11 @@ public class Xsd2XmlNodeModel extends NodeModel {
     
 	static final String XSD_FILE = "xsdfile";
 	static final String XML_FILE = "xmlfile";
+	static final String SAVE_WORKFLOW = "save workflow?";
 	
     private final SettingsModelString xsdFile = new SettingsModelString(XSD_FILE, "");
     private final SettingsModelString xmlFile = new SettingsModelString(XML_FILE, "");
+    private final SettingsModelBoolean saveWF = new SettingsModelBoolean(SAVE_WORKFLOW, true); 
 
     /**
      * Constructor for the node model.
@@ -92,8 +98,22 @@ public class Xsd2XmlNodeModel extends NodeModel {
 
     	String xsd = xsdFile.getStringValue();//"C:\\Users\\Armin\\Desktop\\LIMS_43\\Tauschordner_AK_AW\\XML-Projekt_Reporting2013\\XMLschemas\\AMR Isolate Based Data Model.xsd";
     	String xml = xmlFile.getStringValue();//"C:\\Users\\Armin\\Desktop\\LIMS_43\\Tauschordner_AK_AW\\XML-Projekt_Reporting2013\\XMLschemas\\AMR_Iso.xml";
-    	File xsdDatei = new File(xsd);
-    	File xmlDatei = new File(xml);
+
+    	File xsdDatei = new File(xsd); // default, wegen knime.workflow u.ä.
+        URL url = FileUtil.toURL(xsd);
+        Path localPath = FileUtil.resolveToPath(url);
+        if (localPath != null) {
+        	xsdDatei = localPath.toFile();
+            xsd = xsdDatei.getAbsolutePath();
+        }
+    	File xmlDatei = new File(xml); // default, wegen knime.workflow u.ä.
+        url = FileUtil.toURL(xml);
+        localPath = FileUtil.resolveToPath(url);
+        if (localPath != null) {
+        	xmlDatei = localPath.toFile();
+            xml = xmlDatei.getAbsolutePath();
+        }
+        
         DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder docBuilderXsd = docBuilderFactory.newDocumentBuilder();
         Document document = docBuilderXsd.parse(xsdDatei);
@@ -167,8 +187,10 @@ public class Xsd2XmlNodeModel extends NodeModel {
     	transformer.transform(source, result);
     	System.out.println("Xml File saved!");
     	
-    	saveWF(exec, xml);
-    	System.out.println("Workflow saved!");
+    	if (saveWF.getBooleanValue()) {
+        	saveWF(exec, xml);
+        	System.out.println("Workflow saved!");    		
+    	}
     	 
 
     	// Validation method 1
@@ -298,6 +320,7 @@ public class Xsd2XmlNodeModel extends NodeModel {
     protected void saveSettingsTo(final NodeSettingsWO settings) {
     	xsdFile.saveSettingsTo(settings);
     	xmlFile.saveSettingsTo(settings);
+    	saveWF.saveSettingsTo(settings);
     }
 
     /**
@@ -308,6 +331,7 @@ public class Xsd2XmlNodeModel extends NodeModel {
             throws InvalidSettingsException {
     	xsdFile.loadSettingsFrom(settings);
     	xmlFile.loadSettingsFrom(settings);
+    	if (settings.containsKey(SAVE_WORKFLOW)) saveWF.loadSettingsFrom(settings);
     }
 
     /**
@@ -318,6 +342,7 @@ public class Xsd2XmlNodeModel extends NodeModel {
             throws InvalidSettingsException {
     	xsdFile.validateSettings(settings);
     	xmlFile.validateSettings(settings);
+    	if (settings.containsKey(SAVE_WORKFLOW)) saveWF.validateSettings(settings);
     }
     
     /**

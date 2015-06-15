@@ -3,7 +3,9 @@ package de.bund.bfr.knime.Xsd2Xml;
 import javax.swing.JFileChooser;
 
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
+import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentFileChooser;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
@@ -21,8 +23,10 @@ public class Xsd2XmlNodeDialog extends DefaultNodeSettingsPane {
 
 	private final DialogComponentFileChooser xsdDialog;
 	private final DialogComponentFileChooser xmlDialog;
+	private final DialogComponentBoolean saveWFDialog;
     private final SettingsModelString xsdFile = new SettingsModelString(Xsd2XmlNodeModel.XSD_FILE, "");
     private final SettingsModelString xmlFile = new SettingsModelString(Xsd2XmlNodeModel.XML_FILE, "");
+    private final SettingsModelBoolean saveWF = new SettingsModelBoolean(Xsd2XmlNodeModel.SAVE_WORKFLOW, true); 
 
     /**
      * New pane for configuring the Xsd2Xml node.
@@ -30,12 +34,14 @@ public class Xsd2XmlNodeDialog extends DefaultNodeSettingsPane {
     protected Xsd2XmlNodeDialog() {
     	xsdDialog = new DialogComponentFileChooser(xsdFile, Xsd2XmlNodeModel.XSD_FILE, JFileChooser.OPEN_DIALOG, ".xsd");
     	xmlDialog = new DialogComponentFileChooser(xmlFile, Xsd2XmlNodeModel.XML_FILE, JFileChooser.OPEN_DIALOG, ".xml");
+    	saveWFDialog = new DialogComponentBoolean(saveWF, Xsd2XmlNodeModel.SAVE_WORKFLOW);
     	
     	xsdDialog.setBorderTitle("XSD File");
     	xmlDialog.setBorderTitle("XML File");
     	
     	addDialogComponent(xsdDialog);
     	addDialogComponent(xmlDialog);
+    	addDialogComponent(saveWFDialog);
     }
 }
 
