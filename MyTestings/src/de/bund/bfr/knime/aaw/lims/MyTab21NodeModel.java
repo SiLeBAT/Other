@@ -130,9 +130,12 @@ public class MyTab21NodeModel extends NodeModel {
        			cell = xrow.createCell(colIndex); cell.setCellValue(cn + "_Res"); colIndex++;
        		}
     	}
+    	//System.err.println("Wirkstoffe34:\t" + (System.currentTimeMillis()-ttt));
     	boolean containsStrings = false;
+try {
     	for (DataRow row : inData[0]) {
     		exec.checkCanceled();
+        	//System.err.println("Wirkstofferow:\t" + row);
     		Programm p = new Programm();
     		rowIndex++; xrow = ew.createRow(rowIndex);
     		colIndex = 0;
@@ -196,6 +199,9 @@ public class MyTab21NodeModel extends NodeModel {
     			else ps.get(p.getName()).merge(p);
     		}
     	}
+}
+catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();throw ee;}
+
     	System.err.println("preTab0:\t" + (System.currentTimeMillis()-ttt));
     	String pfn = getFilename(baseFolder.getStringValue(), "preTab" + (containsStrings ? "_ESBL" : "21"));
 
