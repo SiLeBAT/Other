@@ -5,10 +5,18 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-<title>Validation Result</title>
+<title>Template Validator</title>
 <link href="footer.css" type="text/css" rel="stylesheet"></head>
+</head>
 <body>
-    <h2>${requestScope.message}</h2>
+	<center>
+	    <h1>Template Validator</h1>
+	    <form method="post" action="result"
+	        enctype="multipart/form-data">
+	        Select template to validate: <input type="file" name="file" size="60" /><br />
+	        <br /> <input type="submit" value="Validate" />
+	    </form>
+	</center>
     <div id="footer">
         <ul>
             <li>· <a href="http://foodrisklabs.bfr.bund.de">foodrisklabs.bfr.bund.de</a></li>

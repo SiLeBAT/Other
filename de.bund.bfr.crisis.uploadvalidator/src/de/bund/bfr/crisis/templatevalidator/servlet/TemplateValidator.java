@@ -91,11 +91,26 @@ public class TemplateValidator extends HttpServlet {
                 // processes only fields that are not form fields
                 if (!item.isFormField()) {
                     String fileName = new File(item.getName()).getName();
+                    if (fileName.trim().length() == 0) {
+                        request.setAttribute("message", "No file to validate!");
+                        break;
+                    }
                     String filePath = uploadPath + File.separator + fileName;
                     File storeFile = new File(filePath);
                      
+                    String ext = getFileExtension(fileName);
+                    if (!ext.equals("xls") && !ext.equals("xlsx")) {
+                        request.setAttribute("message", "The submitted file '" + fileName + "' has no correct file extension.");
+                        break;
+                    }
+
                     // saves the file on disk
                     item.write(storeFile);
+
+                    if (storeFile == null || !storeFile.exists() || !storeFile.isFile()) {
+                        request.setAttribute("message", "There is an unknown problem with the submitted file '" + fileName + "'<BR>Please write an email to foodrisklabs@bfr.bund.de with your submitted file.");
+                        break;
+                    }
 
                     MyDBI mydbi = new MyDBTablesNew();
                     mydbi.establishNewConnection("SA", "", uploadPath + File.separator, false, false);
@@ -134,9 +149,9 @@ public class TemplateValidator extends HttpServlet {
         				}						
         	  		}
          
-                mydbi.closeDBConnections(false);
-                //deregisterDrivers();
-                request.setAttribute("message", message); // "Upload has been done successfully!"
+	                mydbi.closeDBConnections(false);
+	                //deregisterDrivers();
+	                request.setAttribute("message", message); // "Upload has been done successfully!"
                 }
             }
         } catch (Exception ex) {
@@ -144,4 +159,9 @@ public class TemplateValidator extends HttpServlet {
         }
         getServletContext().getRequestDispatcher("/message.jsp").forward(request, response);
 	}
+    private String getFileExtension(String fileName) {
+        if(fileName.lastIndexOf(".") != -1 && fileName.lastIndexOf(".") != 0)
+        return fileName.substring(fileName.lastIndexOf(".")+1);
+        else return "";
+    }
 }
