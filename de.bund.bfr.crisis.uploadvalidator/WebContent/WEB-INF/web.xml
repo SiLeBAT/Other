@@ -2,7 +2,7 @@
 <web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd" id="WebApp_ID" version="3.0">
   <display-name>TemplateValidator</display-name>
   <welcome-file-list>
-    <welcome-file>TemplateValidator.jsp</welcome-file>
+    <welcome-file>upload.jsp</welcome-file>
   </welcome-file-list>
   <servlet>
     <description></description>
@@ -12,6 +12,6 @@
   </servlet>
   <servlet-mapping>
     <servlet-name>TemplateValidator</servlet-name>
-    <url-pattern>/TemplateValidator</url-pattern>
+    <url-pattern>/result</url-pattern>
   </servlet-mapping>
 </web-app>
