@@ -136,12 +136,14 @@ public class TemplateValidator extends HttpServlet {
         					errors = errors.replaceAll("Importer says: \n", "");
         					errors = errors.replaceAll(" in '" + storeFile.getAbsolutePath().replace(File.separator, Matcher.quoteReplacement(File.separator)) + "'", "");
         					message += errors.trim();
+							if (!warnings.isEmpty()) message += "<BR>Warnings:<BR>" + warnings + "<BR>";
         					message += "Please solve these issues and upload again...";
         				}
         				else {
         					warnings = warnings.replace("Importing " + storeFile.getAbsolutePath(), "");
         					//warnings = warnings.replace("Unable to import file '" + storeFile.getAbsolutePath() + "'.", "");
         					warnings = warnings.replaceAll("\n\n", "<BR>");
+        					warnings = warnings.replaceAll("\n", "<BR>");
         					warnings = warnings.replaceAll("Importer says: \n", "");
         					warnings = warnings.replaceAll(" in '" + storeFile.getAbsolutePath().replace(File.separator, Matcher.quoteReplacement(File.separator)) + "'", "");
         					message += warnings.trim();
