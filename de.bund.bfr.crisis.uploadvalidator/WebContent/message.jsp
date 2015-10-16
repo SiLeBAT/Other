@@ -8,12 +8,7 @@
 <title>Validation Result</title>
 <link href="footer.css" type="text/css" rel="stylesheet"></head>
 <body>
-    <h2>${requestScope.message}</h2>
-    <div id="footer">
-        <ul>
-            <li>· <a href="http://foodrisklabs.bfr.bund.de">foodrisklabs.bfr.bund.de</a></li>
-            <li>· <a href="mailto:foodrisklabs@bfr.bund.de" target="_top">foodrisklabs@bfr.bund.de</a></li>
-        </ul>
-    </div>
+    <h2>Validation Result</h2>
+    ${requestScope.message}
 </body>
 </html>

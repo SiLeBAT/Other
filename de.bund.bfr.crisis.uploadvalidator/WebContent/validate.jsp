@@ -10,18 +10,11 @@
 </head>
 <body>
 	<center>
-	    <h1>Template Validator</h1>
 	    <form method="post" action="result"
 	        enctype="multipart/form-data">
 	        Select template to validate: <input type="file" name="file" size="60" /><br />
 	        <br /> <input type="submit" value="Validate" />
 	    </form>
 	</center>
-    <div id="footer">
-        <ul>
-            <li>· <a href="http://foodrisklabs.bfr.bund.de">foodrisklabs.bfr.bund.de</a></li>
-            <li>· <a href="mailto:foodrisklabs@bfr.bund.de" target="_top">foodrisklabs@bfr.bund.de</a></li>
-        </ul>
-    </div>
 </body>
 </html>
