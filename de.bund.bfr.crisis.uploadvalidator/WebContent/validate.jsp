@@ -9,13 +9,15 @@
 <link href="footer.css" type="text/css" rel="stylesheet"></head>
 </head>
 <body>
-	<center>
 	    <form method="post" action="result"
 	        enctype="multipart/form-data">
-	        Select template to validate: <input type="file" name="file" size="60" /><br />
-	        <br /> <input type="submit" value="Validate" />
+	        Select template to validate<BR><BR>
+	        <input type="file" name="file" size="60" />
+	        <br />
+	        <br />
+	        <BR>
+	        <input type="submit" value="Validate" />
 	    </form>
-	</center>
-    <div id="footer"><b>NOTE: your file upload will NOT be saved on this server!</b><BR>Uploaded file will be deleted directly after validation! We do <b>NOT</b> keep any probably personal information!</div>
+    <div id="footer">Your trust is important to us!<BR>Uploaded files will be deleted directly after validation.<BR>We do not keep any personal information.</div>
 </body>
 </html>

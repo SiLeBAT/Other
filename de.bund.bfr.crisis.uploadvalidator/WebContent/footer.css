@@ -2,9 +2,12 @@
 position: absolute;
 bottom: 0;
 width: 100%;
-line-height: 1.5em;
-text-align: center;
-background: #EEEEEE;
+line-height: 1.1em;
+text-align: left;
+background: #FFFFFF;
+font-size: 0.9em;
+margin-left: 10px;
+margin-right: 10px;
 }
 
 ul li{
