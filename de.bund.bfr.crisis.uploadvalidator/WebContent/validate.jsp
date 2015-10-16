@@ -16,5 +16,6 @@
 	        <br /> <input type="submit" value="Validate" />
 	    </form>
 	</center>
+    <div id="footer"><b>NOTE: your file upload will NOT be saved on this server!</b><BR>Uploaded file will be deleted directly after validation! We do <b>NOT</b> keep any probably personal information!</div>
 </body>
 </html>

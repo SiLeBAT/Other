@@ -153,6 +153,8 @@ public class TemplateValidator extends HttpServlet {
          
 	                mydbi.closeDBConnections(false);
 	                //deregisterDrivers();
+	                deleteUploadDir(uploadDir);
+
 	                request.setAttribute("message", message); // "Upload has been done successfully!"
                 }
             }
@@ -161,7 +163,17 @@ public class TemplateValidator extends HttpServlet {
         }
         getServletContext().getRequestDispatcher("/message.jsp").forward(request, response);
 	}
-    private String getFileExtension(String fileName) {
+	private void deleteUploadDir(File uploadDir){
+	    try {
+	        for (File f : uploadDir.listFiles()) {
+	            f.delete();
+	        }
+	        //uploadDir.delete();
+	    } catch (Exception e) {
+	        e.printStackTrace(System.err);
+	    }
+	}
+	private String getFileExtension(String fileName) {
         if(fileName.lastIndexOf(".") != -1 && fileName.lastIndexOf(".") != 0)
         return fileName.substring(fileName.lastIndexOf(".")+1);
         else return "";
