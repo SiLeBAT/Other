@@ -1,13 +1,14 @@
 #footer {
-position: absolute;
-bottom: 0;
-width: 95%;
-line-height: 1.1em;
-text-align: left;
-background: #FFFFFF;
-font-size: 0.9em;
-margin-left: 10px;
-margin-right: 10px;
+	position: absolute;
+	bottom: 0;
+	width: 92%;
+	line-height: 1.1em;
+	text-align: left;
+	background: #FFFFFF;
+	font-size: 0.9em;
+	margin-left: 10px;
+	margin-right: 10px;
+	border-top: black 2px solid;
 }
 
 ul li{
@@ -20,4 +21,5 @@ iframe {
     border: none; /* solid */
     height: calc(100vh - 120px);
     width: 95%;
+    /*border-bottom: black 2px solid;*/
 }

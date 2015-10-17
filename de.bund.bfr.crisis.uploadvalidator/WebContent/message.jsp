@@ -14,6 +14,6 @@
     
     ${requestScope.message}
 
-    <div id="footer">Your trust is important to us!<BR>Uploaded files will be deleted directly after validation. We do not keep any personal information.</div>
+    <div id="footer"><BR>Your trust is important to us!<BR>Uploaded files will be deleted directly after validation. We do not keep any personal information.</div>
 </body>
 </html>
