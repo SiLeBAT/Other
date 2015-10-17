@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 
 import javax.servlet.ServletException;
@@ -122,12 +124,12 @@ public class TemplateValidator extends HttpServlet {
         		  		bti.doImport(storeFile.getAbsolutePath(), null, false);
         		  		
         				String errors = bti.getLogMessages();
-        				String warnings = bti.getLogWarnings();
+        				Map<String, Set<String>> warns = bti.getLastWarnings();
         				String nl = errors.replaceAll("\nImporting ", "");
         				boolean success = nl.indexOf("\n") == nl.length() - 1; 
-        				message += "Uploaded file '" + storeFile.getName() + "':<BR>";
-        				if (success && warnings.isEmpty()) {
-        					message += "Validation passed successfully!";
+        				message += "<b>Uploaded file '" + storeFile.getName() + "':</b><BR>";
+        				if (success && warns.isEmpty()) {
+        					message += "<font style=\"color: green\">Validation passed successfully!</font>";
         				}
         				else if (!success) {
         					errors = errors.replace("Importing " + storeFile.getAbsolutePath(), "");
@@ -136,18 +138,16 @@ public class TemplateValidator extends HttpServlet {
         					errors = errors.replaceAll("Importer says: \n", "");
         					errors = errors.replaceAll(" in '" + storeFile.getAbsolutePath().replace(File.separator, Matcher.quoteReplacement(File.separator)) + "'", "");
         					message += errors.trim();
-							if (!warnings.isEmpty()) message += "<BR>Warnings:<BR>" + warnings + "<BR>";
-        					message += "Please solve these issues and upload again...";
+							if (!warns.isEmpty()) {
+	        					String warnings = prepareWarnings(warns);
+								message += "<BR>Warnings:<BR>" + warnings.trim() + "<BR>";
+							}
+        					message += "<BR><font style=\"color: red\"><b>Please solve these issues and upload again...</b></font>";
         				}
         				else {
-        					warnings = warnings.replace("Importing " + storeFile.getAbsolutePath(), "");
-        					//warnings = warnings.replace("Unable to import file '" + storeFile.getAbsolutePath() + "'.", "");
-        					warnings = warnings.replaceAll("\n\n", "<BR>");
-        					warnings = warnings.replaceAll("\n", "<BR>");
-        					warnings = warnings.replaceAll("Importer says: \n", "");
-        					warnings = warnings.replaceAll(" in '" + storeFile.getAbsolutePath().replace(File.separator, Matcher.quoteReplacement(File.separator)) + "'", "");
+        					String warnings = prepareWarnings(warns);
         					message += warnings.trim();
-        					message += "Validation passed successfully! But some warnings occurred, please check...";
+        					message += "<BR><font style=\"color: black; background-color: yellow\"><b>Validation passed successfully! But some warnings occurred, please check...</b></font>";
         				}						
         	  		}
          
@@ -173,6 +173,18 @@ public class TemplateValidator extends HttpServlet {
             request.setAttribute("message", "There was an error: " + ex.getMessage());
         }
         getServletContext().getRequestDispatcher("/message.jsp").forward(request, response);
+	}
+	private String prepareWarnings(Map<String, Set<String>> warns) {
+		String warnings = "";
+		for (String key : warns.keySet()) {
+			warnings += "\n<b>" + key + ":</b>\n";
+			for (String w : warns.get(key)) {
+				warnings += w + "\n";
+			}
+		}
+		warnings = warnings.replaceAll("\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
+		warnings = warnings.replaceAll("\n", "<BR>");
+		return warnings;
 	}
 	private void deleteUploadDir(File uploadDir){
 	    try {
