@@ -10,20 +10,10 @@
 
 
 <body>
-
     <h2>Validation Result</h2>
+    
     ${requestScope.message}
 
-<c:set var="b" value="${requestScope.message}" scope="page"/>
-    <iframe id="FileFrame" src="about:blank" width="100%" height="75%"></iframe>
-<script type="text/javascript">
-var doc = document.getElementById('FileFrame').contentWindow.document;
-doc.open();
-var aquaStr = '<html><head><title></title></head><body>hallo</body></html>';
-doc.write(aquaStr);
-doc.close();
-</script>
-
-    <div id="footer">Your trust is important to us!<BR>Uploaded files will be deleted directly after validation.<BR>We do not keep any personal information.</div>
+    <div id="footer">Your trust is important to us!<BR>Uploaded files will be deleted directly after validation. We do not keep any personal information.</div>
 </body>
 </html>

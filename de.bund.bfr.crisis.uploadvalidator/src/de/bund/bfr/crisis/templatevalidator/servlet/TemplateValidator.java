@@ -155,7 +155,18 @@ public class TemplateValidator extends HttpServlet {
 	                //deregisterDrivers();
 	                deleteUploadDir(uploadDir);
 
-	                request.setAttribute("message", message); // "Upload has been done successfully!"
+	                String pre0 = "<iframe id=\"FileFrame\" src=\"about:blank\" scrolling=\"auto\"></iframe>";
+
+	                String pre = "<script type=\"text/javascript\">";
+	                pre += "var doc = document.getElementById('FileFrame').contentWindow.document;";
+	                pre += "doc.open();";
+	                pre += "doc.write(\"<html><head><title></title></head><body>";
+	                
+	        		String post = "</body></html>\");";
+	        		post += "doc.close();";
+	        		post += "</script>";
+	        		
+                	request.setAttribute("message", pre0 + pre + message.replace("\"", "\\\"") + post); // "Upload has been done successfully!"	                
                 }
             }
         } catch (Exception ex) {
