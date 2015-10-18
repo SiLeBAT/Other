@@ -22,4 +22,6 @@ iframe {
     height: calc(100vh - 120px);
     width: 95%;
     /*border-bottom: black 2px solid;*/
+    /*overflow-x: visible;*/
+    overflow-y: auto;
 }

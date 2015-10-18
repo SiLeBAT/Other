@@ -155,7 +155,7 @@ public class TemplateValidator extends HttpServlet {
 	                //deregisterDrivers();
 	                deleteUploadDir(uploadDir);
 
-	                String pre0 = "<iframe id=\"FileFrame\" src=\"about:blank\" scrolling=\"auto\"></iframe>";
+	                String pre0 = "<iframe id=\"FileFrame\" src=\"about:blank\"></iframe>";
 
 	                String pre = "<script type=\"text/javascript\">";
 	                pre += "var doc = document.getElementById('FileFrame').contentWindow.document;";
