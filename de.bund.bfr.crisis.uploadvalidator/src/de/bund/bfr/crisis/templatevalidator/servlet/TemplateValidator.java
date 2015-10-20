@@ -138,10 +138,10 @@ public class TemplateValidator extends HttpServlet {
         					errors = errors.replaceAll("\n", "<BR>");
         					errors = errors.replaceAll("Importer says: \n", "");
         					errors = errors.replaceAll(" in '" + storeFile.getAbsolutePath().replace(File.separator, Matcher.quoteReplacement(File.separator)) + "'", "");
-        					message += errors.trim();
+        					message += "<BR><b>Errors</b>:" + errors.trim();
 							if (!warns.isEmpty()) {
 	        					String warnings = prepareWarnings(warns);
-								message += "<BR>Warnings:<BR>" + warnings.trim() + "<BR>";
+								message += "<BR>" + warnings.trim() + "<BR>";
 							}
         					message += "<BR><font style=\"color: red\"><b>Please solve these issues and upload again...</b></font>";
         				}
@@ -177,10 +177,20 @@ public class TemplateValidator extends HttpServlet {
 	}
 	private String prepareWarnings(Map<String, Set<String>> warns) {
 		String warnings = "";
+		if (warns.size() > 0) warnings = "\n<b>Warnings:</b>";
 		for (String key : warns.keySet()) {
-			warnings += "\n<b>" + key + ":</b>\n";
-			for (String w : warns.get(key)) {
-				warnings += w + "\n";
+			warnings += "\n<b>" + key + "</b>";
+			if (warns.get(key) != null) {
+				warnings += ":\n";
+				for (String w : warns.get(key)) {
+					if (warnings.indexOf(w+"\n") < 0) warnings += w + "\n";
+				}
+				if (warnings.endsWith("\n" + key + ":\n")) {
+					warnings = warnings.substring(0, warnings.length() - ("\n" + key + ":\n").length());
+				}
+			}
+			else {
+				warnings += "\n";				
 			}
 		}
 		warnings = warnings.replaceAll("\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
