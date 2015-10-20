@@ -135,6 +135,7 @@ public class TemplateValidator extends HttpServlet {
         					errors = errors.replace("Importing " + storeFile.getAbsolutePath(), "");
         					errors = errors.replace("Unable to import file '" + storeFile.getAbsolutePath() + "'.", "");
         					errors = errors.replaceAll("\n\n", "<BR>");
+        					errors = errors.replaceAll("\n", "<BR>");
         					errors = errors.replaceAll("Importer says: \n", "");
         					errors = errors.replaceAll(" in '" + storeFile.getAbsolutePath().replace(File.separator, Matcher.quoteReplacement(File.separator)) + "'", "");
         					message += errors.trim();
