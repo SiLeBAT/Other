@@ -10,8 +10,7 @@
 
 
 <body>
-    <h2>Validation Result</h2>
-    
+
     ${requestScope.message}
 
     <div id="footer"><BR>Your trust is important to us!<BR>Uploaded files will be deleted directly after validation. We do not keep any personal information.</div>

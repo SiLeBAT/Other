@@ -127,27 +127,28 @@ public class TemplateValidator extends HttpServlet {
         				Map<String, Set<String>> warns = bti.getLastWarnings();
         				String nl = errors.replaceAll("\nImporting ", "");
         				boolean success = nl.indexOf("\n") == nl.length() - 1; 
-        				message += "<b>Uploaded file '" + storeFile.getName() + "':</b><BR>";
+        				message = "<h1 id=\"file\">Validation Result for uploaded file '" + storeFile.getName() + "'</h1><BR>";
         				if (success && warns.isEmpty()) {
         					message += "<font style=\"color: green\">Validation passed successfully!</font>";
         				}
         				else if (!success) {
         					errors = errors.replace("Importing " + storeFile.getAbsolutePath(), "");
         					errors = errors.replace("Unable to import file '" + storeFile.getAbsolutePath() + "'.", "");
+        					errors = errors.replace("<h1 id=\"error\">Error in file '" + storeFile.getAbsolutePath() + "'</h1><ul>", "");
         					errors = errors.replaceAll("\n\n", "<BR>");
         					errors = errors.replaceAll("\n", "<BR>");
         					errors = errors.replaceAll("Importer says: \n", "");
         					errors = errors.replaceAll(" in '" + storeFile.getAbsolutePath().replace(File.separator, Matcher.quoteReplacement(File.separator)) + "'", "");
-        					message += "<BR><b>Errors</b>:" + errors.trim();
+        					message += "<BR><h1 id=\"error\">Errors</h1><ul>" + errors.trim() + "</ul>";
 							if (!warns.isEmpty()) {
-	        					String warnings = prepareWarnings(warns);
+	        					String warnings = doWarns(warns);
 								message += "<BR>" + warnings.trim() + "<BR>";
 							}
         					message += "<BR><font style=\"color: red\"><b>Please solve these issues and upload again...</b></font>";
         				}
         				else {
-        					String warnings = prepareWarnings(warns);
-        					message += warnings.trim();
+        					String warnings = doWarns(warns);
+        					message += "<BR>" + warnings.trim() + "<BR>";
         					message += "<BR><font style=\"color: black; background-color: yellow\"><b>Validation passed successfully! But some warnings occurred, please check...</b></font>";
         				}						
         	  		}
@@ -159,9 +160,12 @@ public class TemplateValidator extends HttpServlet {
 	                String pre0 = "<iframe id=\"FileFrame\" src=\"about:blank\"></iframe>";
 
 	                String pre = "<script type=\"text/javascript\">";
+
 	                pre += "var doc = document.getElementById('FileFrame').contentWindow.document;";
 	                pre += "doc.open();";
-	                pre += "doc.write(\"<html><head><title></title></head><body>";
+	                pre += "doc.write(\"<html><head><title></title>";
+	                pre += "<link href='messages.css' type='text/css' rel='stylesheet'>";
+	                pre += "</head><body>";
 	                
 	        		String post = "</body></html>\");";
 	        		post += "doc.close();";
@@ -175,26 +179,22 @@ public class TemplateValidator extends HttpServlet {
         }
         getServletContext().getRequestDispatcher("/message.jsp").forward(request, response);
 	}
-	private String prepareWarnings(Map<String, Set<String>> warns) {
+	private String doWarns(Map<String, Set<String>> warns) {
 		String warnings = "";
-		if (warns.size() > 0) warnings = "\n<b>Warnings:</b>";
-		for (String key : warns.keySet()) {
-			warnings += "\n<b>" + key + "</b>";
-			if (warns.get(key) != null) {
-				warnings += ":\n";
-				for (String w : warns.get(key)) {
-					if (warnings.indexOf(w+"\n") < 0) warnings += w + "\n";
+		if (warns.size() > 0) {
+			warnings = "<h1 id=\"warning\">Warnings<h1>";
+			for (String key : warns.keySet()) {
+				warnings += "<h2>" + key + "</h2>";
+				if (warns.get(key) != null && !warns.get(key).isEmpty()) {
+					warnings += "<ul>";
+					for (String w : warns.get(key)) {
+						if (warnings.indexOf("<li>" + w + "</li>") < 0) warnings += "<li>" + w + "</li>";							
+						//newLogs += "<li>" + w + "</li>";
+					}
+					warnings += "</ul>";
 				}
-				if (warnings.endsWith("\n" + key + ":\n")) {
-					warnings = warnings.substring(0, warnings.length() - ("\n" + key + ":\n").length());
-				}
-			}
-			else {
-				warnings += "\n";				
-			}
+			}		
 		}
-		warnings = warnings.replaceAll("\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
-		warnings = warnings.replaceAll("\n", "<BR>");
 		return warnings;
 	}
 	private void deleteUploadDir(File uploadDir){

@@ -1,0 +1,28 @@
+* {
+	font-family:monospace; font-size:10px;
+}
+#warning {
+	color:orange;
+}
+#error {
+	color:red;
+}
+h1 {
+	font-size:12px;
+}
+h2 {
+	font-size:11px;
+}
+h1, h2 {
+	margin-top:0px; margin-bottom:0px;
+}
+#filered {
+    color: red;
+}
+#fileorange {
+    color: black;
+    background-color: yellow
+}
+#filegreen {
+    color: green;
+	}
