@@ -1,0 +1,205 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!-- Created by -->
+<sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" level="3" version="1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:pmml="http://www.dmg.org/PMML-4_2" xmlns:pmf="http://sourceforge.net/projects/microbialmodelingexchange/files/PMF-ML" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:numl="http://www.numl.org/numl/level1/version1" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <model id="salmonella_broth_primary_25C_GrowthModel_Huang" name="salmonella_broth_primary_25C_GrowthModel-Huang" metaid="Meta_salmonella_broth_primary_25C_GrowthModel-Huang">
+    <annotation>
+      <pmf:metadata>
+        <dc:identifier>salmonella_broth_primary_25C_GrowthModel_Huang</dc:identifier>
+        <dc:title>salmonella_broth_primary_25C_GrowthModel-Huang</dc:title>
+        <dc:description>Growth model of Salmonella Spp</dc:description>
+        <dc:type>Primary model</dc:type>
+        <dc:creator>Max Mustermann</dc:creator>
+        <dcterms:created>15/07/2013</dcterms:created>
+        <dc:language>eng</dc:language>
+        <dcterms:hasVersion>V1.0</dcterms:hasVersion>
+        <dc:format>SBML</dc:format>
+        <pmml:modelquality targetField="salmonella_spp" dataName="MyData" dataUsage="training" r-squared="0.9511" rootMeanSquaredError="0.0208" />
+        <pmf:dataSources>
+          <pmf:dataSource id="source1" xlink:href="ValidData.xml" />
+        </pmf:dataSources>
+      </pmf:metadata>
+    </annotation>
+    <listOfUnitDefinitions>
+      <unitDefinition id="pmf_ln_cfu_g" name="ln(cfu/g)">
+        <annotation>
+          <pmf:metadata>
+            <pmf:transformation name="ln" xlink:href="http://sourceforge.net/projects/microbialmodelingexchange/files/PMF-ML" />
+          </pmf:metadata>
+        </annotation>
+        <listOfUnits>
+          <unit kind="item" exponent="1" scale="1" multiplier="1" />
+          <unit kind="gram" exponent="-1" scale="1" multiplier="1" />
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="pmf_rate_ln_cfu_g_h" name="ln(cfu/g)/h">
+        <annotation>
+          <pmf:metadata>
+            <pmf:transformation name="rate_ln" xlink:href="http://sourceforge.net/projects/microbialmodelingexchange/files/PMF-ML" />
+          </pmf:metadata>
+        </annotation>
+        <listOfUnits>
+          <unit kind="item" exponent="1" scale="1" multiplier="1" />
+          <unit kind="gram" exponent="-1" scale="1" multiplier="1" />
+          <unit kind="second" exponent="-1" scale="1" multiplier="3600" />
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="h">
+        <listOfUnits>
+          <unit kind="second" exponent="1" scale="1" multiplier="3600" />
+        </listOfUnits>
+      </unitDefinition>
+    </listOfUnitDefinitions>
+    <listOfCompartments>
+      <compartment id="culture_broth" name="culture broth" constant="true">
+        <annotation>
+          <pmf:metadata>
+            <dc:source>http://identifiers.org/ncim/C2919900</dc:source>
+          </pmf:metadata>
+        </annotation>
+      </compartment>
+    </listOfCompartments>
+    <listOfSpecies>
+      <species id="salmonella_spp" name="salmonella spp" compartment="culture_broth" constant="false" boundaryCondition="true" substanceUnits="pmf_ln_cfu_g" hasOnlySubstanceUnits="false">
+        <annotation>
+          <pmf:metadata>
+            <dc:source>http://identifiers.org/ncim/C0036111</dc:source>
+            <pmf:sourceValues>
+              <pmf:sourceValue source="source1" descriptor="//numl:ResultComponent[@id='resultComponent1']//numl:atomicDescription[@name='mass']" />
+            </pmf:sourceValues>
+          </pmf:metadata>
+        </annotation>
+      </species>
+    </listOfSpecies>
+    <listOfParameters>
+      <parameter id="lambda" constant="true" value="2.22" />
+      <parameter id="mu_max" constant="true" value="0.8487" units="pmf_rate_ln_cfu_g_h" />
+      <parameter id="Ymax" constant="true" value="25" units="pmf_ln_cfu_g" />
+      <parameter id="Y0" constant="false" value="7.11" units="pmf_ln_cfu_g" />
+      <parameter id="time" constant="false" value="0" units="h">
+        <annotation>
+          <pmf:metadata>
+            <pmf:sourceValues>
+              <pmf:sourceValue source="source1" descriptor="//numl:ResultComponent[@id='resultComponent1']//numl:atomicDescription[@name='time']" />
+            </pmf:sourceValues>
+          </pmf:metadata>
+        </annotation>
+      </parameter>
+    </listOfParameters>
+    <listOfRules>
+      <assignmentRule variable="salmonella_spp">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <apply>
+            <minus />
+            <apply>
+              <plus />
+              <ci> Y0 </ci>
+              <ci> Ymax </ci>
+            </apply>
+            <apply>
+              <ln />
+              <apply>
+                <plus />
+                <apply>
+                  <exp />
+                  <ci> Y0 </ci>
+                </apply>
+                <apply>
+                  <times />
+                  <apply>
+                    <minus />
+                    <apply>
+                      <exp />
+                      <ci> Ymax </ci>
+                    </apply>
+                    <apply>
+                      <exp />
+                      <ci> Y0 </ci>
+                    </apply>
+                  </apply>
+                  <apply>
+                    <exp />
+                    <apply>
+                      <times />
+                      <apply>
+                        <minus />
+                        <ci> mu_max </ci>
+                      </apply>
+                      <apply>
+                        <plus />
+                        <csymbol encoding="text" definitionURL="http://www.sbml.org/sbml/symbols/time"> time </csymbol>
+                        <apply>
+                          <divide />
+                          <apply>
+                            <times />
+                            <apply>
+                              <ln />
+                              <apply>
+                                <divide />
+                                <apply>
+                                  <plus />
+                                  <cn type="integer"> 1 </cn>
+                                  <apply>
+                                    <exp />
+                                    <apply>
+                                      <times />
+                                      <apply>
+                                        <minus />
+                                        <cn type="integer"> 4 </cn>
+                                      </apply>
+                                      <apply>
+                                        <minus />
+                                        <csymbol encoding="text" definitionURL="http://www.sbml.org/sbml/symbols/time"> time </csymbol>
+                                        <ci> lambda </ci>
+                                      </apply>
+                                    </apply>
+                                  </apply>
+                                </apply>
+                                <apply>
+                                  <plus />
+                                  <cn type="integer"> 1 </cn>
+                                  <apply>
+                                    <exp />
+                                    <apply>
+                                      <times />
+                                      <cn type="integer"> 4 </cn>
+                                      <ci> lambda </ci>
+                                    </apply>
+                                  </apply>
+                                </apply>
+                              </apply>
+                            </apply>
+                            <cn type="integer"> 1 </cn>
+                          </apply>
+                          <cn type="integer"> 4 </cn>
+                        </apply>
+                      </apply>
+                    </apply>
+                  </apply>
+                </apply>
+              </apply>
+            </apply>
+          </apply>
+        </math>
+      </assignmentRule>
+    </listOfRules>
+    <listOfConstraints>
+      <constraint>
+        <math xmlns="http://www.w3.org/1998/Math/MathML" xmlns:sbml="http://www.sbml.org/sbml/level3/version1/core">
+          <apply>
+            <and />
+            <apply>
+              <geq />
+              <ci> time </ci>
+              <cn sbml:units="h"> 0 </cn>
+            </apply>
+            <apply>
+              <leq />
+              <ci> time </ci>
+              <cn sbml:units="h">13.33</cn>
+            </apply>
+          </apply>
+        </math>
+      </constraint>
+    </listOfConstraints>
+  </model>
+</sbml>
