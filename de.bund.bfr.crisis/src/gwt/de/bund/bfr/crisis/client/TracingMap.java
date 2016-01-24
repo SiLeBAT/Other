@@ -393,7 +393,7 @@ public class TracingMap extends MapWidget {
 	private void buildPanel() {
 		OSM osmMapnik = OSM.Mapnik("Mapnik");
 		// OSM osmCycle = OSM.CycleMap("CycleMap");
-		Window.alert(OpenLayers.getProxyHost());
+		//Window.alert(OpenLayers.getProxyHost());
 		
 		osmMapnik.setIsBaseLayer(true);
 		// osmCycle.setIsBaseLayer(true);
