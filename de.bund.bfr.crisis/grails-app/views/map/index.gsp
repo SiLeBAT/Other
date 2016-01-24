@@ -28,8 +28,10 @@
   <script type="text/javascript" src="${resource(dir: 'gwt/de.bund.bfr.crisis.TracingApp', file: 'sc/modules/ISC_DataBinding.js')}"></script>
   <script type="text/javascript" src="${resource(dir: 'gwt/de.bund.bfr.crisis.TracingApp', file: 'sc/skins/Enterprise/load_skin.js')}"></script>
 
-  <script src="http://www.openlayers.org/api/OpenLayers.js"></script>
-  <script src="http://www.openstreetmap.org/openlayers/OpenStreetMap.js"></script>
+  <!-- <script src="http://www.openlayers.org/api/OpenLayers.js"></script> -->
+  <!-- <script src="http://www.openstreetmap.org/openlayers/OpenStreetMap.js"></script> -->
+  <asset:javascript src="OpenLayers.js"/>
+  <asset:javascript src="OpenStreetMap.js"/>
   <asset:stylesheet src="map.css"/>
 </head>
 

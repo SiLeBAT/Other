@@ -13,6 +13,7 @@ import org.gwtopenmaps.openlayers.client.LonLat;
 import org.gwtopenmaps.openlayers.client.Map;
 import org.gwtopenmaps.openlayers.client.MapOptions;
 import org.gwtopenmaps.openlayers.client.MapWidget;
+import org.gwtopenmaps.openlayers.client.OpenLayers;
 import org.gwtopenmaps.openlayers.client.Pixel;
 import org.gwtopenmaps.openlayers.client.Projection;
 import org.gwtopenmaps.openlayers.client.Style;
@@ -392,7 +393,8 @@ public class TracingMap extends MapWidget {
 	private void buildPanel() {
 		OSM osmMapnik = OSM.Mapnik("Mapnik");
 		// OSM osmCycle = OSM.CycleMap("CycleMap");
-
+		Window.alert(OpenLayers.getProxyHost());
+		
 		osmMapnik.setIsBaseLayer(true);
 		// osmCycle.setIsBaseLayer(true);
 

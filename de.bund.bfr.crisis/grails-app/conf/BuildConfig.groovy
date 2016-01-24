@@ -72,7 +72,7 @@ grails.project.dependency.resolution = {
 		build 'com.google.gwt:gwt-servlet:2.7.0'
 
 		compile 'org.hsqldb:hsqldb:2.3.2'
-		compile 'com.h2database:h2:1.4.187'
+		compile 'com.h2database:h2:1.4.188'
 		
 //		compile 'org.apache.httpcomponents:httpclient:4.4', {
 //			force = true
@@ -120,9 +120,9 @@ gwt {
 		'org.gwtopenmaps.openlayers:gwt-openlayers-client:1.1-SNAPSHOT',
 		'com.google.gwt:gwt-codeserver:2.7.0',
 		'com.google.gwt:gwt-dev:2.7.0',
-		'org.ow2.asm:asm:5.0.3',
-		'org.ow2.asm:asm-commons:5.0.3',
-		'org.ow2.asm:asm-util:5.0.3'
+		'org.ow2.asm:asm:5.0.4',
+		'org.ow2.asm:asm-commons:5.0.4',
+		'org.ow2.asm:asm-util:5.0.4'
 	]
 }
 
