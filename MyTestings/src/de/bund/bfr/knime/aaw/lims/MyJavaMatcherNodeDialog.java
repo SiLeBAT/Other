@@ -25,15 +25,19 @@ public class MyJavaMatcherNodeDialog extends DefaultNodeSettingsPane {
 	protected MyJavaMatcherNodeDialog() {
     	createNewGroup("BVL:"); 
     	SettingsModelString sms = new SettingsModelString(MyJavaMatcherNodeModel.COLSEL, "");
+    	SettingsModelString bvlSample = new SettingsModelString(MyJavaMatcherNodeModel.BVL_SAMPLE, "");
     	//DialogComponentColumnNameSelection d = new DialogComponentColumnNameSelection(sms, "Select a columnname", 0, true);
     	//addDialogComponent(d);
-    	addDialogComponent(new DialogComponentString(sms, "Enter a columnname:"));
+    	addDialogComponent(new DialogComponentString(sms, "Enter a columnname -> LabNumber:"));
+    	addDialogComponent(new DialogComponentString(bvlSample, "Columnname for Sample result:"));
 
     	createNewGroup("LIMS:"); 
     	SettingsModelString smsLims = new SettingsModelString(MyJavaMatcherNodeModel.COLSELLIMS, "");
+    	SettingsModelString limsSample = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_SAMPLE, "");
     	//d = new DialogComponentColumnNameSelection(smsLims, "Select a columnname", 1, true);
     	//addDialogComponent(d);
-    	addDialogComponent(new DialogComponentString(smsLims, "Enter a columnname:"));
+    	addDialogComponent(new DialogComponentString(smsLims, "Enter a columnname -> Kundennummer:"));
+    	addDialogComponent(new DialogComponentString(limsSample, "Columnname for Sample result:"));
 
     	createNewGroup("Remove Non-Numbers:"); 
     	SettingsModelBoolean smsNO = new SettingsModelBoolean(MyJavaMatcherNodeModel.NUMBERSONLY, false);

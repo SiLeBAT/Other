@@ -38,11 +38,15 @@ public class MyJavaMatcherNodeModel extends NodeModel {
     
 	static final String COLSEL = "selCol";
 	static final String COLSELLIMS = "selColLims";
+	static final String BVL_SAMPLE = "bvlsample";
+	static final String LIMS_SAMPLE = "limssample";
 	static final String WILD = "wild";
 	static final String NUMBERSONLY = "numbersonly";
 	
 	private final SettingsModelString m_colSel = new SettingsModelString(COLSEL, "none");
 	private final SettingsModelString m_colSelLims = new SettingsModelString(COLSELLIMS, "none");
+	private final SettingsModelString m_bvlSample = new SettingsModelString(BVL_SAMPLE, "none");
+	private final SettingsModelString m_limsSample = new SettingsModelString(LIMS_SAMPLE, "none");
 	private final SettingsModelBoolean m_wildSearch = new SettingsModelBoolean(WILD, false);
 	private final SettingsModelBoolean m_onlyNumbers = new SettingsModelBoolean(NUMBERSONLY, false);
 	
@@ -60,12 +64,12 @@ public class MyJavaMatcherNodeModel extends NodeModel {
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
     	boolean doAll = false;
-    	DataTableSpec dts = inData[0].getSpec();
+    	DataTableSpec dts0 = inData[0].getSpec();
     	DataTableSpec dts1 = inData[1].getSpec();
-    	int numOutCols = dts1.getNumColumns() + 1;
+    	int numOutCols = dts0.getNumColumns() + dts1.getNumColumns();
 		int theCol0 = -1;
-    	for (int i=0;i<dts.getNumColumns();i++) {
-    		if (dts.getColumnNames()[i].equals(m_colSel.getStringValue())) { // "PN_conTP"
+    	for (int i=0;i<dts0.getNumColumns();i++) {
+    		if (dts0.getColumnNames()[i].equals(m_colSel.getStringValue())) { // "PN_conTP"
     			theCol0 = i;
     			break;
     		}
@@ -74,6 +78,20 @@ public class MyJavaMatcherNodeModel extends NodeModel {
     	for (int i=0;i<dts1.getNumColumns();i++) {
     		if (dts1.getColumnNames()[i].equals(m_colSelLims.getStringValue())) { // "KundenProbenr"
     			theCol1 = i;
+    			break;
+    		}
+    	}
+		int theCol2 = -1;
+    	for (int i=0;i<dts0.getNumColumns();i++) {
+    		if (dts0.getColumnNames()[i].equals(m_bvlSample.getStringValue())) { // "...TEXT3"
+    			theCol2 = i;
+    			break;
+    		}
+    	}
+		int theCol3 = -1;
+    	for (int i=0;i<dts1.getNumColumns();i++) {
+    		if (dts1.getColumnNames()[i].equals(m_limsSample.getStringValue())) { // "Ergebnis"
+    			theCol3 = i;
     			break;
     		}
     	}
@@ -89,38 +107,67 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 			}
 		}
 
-		BufferedDataContainer buf = exec.createDataContainer(getSpec(dts1, m_colSel.getStringValue()));
+		BufferedDataContainer buf = exec.createDataContainer(getSpec(dts0,dts1));
     	long rk = 0;
     	int rowLfd = 0;
 		DataCell[] cells = new DataCell[numOutCols];
     	if (theCol0 >= 0 && theCol1 >= 0) {
-        	for (DataRow row : inData[0]) {
+        	for (DataRow row0 : inData[0]) {
         		boolean success = false;
-        		DataCell dc = row.getCell(theCol0);
+        		DataCell dc = row0.getCell(theCol0);
         		if (!dc.isMissing()) {
             		String queryStr = ((StringCell) dc).getStringValue();
             		queryStr = queryStr.replace("%", ".*");
             		if (m_wildSearch.getBooleanValue()) queryStr = ".*" + queryStr + ".*";
             		for (String limsStr : limsMap.keySet()) {
     					if (limsStr.matches(queryStr)) {
+    						List<DataRow> bestScore = new ArrayList<>();
+    						double topScore = 0;
     						for (DataRow row1 : limsMap.get(limsStr)) {
-        						for (int i=0;i<dts1.getNumColumns();i++) {
-        							cells[i] = row1.getCell(i);
+    							double score = 0; 
+        						if (theCol2 >= 0 && theCol3 >= 0) {
+        							DataCell bvlSample = row0.getCell(theCol2);
+        							DataCell limsSample = row1.getCell(theCol3);
+        							if (!bvlSample.isMissing() && !limsSample.isMissing()) {
+            							String bvl = ((StringCell) bvlSample).getStringValue();
+            							String lims = ((StringCell) limsSample).getStringValue();
+                						//Hier sollten die ähnlichsten in Bezug auf SamplingResult genommen werden, falls es mehrere Kandiadten gibt!
+            							score = StringSimilarity.diceCoefficientOptimized(bvl, lims);
+        							}
         						}
-        						cells[numOutCols - 1] = dc;
+    							if (score == topScore) {
+    								bestScore.add(row1);
+    							}
+    							else if (score > topScore) {
+    								bestScore.clear();
+    								topScore = score;
+    								bestScore.add(row1);
+    							}
+    						}    							
+							for (DataRow row1 : bestScore) {
+        						for (int i=0;i<dts0.getNumColumns();i++) {
+        							cells[i] = row0.getCell(i);
+        						}
+        						for (int i=0;i<dts1.getNumColumns();i++) {
+        							cells[dts0.getNumColumns()+i] = row1.getCell(i);
+        						}
+        						//cells[numOutCols - 1] = dc;
     							RowKey key = RowKey.createRowKey(rk);rk++;
         		        		DataRow outputRow = new DefaultRow(key, cells);
         		        		buf.addRowToTable(outputRow);
-    						}
-    		        		success = true;
+        		        		success = true;
+							}
     					}
             		}
         		}
         		if (doAll && !success) {
-					for (int i=0;i<dts1.getNumColumns();i++) {
-						cells[i] = DataType.getMissingCell();
+					for (int i=0;i<dts0.getNumColumns();i++) {
+						cells[i] = row0.getCell(i);
 					}
-					cells[numOutCols - 1] = dc;
+					for (int i=0;i<dts1.getNumColumns();i++) {
+						cells[dts0.getNumColumns()+i] = DataType.getMissingCell();
+					}
+					//cells[numOutCols - 1] = dc;
 					RowKey key = RowKey.createRowKey(rk);rk++;
 	        		DataRow outputRow = new DefaultRow(key, cells);
 	        		buf.addRowToTable(outputRow);
@@ -134,13 +181,16 @@ public class MyJavaMatcherNodeModel extends NodeModel {
         return new BufferedDataTable[]{buf.getTable()};
     }
 
-	private DataTableSpec getSpec(DataTableSpec inSpec, String lastColname) {
-		DataColumnSpec[] outSpec = new DataColumnSpec[inSpec.getNumColumns() + 1];
-		for (int i=0;i<inSpec.getNumColumns();i++) {
-			DataColumnSpec inSpecCols = inSpec.getColumnSpec(i);
+	private DataTableSpec getSpec(DataTableSpec inSpec0, DataTableSpec inSpec1) {
+		DataColumnSpec[] outSpec = new DataColumnSpec[inSpec0.getNumColumns() + inSpec1.getNumColumns()];		
+		for (int i=0;i<inSpec0.getNumColumns();i++) {
+			DataColumnSpec inSpecCols = inSpec0.getColumnSpec(i);
 			outSpec[i] = new DataColumnSpecCreator(inSpecCols.getName(), inSpecCols.getType()).createSpec();
 		}
-		outSpec[inSpec.getNumColumns()] = new DataColumnSpecCreator(lastColname, StringCell.TYPE).createSpec();
+		for (int i=0;i<inSpec1.getNumColumns();i++) {
+			DataColumnSpec inSpecCols = inSpec1.getColumnSpec(i);
+			outSpec[inSpec0.getNumColumns()+i] = new DataColumnSpecCreator(inSpecCols.getName(), inSpecCols.getType()).createSpec();
+		}
 		return new DataTableSpec(outSpec);
 	}
 
@@ -158,7 +208,7 @@ public class MyJavaMatcherNodeModel extends NodeModel {
     @Override
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
             throws InvalidSettingsException {
-		return new DataTableSpec[] {getSpec(inSpecs[1], m_colSel.getStringValue())};
+		return new DataTableSpec[] {getSpec(inSpecs[0],inSpecs[1])};
     }
 
     /**
@@ -168,6 +218,8 @@ public class MyJavaMatcherNodeModel extends NodeModel {
     protected void saveSettingsTo(final NodeSettingsWO settings) {
     	m_colSel.saveSettingsTo(settings);
     	m_colSelLims.saveSettingsTo(settings);
+    	m_bvlSample.saveSettingsTo(settings);
+    	m_limsSample.saveSettingsTo(settings);
     	m_wildSearch.saveSettingsTo(settings);
     	m_onlyNumbers.saveSettingsTo(settings);
     }
@@ -180,6 +232,8 @@ public class MyJavaMatcherNodeModel extends NodeModel {
             throws InvalidSettingsException {
     	m_colSel.loadSettingsFrom(settings);
     	if (settings.containsKey(COLSELLIMS)) m_colSelLims.loadSettingsFrom(settings);
+    	if (settings.containsKey(BVL_SAMPLE)) m_bvlSample.loadSettingsFrom(settings);
+    	if (settings.containsKey(LIMS_SAMPLE)) m_limsSample.loadSettingsFrom(settings);
     	if (settings.containsKey(WILD)) m_wildSearch.loadSettingsFrom(settings);
     	if (settings.containsKey(NUMBERSONLY)) m_onlyNumbers.loadSettingsFrom(settings);
     }
@@ -192,6 +246,8 @@ public class MyJavaMatcherNodeModel extends NodeModel {
             throws InvalidSettingsException {
     	m_colSel.validateSettings(settings);
     	if (settings.containsKey(COLSELLIMS)) m_colSelLims.validateSettings(settings);
+    	if (settings.containsKey(BVL_SAMPLE)) m_bvlSample.validateSettings(settings);
+    	if (settings.containsKey(LIMS_SAMPLE)) m_limsSample.validateSettings(settings);
     	if (settings.containsKey(WILD)) m_wildSearch.validateSettings(settings);
     	if (settings.containsKey(NUMBERSONLY)) m_onlyNumbers.validateSettings(settings);
     }
