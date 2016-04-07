@@ -37,11 +37,13 @@ public class MyJavaMatcherNodeDialog extends DefaultNodeSettingsPane {
     	SettingsModelString smsLims = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_KUNDENPROBENNR, "");
     	SettingsModelString limsSample = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_SAMPLE, "");
     	SettingsModelString limsMatrixCode = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_MATRIX_CODE, "");
+    	SettingsModelString limsSampleResult = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_SAMPLE_RESULT, "");
    	//d = new DialogComponentColumnNameSelection(smsLims, "Select a columnname", 1, true);
     	//addDialogComponent(d);
     	addDialogComponent(new DialogComponentString(smsLims, "Enter a columnname -> Kundennummer:"));
-    	addDialogComponent(new DialogComponentString(limsSample, "Columnname for Sample result:"));
+    	addDialogComponent(new DialogComponentString(limsSample, "Columnname for Sample Vorbefund:"));
     	addDialogComponent(new DialogComponentString(limsMatrixCode, "Columnname for ADV-Matrix-Code:"));
+    	addDialogComponent(new DialogComponentString(limsSampleResult, "Columnname for Sample result:"));
 
     	createNewGroup("Remove Non-Numbers:"); 
     	SettingsModelBoolean smsNO = new SettingsModelBoolean(MyJavaMatcherNodeModel.NUMBERSONLY, false);
