@@ -1,9 +1,7 @@
 package de.bund.bfr.knime.aaw.lims;
 
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
-import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentString;
-import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
@@ -29,7 +27,7 @@ public class MyJavaMatcherNodeDialog extends DefaultNodeSettingsPane {
     	SettingsModelString bvlMatrixCode = new SettingsModelString(MyJavaMatcherNodeModel.BVL_MATRIX_CODE, "");
     	SettingsModelString bvlSamplingDate = new SettingsModelString(MyJavaMatcherNodeModel.BVL_SAMPLING_DATE, "");
      	addDialogComponent(new DialogComponentString(sms, "Enter a columnname -> LabNumber:"));
-    	addDialogComponent(new DialogComponentString(bvlSample, "Columnname for Sample result:"));
+    	addDialogComponent(new DialogComponentString(bvlSample, "Columnname for Sample Vorbefund:"));
     	addDialogComponent(new DialogComponentString(bvlMatrixCode, "Columnname for ADV-Matrix-Code:"));
     	addDialogComponent(new DialogComponentString(bvlSamplingDate, "Columnname for sampling date:"));
 
@@ -42,9 +40,9 @@ public class MyJavaMatcherNodeDialog extends DefaultNodeSettingsPane {
     	addDialogComponent(new DialogComponentString(smsLims, "Enter a columnname -> Kundennummer:"));
     	addDialogComponent(new DialogComponentString(limsSample, "Columnname for Sample Vorbefund:"));
     	addDialogComponent(new DialogComponentString(limsMatrixCode, "Columnname for ADV-Matrix-Code:"));
-    	addDialogComponent(new DialogComponentString(limsSampleResult, "Columnname for Sample result:"));
     	addDialogComponent(new DialogComponentString(limsSamplingDate, "Columnname for sampling date:"));
-
+    	addDialogComponent(new DialogComponentString(limsSampleResult, "Columnname for Sample result:"));
+/*
     	createNewGroup("Remove Non-Numbers:"); 
     	SettingsModelBoolean smsNO = new SettingsModelBoolean(MyJavaMatcherNodeModel.NUMBERSONLY, false);
     	addDialogComponent(new DialogComponentBoolean(smsNO, "Remove all non-numbers from LIMS Strings:"));
@@ -56,6 +54,15 @@ public class MyJavaMatcherNodeDialog extends DefaultNodeSettingsPane {
     	createNewGroup("Loose Search:"); 
     	SettingsModelBoolean smsLoose = new SettingsModelBoolean(MyJavaMatcherNodeModel.LOOSE, false);
     	addDialogComponent(new DialogComponentBoolean(smsLoose, "Enable loose search, i.e. NULL allowed as Match:"));
+
+    	createNewGroup("Optional Output:"); 
+    	SettingsModelBoolean smsOptional = new SettingsModelBoolean(MyJavaMatcherNodeModel.OPTIONAL, false);
+    	addDialogComponent(new DialogComponentBoolean(smsOptional, "Enable optional Output:"));
+
+    	createNewGroup("Degree of Trust:"); 
+    	SettingsModelInteger smiTrust = new SettingsModelInteger(MyJavaMatcherNodeModel.DEGREE_OF_TRUST, 0);
+    	addDialogComponent(new DialogComponentNumber(smiTrust, "Match Quality:", 1));
+    	*/
 	}
 }
 
