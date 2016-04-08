@@ -27,23 +27,23 @@ public class MyJavaMatcherNodeDialog extends DefaultNodeSettingsPane {
     	SettingsModelString sms = new SettingsModelString(MyJavaMatcherNodeModel.BVL_PROBENNR, "");
     	SettingsModelString bvlSample = new SettingsModelString(MyJavaMatcherNodeModel.BVL_SAMPLE, "");
     	SettingsModelString bvlMatrixCode = new SettingsModelString(MyJavaMatcherNodeModel.BVL_MATRIX_CODE, "");
-    	//DialogComponentColumnNameSelection d = new DialogComponentColumnNameSelection(sms, "Select a columnname", 0, true);
-    	//addDialogComponent(d);
-    	addDialogComponent(new DialogComponentString(sms, "Enter a columnname -> LabNumber:"));
+    	SettingsModelString bvlSamplingDate = new SettingsModelString(MyJavaMatcherNodeModel.BVL_SAMPLING_DATE, "");
+     	addDialogComponent(new DialogComponentString(sms, "Enter a columnname -> LabNumber:"));
     	addDialogComponent(new DialogComponentString(bvlSample, "Columnname for Sample result:"));
     	addDialogComponent(new DialogComponentString(bvlMatrixCode, "Columnname for ADV-Matrix-Code:"));
+    	addDialogComponent(new DialogComponentString(bvlSamplingDate, "Columnname for sampling date:"));
 
     	createNewGroup("LIMS:"); 
     	SettingsModelString smsLims = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_KUNDENPROBENNR, "");
     	SettingsModelString limsSample = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_SAMPLE, "");
     	SettingsModelString limsMatrixCode = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_MATRIX_CODE, "");
     	SettingsModelString limsSampleResult = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_SAMPLE_RESULT, "");
-   	//d = new DialogComponentColumnNameSelection(smsLims, "Select a columnname", 1, true);
-    	//addDialogComponent(d);
+    	SettingsModelString limsSamplingDate = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_SAMPLING_DATE, "");
     	addDialogComponent(new DialogComponentString(smsLims, "Enter a columnname -> Kundennummer:"));
     	addDialogComponent(new DialogComponentString(limsSample, "Columnname for Sample Vorbefund:"));
     	addDialogComponent(new DialogComponentString(limsMatrixCode, "Columnname for ADV-Matrix-Code:"));
     	addDialogComponent(new DialogComponentString(limsSampleResult, "Columnname for Sample result:"));
+    	addDialogComponent(new DialogComponentString(limsSamplingDate, "Columnname for sampling date:"));
 
     	createNewGroup("Remove Non-Numbers:"); 
     	SettingsModelBoolean smsNO = new SettingsModelBoolean(MyJavaMatcherNodeModel.NUMBERSONLY, false);
@@ -52,6 +52,10 @@ public class MyJavaMatcherNodeDialog extends DefaultNodeSettingsPane {
     	createNewGroup("Wild Search:"); 
     	SettingsModelBoolean smsWild = new SettingsModelBoolean(MyJavaMatcherNodeModel.WILD, false);
     	addDialogComponent(new DialogComponentBoolean(smsWild, "Enable wild cards at the ends of Strings:"));
+
+    	createNewGroup("Loose Search:"); 
+    	SettingsModelBoolean smsLoose = new SettingsModelBoolean(MyJavaMatcherNodeModel.LOOSE, false);
+    	addDialogComponent(new DialogComponentBoolean(smsLoose, "Enable loose search, i.e. NULL allowed as Match:"));
 	}
 }
 
