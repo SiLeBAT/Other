@@ -35,13 +35,15 @@ public class MyJavaMatcherNodeDialog extends DefaultNodeSettingsPane {
     	SettingsModelString smsLims = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_KUNDENPROBENNR, "");
     	SettingsModelString limsSample = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_SAMPLE, "");
     	SettingsModelString limsMatrixCode = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_MATRIX_CODE, "");
-    	SettingsModelString limsSampleResult = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_SAMPLE_RESULT, "");
     	SettingsModelString limsSamplingDate = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_SAMPLING_DATE, "");
+    	SettingsModelString limsSampleResult = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_SAMPLE_RESULT, "");
+    	SettingsModelString limsSampleStatus = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_SAMPLE_STATUS, "");
     	addDialogComponent(new DialogComponentString(smsLims, "Enter a columnname -> Kundennummer:"));
     	addDialogComponent(new DialogComponentString(limsSample, "Columnname for Sample Vorbefund:"));
     	addDialogComponent(new DialogComponentString(limsMatrixCode, "Columnname for ADV-Matrix-Code:"));
     	addDialogComponent(new DialogComponentString(limsSamplingDate, "Columnname for sampling date:"));
     	addDialogComponent(new DialogComponentString(limsSampleResult, "Columnname for Sample result:"));
+    	addDialogComponent(new DialogComponentString(limsSampleStatus, "Columnname for result status:"));
 /*
     	createNewGroup("Remove Non-Numbers:"); 
     	SettingsModelBoolean smsNO = new SettingsModelBoolean(MyJavaMatcherNodeModel.NUMBERSONLY, false);

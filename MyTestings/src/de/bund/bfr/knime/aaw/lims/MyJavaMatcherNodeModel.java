@@ -19,7 +19,7 @@ import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
 import org.knime.core.data.RowKey;
 import org.knime.core.data.def.DefaultRow;
-import org.knime.core.data.def.IntCell;
+import org.knime.core.data.def.DoubleCell;
 import org.knime.core.data.def.StringCell;
 import org.knime.core.data.date.DateAndTimeCell;
 import org.knime.core.node.BufferedDataContainer;
@@ -54,6 +54,7 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 	static final String BVL_SAMPLE = "bvlsample";
 	static final String LIMS_SAMPLE = "limssample";
 	static final String LIMS_SAMPLE_RESULT = "limssampleresult";
+	static final String LIMS_SAMPLE_STATUS = "limssamplestatus";
 	static final String BVL_MATRIX_CODE = "bvlmatrixcode";
 	static final String LIMS_MATRIX_CODE = "limsmatrixcode";
 	static final String BVL_SAMPLING_DATE = "bvlsamplingdate";
@@ -69,6 +70,7 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 	private final SettingsModelString m_bvlSample = new SettingsModelString(BVL_SAMPLE, "none");
 	private final SettingsModelString m_limsSample = new SettingsModelString(LIMS_SAMPLE, "none");
 	private final SettingsModelString m_limsSampleResult = new SettingsModelString(LIMS_SAMPLE_RESULT, "");
+	private final SettingsModelString m_limsSampleStatus = new SettingsModelString(LIMS_SAMPLE_STATUS, "");
 	private final SettingsModelString m_bvlMatrixCode = new SettingsModelString(BVL_MATRIX_CODE, "");
 	private final SettingsModelString m_limsMatrixCode = new SettingsModelString(LIMS_MATRIX_CODE, "");
 	private final SettingsModelString m_bvlSamplingDate = new SettingsModelString(BVL_SAMPLING_DATE, "");
@@ -136,25 +138,37 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 		}   
 		return samplingDateOK;
     }
-    private boolean searchInLims(String bvlStr, int qProbe, int qDate, int qMatrix, boolean offerMoreMatches, int matchQuality, Map<String, List<DataRow>> limsMap, int col_BvlAdvCode, int col_LimsAdvCode,
+	// EXACT, DIGITS_ONLY, WILD_LEFT, WILD_RIGHT, WILD_BOTH
+    private String manageString(String str, int todo) {
+    	if (todo == EXACT) return str;
+    	else if (todo == DIGITS_ONLY) return str.replaceAll("[^0-9]","");
+    	else if (todo == WILD_LEFT) return ".*" + str;
+    	else if (todo == WILD_RIGHT) return str + ".*";
+    	else if (todo == WILD_BOTH) return ".*" + str + ".*";
+    	return str;
+    }
+    private boolean searchInLims(int qProbe, int qBvlProbeWild, int qDate, int qMatrix, boolean offerMoreMatches, int matchQuality, String bvlStr, Map<String, List<DataRow>> limsMap, int col_BvlAdvCode, int col_LimsAdvCode,
     		 int col_BvlVorbefund, int col_LimsVorbefund, int col_BvlSamplingDate, int col_LimsSamplingDate, int col_limsResult,
     		DataRow rowBvl, DataTableSpec dts0, DataTableSpec dts1, BufferedDataContainer buf) throws ParseException {
     	boolean success = false;
+    	String c_bvl = manageString(bvlStr, qProbe);
+    	c_bvl = manageString(c_bvl, qBvlProbeWild);
 		double topScore = 0;
-		Map<String, DataRow> bestScore = new LinkedHashMap<>();
-		// EXACT, DIGITS_ONLY, WILD_LEFT, WILD_RIGHT, WILD_BOTH
+		Map<DataRow, String> bestScore = new LinkedHashMap<>();
 		for (String limsStr : limsMap.keySet()) {
-			if (limsStr.matches(bvlStr)) {
+			String c_lims = manageString(limsStr, qProbe);
+			if (c_lims.matches(c_bvl)) {
 				for (DataRow rowLims : limsMap.get(limsStr)) {
+					
 					// 2: check Matrix-ADV-Code
 					boolean advCodeOk = getAdvCodeOk(qMatrix, col_BvlAdvCode, col_LimsAdvCode, rowBvl, rowLims);
+					// 3: check Sampling Date
+					boolean samplingDateOk = getSamplingDateOk(qDate, col_BvlSamplingDate, col_LimsSamplingDate, rowBvl, rowLims);
 					
-					if (bvlStr.indexOf("150073797") >= 0) {
+					if (bvlStr.indexOf("1552211MK   166") >= 0) {
 						System.err.print("");
 					}
 					
-					// 3: check Sampling Date
-					boolean samplingDateOk = getSamplingDateOk(qDate, col_BvlSamplingDate, col_LimsSamplingDate, rowBvl, rowLims);
 					
 					if (advCodeOk && samplingDateOk) {
 						// 4: check best Score for SerovarSimilarity
@@ -170,12 +184,12 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 							}
 						}
 						if (score == topScore) {
-							bestScore.put(limsStr, rowLims);
+							bestScore.put(rowLims, limsStr);
 						}
 						else if (score > topScore) {
 							bestScore.clear();
 							topScore = score;
-							bestScore.put(limsStr, rowLims);
+							bestScore.put(rowLims, limsStr);
 						}
 					}
 				}    							
@@ -185,17 +199,17 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 		if (bestScore.size() > 1) {
 			System.out.println("\nBVL:\n" + rowBvl);
 			System.out.println("LIMS:");
-			for (DataRow rowLims : bestScore.values()) {
+			for (DataRow rowLims : bestScore.keySet()) {
 				System.out.println(rowLims);
 			}
 		}
-		for (String limsStr : bestScore.keySet()) {
-			DataRow rowLims = bestScore.get(limsStr);
+		for (DataRow rowLims : bestScore.keySet()) {
 			DataCell rc = col_limsResult >= 0 ? rowLims.getCell(col_limsResult) : null;
 			String limsResult = rc != null && !rc.isMissing() ? ((StringCell) rowLims.getCell(col_limsResult)).getStringValue() : ""+rowLims;
 			if (offerMoreMatches || !limsResults.contains(limsResult)) { // e.g. one BVL dataset can result in two limsResults. This is only allowed, if the results are different, e.g. c.coli and c.jejuni
 				limsResults.add(limsResult);
     			addRow(dts0, rowBvl, dts1, rowLims, buf, RowKey.createRowKey(buf.size()), matchQuality);
+    			String limsStr = bestScore.get(rowLims);
     			removeLimsStr(limsMap, limsStr, rowLims);
     			if (bestScore.size() > 1) System.out.println("LIMS_chosen:\n" + rowLims + "\n");
         		success = true;
@@ -208,44 +222,121 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 		ldr.remove(rowLims);
 		if (ldr.size() == 0) limsMap.remove(limsStr);    	
     }
+    private Boolean checkDates(Long date1, Long date2) {
+    	if (date1 == null || date2 == null) return null;
+		boolean criterium = date1 >= date2 - ONE_DAY && date1 <= date2 + ONE_DAY;
+		return criterium;
+    }
+    private Boolean checkAdv(String adv1, String adv2) {
+    	if (adv1 == null || adv2 == null) return null;
+    	return adv1.equals(adv2);
+    }
     /**
      * {@inheritDoc}
      */
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
-    	boolean doAll = false;
+    	boolean doAll = true;
     	DataTableSpec dts0 = inData[0].getSpec();
     	DataTableSpec dts1 = inData[1].getSpec();
     	
-		int col_BvlProbenNr = getCol(dts0, m_bvlProbenNr.getStringValue()); // "PN_conTP"
+		int col_BvlProbenNr = getCol(dts0, m_bvlProbenNr.getStringValue()); // "PROBEN_NR"
 		int col_limsKundenNr = getCol(dts1, m_limsKundenProbenNr.getStringValue()); // "KundenProbenr"
 		int col_BvlVorbefund = getCol(dts0, m_bvlSample.getStringValue()); // "PARAMETER_TEXT1"
 		int col_LimsVorbefund = getCol(dts1, m_limsSample.getStringValue()); // "Vorbefund"
 		int col_limsResult = getCol(dts1, m_limsSampleResult.getStringValue()); // "Ergebnis"
+		int col_limsStatus = getCol(dts1, m_limsSampleStatus.getStringValue()); // "Status"
 		int col_BvlAdvCode = getCol(dts0, m_bvlMatrixCode.getStringValue()); // "ZERL_MATRIX"
 		int col_LimsAdvCode = getCol(dts1, m_limsMatrixCode.getStringValue()); // "Matrix-A-Code"
 		int col_BvlSamplingDate = getCol(dts0, m_bvlSamplingDate.getStringValue()); // "PROBENAHME_DAT"
 		int col_LimsSamplingDate = getCol(dts1, m_limsSamplingDate.getStringValue()); // "Probenahme"
 
-    	Map<String, List<DataRow>> limsMap = new LinkedHashMap<>();
+    	Map<String, List<MyLimsDs>> limsMap = new LinkedHashMap<>();
 		for (DataRow row1 : inData[1]) {
-			DataCell dc1 = row1.getCell(col_limsKundenNr);
-			if (!dc1.isMissing()) {
-				String limsStr = ((StringCell) dc1).getStringValue();
-        		//if (m_onlyNumbers.getBooleanValue()) limsStr = limsStr.replaceAll("[^0-9]","");
-				if (!limsMap.containsKey(limsStr)) limsMap.put(limsStr, new ArrayList<>());
-				List<DataRow> l = limsMap.get(limsStr);
-				l.add(row1);
+			MyLimsDs mld = new MyLimsDs(col_limsKundenNr, col_LimsVorbefund, col_limsResult, col_limsStatus, col_LimsAdvCode, col_LimsSamplingDate);
+			mld.setDr(row1);
+			if (limsMap.containsKey(mld.getKey())) {
+				//System.err.println("LIMS: " + mld.getKey() + " already existing...");
+			}
+			else {
+				limsMap.put(mld.getKey(), new ArrayList<>());
+			}
+			List<MyLimsDs> l = limsMap.get(mld.getKey());
+			l.add(mld);
+		}
+    	Map<String, MyBvlDs> bvlMap = new LinkedHashMap<>();
+		for (DataRow row0 : inData[0]) {
+			MyBvlDs mbd = new MyBvlDs(col_BvlProbenNr, col_BvlVorbefund, col_BvlAdvCode, col_BvlSamplingDate);
+			mbd.setDr(row0);
+			if (bvlMap.containsKey(mbd.getKey())) {
+				System.err.println("BVL: " + mbd.getKey() + " already existing...");
+			}
+			else {
+				bvlMap.put(mbd.getKey(), mbd);
 			}
 		}
-		/* Match Quality:
-		 * 1. Exakt
-		 * 2. 
-		*/
+		
+		
 		BufferedDataContainer buf = exec.createDataContainer(getSpec(dts0,dts1));
     	int rowLfd = 0;
-    	if (col_BvlProbenNr >= 0 && col_limsKundenNr >= 0) {
+		for (String key : bvlMap.keySet()) {
+			boolean success = false;
+			MyBvlDs mbd = bvlMap.get(key);
+			if (mbd.getPROBEN_NR().indexOf("15LMT0498-01") >= 0) {
+				System.err.print("");
+			}
+			for (String limsKey : limsMap.keySet()) {
+				List<MyLimsDs> mldl = limsMap.get(limsKey);
+				String limsKPN = mldl.get(0).getKundenProbenr();
+				double score = StringSimilarity.diceCoefficientOptimized(mbd.getPROBEN_NR(), limsKPN);			
+				mbd.addStringComparison(mldl, score);
+			}
+			//System.out.println(mbd.getPROBEN_NR());
+			//mbd.printMap(5);
+			Map<List<MyLimsDs>, Double> sm = mbd.getSortedMap();
+			double topScore = 0;
+			List<MyLimsDs> bestScore = new ArrayList<>();
+			for (Map.Entry<List<MyLimsDs>, Double> entry : sm.entrySet()) {
+				double matchQuality = entry.getValue();
+				if (matchQuality >= topScore) {
+					for (MyLimsDs mld : entry.getKey())  {
+						if (mld.getStatus() != null && !mld.getStatus().equalsIgnoreCase("ev")) matchQuality = matchQuality * 0.7;
+						Boolean b_date = checkDates(mbd.getProbenahmeDate(), mld.getProbenahme());
+						if (b_date == null) matchQuality = matchQuality * 0.75; else if (!b_date) matchQuality = 0; 
+						Boolean b_adv = checkAdv(mbd.getZERL_MATRIX(), mld.getMatrixACode());		
+						if (b_adv == null) matchQuality = matchQuality / 2; else if (!b_adv) matchQuality = matchQuality / 2; 
+						Double d_befund = StringSimilarity.diceCoefficientOptimized(mbd.getVORBEFUND(), mld.getVorbefund());
+						matchQuality = matchQuality * d_befund;
+						if (matchQuality == topScore) {
+							bestScore.add(mld);
+						}
+						else if (matchQuality > topScore) {
+							bestScore.clear();
+							topScore = matchQuality;
+							bestScore.add(mld);
+						}
+		    			success = true;
+					}
+				}
+			}
+			List<String> alreadyIn = new ArrayList<>();
+			for (MyLimsDs mld : bestScore) {
+				String d_result = mld.getErgebnis();
+				if (d_result != null && !alreadyIn.contains(d_result)) {
+					alreadyIn.add(d_result);
+					addRow(dts0, mbd.getDr(), dts1, mld.getDr(), buf, RowKey.createRowKey(buf.size()), topScore);					
+				}
+			}
+    		if (doAll && !success) addRow(dts0, mbd.getDr(), dts1, null, buf, RowKey.createRowKey(buf.size()), -1);
+    		exec.setProgress(((double)rowLfd)/bvlMap.size());
+    		exec.checkCanceled();
+    		rowLfd++;
+		}
+		exec.setProgress(1);
+	
+    	rowLfd = 0;
+    	if (col_BvlProbenNr >= 0 && col_limsKundenNr >= 0 && false) {
         	for (DataRow rowBvl : inData[0]) {
         		boolean success = false;
         		DataCell dc = rowBvl.getCell(col_BvlProbenNr);
@@ -253,16 +344,43 @@ public class MyJavaMatcherNodeModel extends NodeModel {
         			// 1: check KundenprobenNr
             		String bvlStr = ((StringCell) dc).getStringValue();
             		//bvlStr = bvlStr.replace("%", ".*");
-            		//if (m_wildSearch.getBooleanValue()) bvlStr = ".*" + bvlStr + ".*";            		
-            		if (!success) success = searchInLims(bvlStr, EXACT, EXACT, EXACT, false, 1, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
-            		if (!success) success = searchInLims(bvlStr, EXACT, ALLOW_NULL, EXACT, false, 2, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
-            		if (!success) success = searchInLims(bvlStr, EXACT, EXACT, ALLOW_NULL, false, 3, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
-            		if (!success) success = searchInLims(bvlStr, EXACT, ALLOW_NULL, ALLOW_NULL, false, 4, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
-            		if (!success) success = searchInLims(bvlStr, EXACT, IGNORE, EXACT, false, 5, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
-            		//EXACT, DIGITS_ONLY, WILD_LEFT, WILD_RIGHT, WILD_BOTH
-            		//EXACT, DIGITS_ONLY, WILD_LEFT, WILD_RIGHT, WILD_BOTH
-            		if (!success) success = searchInLims(bvlStr, DIGITS_ONLY, EXACT, EXACT, false, 6, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
-            		if (!success) success = searchInLims(bvlStr, WILD_BOTH, EXACT, EXACT, false, 7, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		//if (m_wildSearch.getBooleanValue()) bvlStr = ".*" + bvlStr + ".*";  
+            		// EXACT, DIGITS_ONLY
+            		// WILD_LEFT, WILD_RIGHT, WILD_BOTH
+            		
+            		/*
+            		int mq = 0;
+            		mq++; if (!success) success = searchInLims(EXACT, EXACT, ALLOW_NULL, ALLOW_NULL, false, mq, bvlStr, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		
+            		mq++; if (!success) success = searchInLims(EXACT, WILD_RIGHT, EXACT, EXACT, false, mq, bvlStr, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		mq++; if (!success) success = searchInLims(EXACT, WILD_RIGHT, ALLOW_NULL, EXACT, false, mq, bvlStr, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		mq++; if (!success) success = searchInLims(EXACT, WILD_RIGHT, EXACT, ALLOW_NULL, false, mq, bvlStr, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		mq++; if (!success) success = searchInLims(EXACT, WILD_RIGHT, ALLOW_NULL, ALLOW_NULL, false, mq, bvlStr, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		mq++; if (!success) success = searchInLims(EXACT, WILD_RIGHT, IGNORE, EXACT, false, mq, bvlStr, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		mq++; if (!success) success = searchInLims(EXACT, WILD_RIGHT, EXACT, IGNORE, false, mq, bvlStr, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		
+            		mq++; if (!success) success = searchInLims(DIGITS_ONLY, EXACT, EXACT, EXACT, false, mq, bvlStr, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		mq++; if (!success) success = searchInLims(DIGITS_ONLY, EXACT, ALLOW_NULL, EXACT, false, mq, bvlStr, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		mq++; if (!success) success = searchInLims(DIGITS_ONLY, EXACT, EXACT, ALLOW_NULL, false, mq, bvlStr, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		mq++; if (!success) success = searchInLims(DIGITS_ONLY, EXACT, ALLOW_NULL, ALLOW_NULL, false, mq, bvlStr, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		mq++; if (!success) success = searchInLims(DIGITS_ONLY, EXACT, IGNORE, EXACT, false, mq, bvlStr, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		mq++; if (!success) success = searchInLims(DIGITS_ONLY, EXACT, EXACT, IGNORE, false, mq, bvlStr, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		
+            		mq++; if (!success) success = searchInLims(DIGITS_ONLY, WILD_RIGHT, EXACT, EXACT, false, mq, bvlStr, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		mq++; if (!success) success = searchInLims(DIGITS_ONLY, WILD_RIGHT, ALLOW_NULL, EXACT, false, mq, bvlStr, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		mq++; if (!success) success = searchInLims(DIGITS_ONLY, WILD_RIGHT, EXACT, ALLOW_NULL, false, mq, bvlStr, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		mq++; if (!success) success = searchInLims(DIGITS_ONLY, WILD_RIGHT, ALLOW_NULL, ALLOW_NULL, false, mq, bvlStr, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		mq++; if (!success) success = searchInLims(DIGITS_ONLY, WILD_RIGHT, IGNORE, EXACT, false, mq, bvlStr, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		mq++; if (!success) success = searchInLims(DIGITS_ONLY, WILD_RIGHT, EXACT, IGNORE, false, mq, bvlStr, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		
+            		mq++; if (!success) success = searchInLims(DIGITS_ONLY, WILD_BOTH, EXACT, EXACT, false, mq, bvlStr, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		mq++; if (!success) success = searchInLims(DIGITS_ONLY, WILD_BOTH, ALLOW_NULL, EXACT, false, mq, bvlStr, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		mq++; if (!success) success = searchInLims(DIGITS_ONLY, WILD_BOTH, EXACT, ALLOW_NULL, false, mq, bvlStr, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		mq++; if (!success) success = searchInLims(DIGITS_ONLY, WILD_BOTH, ALLOW_NULL, ALLOW_NULL, false, mq, bvlStr, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		mq++; if (!success) success = searchInLims(DIGITS_ONLY, WILD_BOTH, IGNORE, EXACT, false, mq, bvlStr, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		mq++; if (!success) success = searchInLims(DIGITS_ONLY, WILD_BOTH, EXACT, IGNORE, false, mq, bvlStr, limsMap, col_BvlAdvCode, col_LimsAdvCode, col_BvlVorbefund, col_LimsVorbefund, col_BvlSamplingDate, col_LimsSamplingDate, col_limsResult, rowBvl, dts0, dts1, buf);
+            		
+            		*/
         		}
         		if (doAll && !success) addRow(dts0, rowBvl, dts1, null, buf, RowKey.createRowKey(buf.size()), -1);
         		
@@ -274,7 +392,7 @@ public class MyJavaMatcherNodeModel extends NodeModel {
     	buf.close();
         return new BufferedDataTable[]{buf.getTable()};
     }
-    private void addRow(DataTableSpec dts0, DataRow rowBvl, DataTableSpec dts1, DataRow rowLims, BufferedDataContainer buf, RowKey key, int matchQuality) {
+    private void addRow(DataTableSpec dts0, DataRow rowBvl, DataTableSpec dts1, DataRow rowLims, BufferedDataContainer buf, RowKey key, double matchQuality) {
     	int numOutCols = dts0.getNumColumns() + dts1.getNumColumns() + 1;
 		DataCell[] cells = new DataCell[numOutCols];
 		for (int i=0;i<dts0.getNumColumns();i++) {
@@ -285,7 +403,7 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 			else cells[dts0.getNumColumns()+i] = rowLims.getCell(i);
 
 		}
-		cells[dts0.getNumColumns() + dts1.getNumColumns()] = new IntCell(matchQuality);
+		cells[dts0.getNumColumns() + dts1.getNumColumns()] = new DoubleCell(matchQuality);
 		DataRow outputRow = new DefaultRow(key, cells);
 		buf.addRowToTable(outputRow);
     }
@@ -300,7 +418,7 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 			DataColumnSpec inSpecCol = inSpec1.getColumnSpec(i);
 			outSpec[inSpec0.getNumColumns()+i] = new DataColumnSpecCreator(inSpecCol.getName(), inSpecCol.getType()).createSpec();
 		}
-		outSpec[inSpec0.getNumColumns() + inSpec1.getNumColumns()] = new DataColumnSpecCreator("Match Quality", IntCell.TYPE).createSpec();
+		outSpec[inSpec0.getNumColumns() + inSpec1.getNumColumns()] = new DataColumnSpecCreator("Match Quality", DoubleCell.TYPE).createSpec();
 		return new DataTableSpec(outSpec);
 	}
 
@@ -331,6 +449,7 @@ public class MyJavaMatcherNodeModel extends NodeModel {
     	m_bvlSample.saveSettingsTo(settings);
     	m_limsSample.saveSettingsTo(settings);
     	m_limsSampleResult.saveSettingsTo(settings);
+    	m_limsSampleStatus.saveSettingsTo(settings);
     	m_bvlMatrixCode.saveSettingsTo(settings);
     	m_limsMatrixCode.saveSettingsTo(settings);
     	m_bvlSamplingDate.saveSettingsTo(settings);
@@ -355,6 +474,7 @@ public class MyJavaMatcherNodeModel extends NodeModel {
     	if (settings.containsKey(BVL_SAMPLE)) m_bvlSample.loadSettingsFrom(settings);
     	if (settings.containsKey(LIMS_SAMPLE)) m_limsSample.loadSettingsFrom(settings);
     	if (settings.containsKey(LIMS_SAMPLE_RESULT)) m_limsSampleResult.loadSettingsFrom(settings);
+    	if (settings.containsKey(LIMS_SAMPLE_STATUS)) m_limsSampleStatus.loadSettingsFrom(settings);
     	if (settings.containsKey(BVL_MATRIX_CODE)) m_bvlMatrixCode.loadSettingsFrom(settings);
     	if (settings.containsKey(LIMS_MATRIX_CODE)) m_limsMatrixCode.loadSettingsFrom(settings);
     	if (settings.containsKey(BVL_SAMPLING_DATE)) m_bvlSamplingDate.loadSettingsFrom(settings);
@@ -379,6 +499,7 @@ public class MyJavaMatcherNodeModel extends NodeModel {
     	if (settings.containsKey(BVL_SAMPLE)) m_bvlSample.validateSettings(settings);
     	if (settings.containsKey(LIMS_SAMPLE)) m_limsSample.validateSettings(settings);
     	if (settings.containsKey(LIMS_SAMPLE_RESULT)) m_limsSampleResult.validateSettings(settings);
+    	if (settings.containsKey(LIMS_SAMPLE_STATUS)) m_limsSampleStatus.validateSettings(settings);
     	if (settings.containsKey(BVL_MATRIX_CODE)) m_bvlMatrixCode.validateSettings(settings);
     	if (settings.containsKey(LIMS_MATRIX_CODE)) m_limsMatrixCode.validateSettings(settings);
     	if (settings.containsKey(BVL_SAMPLING_DATE)) m_bvlSamplingDate.validateSettings(settings);
