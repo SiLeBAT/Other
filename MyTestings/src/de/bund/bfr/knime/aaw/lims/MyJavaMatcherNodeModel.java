@@ -20,6 +20,7 @@ import org.knime.core.data.DataType;
 import org.knime.core.data.RowKey;
 import org.knime.core.data.def.DefaultRow;
 import org.knime.core.data.def.DoubleCell;
+import org.knime.core.data.def.IntCell;
 import org.knime.core.data.def.StringCell;
 import org.knime.core.data.date.DateAndTimeCell;
 import org.knime.core.node.BufferedDataContainer;
@@ -208,7 +209,7 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 			String limsResult = rc != null && !rc.isMissing() ? ((StringCell) rowLims.getCell(col_limsResult)).getStringValue() : ""+rowLims;
 			if (offerMoreMatches || !limsResults.contains(limsResult)) { // e.g. one BVL dataset can result in two limsResults. This is only allowed, if the results are different, e.g. c.coli and c.jejuni
 				limsResults.add(limsResult);
-    			addRow(dts0, rowBvl, dts1, rowLims, buf, RowKey.createRowKey(buf.size()), matchQuality);
+    			addRow(dts0, rowBvl, dts1, rowLims, buf, RowKey.createRowKey(buf.size()), matchQuality, null);
     			String limsStr = bestScore.get(rowLims);
     			removeLimsStr(limsMap, limsStr, rowLims);
     			if (bestScore.size() > 1) System.out.println("LIMS_chosen:\n" + rowLims + "\n");
@@ -283,6 +284,7 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 		for (String key : bvlMap.keySet()) {
 			boolean success = false;
 			MyBvlDs mbd = bvlMap.get(key);
+			String bdo = mbd.getPROBEN_NR().replaceAll("[^0-9]","");
 			if (mbd.getPROBEN_NR().indexOf("15LMT0498-01") >= 0) {
 				System.err.print("");
 			}
@@ -299,14 +301,25 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 			List<MyLimsDs> bestScore = new ArrayList<>();
 			for (Map.Entry<List<MyLimsDs>, Double> entry : sm.entrySet()) {
 				double matchQuality = entry.getValue();
-				if (matchQuality >= topScore) {
-					for (MyLimsDs mld : entry.getKey())  {
-						if (mld.getStatus() != null && !mld.getStatus().equalsIgnoreCase("ev")) matchQuality = matchQuality * 0.7;
+				for (MyLimsDs mld : entry.getKey())  {
+					boolean contains = mld.getKundenProbenr().indexOf(mbd.getPROBEN_NR()) >= 0 || mbd.getPROBEN_NR().indexOf(mld.getKundenProbenr()) >= 0;
+					String ldo = mld.getKundenProbenr().replaceAll("[^0-9]","");
+					boolean numberOnlyContains = ldo.indexOf(bdo) >= 0 || bdo.indexOf(ldo) >= 0;
+					if (matchQuality < 1 && !contains && !numberOnlyContains) matchQuality = matchQuality * 0.5;
+					if (matchQuality >= topScore) {
+						MyBLTResults mblt = mld.getMblt(true);
+						mblt.setV_pnScore(matchQuality);
+						mblt.setV_status(mld.getStatus() == null ? null : mld.getStatus().equalsIgnoreCase("ev"));
 						Boolean b_date = checkDates(mbd.getProbenahmeDate(), mld.getProbenahme());
-						if (b_date == null) matchQuality = matchQuality * 0.75; else if (!b_date) matchQuality = 0; 
+						mblt.setV_date(b_date);
 						Boolean b_adv = checkAdv(mbd.getZERL_MATRIX(), mld.getMatrixACode());		
-						if (b_adv == null) matchQuality = matchQuality / 2; else if (!b_adv) matchQuality = matchQuality / 2; 
+						mblt.setV_adv(b_adv);
 						Double d_befund = StringSimilarity.diceCoefficientOptimized(mbd.getVORBEFUND(), mld.getVorbefund());
+						mblt.setVorbefundScore(d_befund);
+						
+						if (b_date == null) matchQuality = matchQuality * 0.75; else if (!b_date) matchQuality = 0; 
+						if (mld.getStatus() != null && !mld.getStatus().toLowerCase().endsWith("v")) matchQuality = matchQuality * 0.7;
+						if (b_adv == null) matchQuality = matchQuality * 0.5; else if (!b_adv) matchQuality = matchQuality * 0.5; 
 						matchQuality = matchQuality * d_befund;
 						if (matchQuality == topScore) {
 							bestScore.add(mld);
@@ -325,10 +338,10 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 				String d_result = mld.getErgebnis();
 				if (d_result != null && !alreadyIn.contains(d_result)) {
 					alreadyIn.add(d_result);
-					addRow(dts0, mbd.getDr(), dts1, mld.getDr(), buf, RowKey.createRowKey(buf.size()), topScore);					
+					addRow(dts0, mbd.getDr(), dts1, mld.getDr(), buf, RowKey.createRowKey(buf.size()), topScore, mld.getMblt(false));					
 				}
 			}
-    		if (doAll && !success) addRow(dts0, mbd.getDr(), dts1, null, buf, RowKey.createRowKey(buf.size()), -1);
+    		if (doAll && !success) addRow(dts0, mbd.getDr(), dts1, null, buf, RowKey.createRowKey(buf.size()), -1, null);
     		exec.setProgress(((double)rowLfd)/bvlMap.size());
     		exec.checkCanceled();
     		rowLfd++;
@@ -382,7 +395,7 @@ public class MyJavaMatcherNodeModel extends NodeModel {
             		
             		*/
         		}
-        		if (doAll && !success) addRow(dts0, rowBvl, dts1, null, buf, RowKey.createRowKey(buf.size()), -1);
+        		if (doAll && !success) addRow(dts0, rowBvl, dts1, null, buf, RowKey.createRowKey(buf.size()), -1, null);
         		
         		exec.setProgress(((double)rowLfd)/inData[0].size());
         		rowLfd++;
@@ -392,8 +405,8 @@ public class MyJavaMatcherNodeModel extends NodeModel {
     	buf.close();
         return new BufferedDataTable[]{buf.getTable()};
     }
-    private void addRow(DataTableSpec dts0, DataRow rowBvl, DataTableSpec dts1, DataRow rowLims, BufferedDataContainer buf, RowKey key, double matchQuality) {
-    	int numOutCols = dts0.getNumColumns() + dts1.getNumColumns() + 1;
+    private void addRow(DataTableSpec dts0, DataRow rowBvl, DataTableSpec dts1, DataRow rowLims, BufferedDataContainer buf, RowKey key, double matchQuality, MyBLTResults mblt) {
+    	int numOutCols = dts0.getNumColumns() + dts1.getNumColumns() + 6;
 		DataCell[] cells = new DataCell[numOutCols];
 		for (int i=0;i<dts0.getNumColumns();i++) {
 			cells[i] = rowBvl.getCell(i);
@@ -404,12 +417,18 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 
 		}
 		cells[dts0.getNumColumns() + dts1.getNumColumns()] = new DoubleCell(matchQuality);
+		cells[dts0.getNumColumns() + dts1.getNumColumns() + 1] = (mblt == null) ? DataType.getMissingCell() : new DoubleCell(mblt.getV_pnScore());
+		cells[dts0.getNumColumns() + dts1.getNumColumns() + 2] = (mblt == null) ? DataType.getMissingCell() : (mblt.getV_status() == null ? new IntCell(0) : mblt.getV_status() ? new IntCell(1) : new IntCell(-1));
+		cells[dts0.getNumColumns() + dts1.getNumColumns() + 3] = (mblt == null) ? DataType.getMissingCell() : (mblt.getV_date() == null ? new IntCell(0) : mblt.getV_date() ? new IntCell(1) : new IntCell(-1));
+		cells[dts0.getNumColumns() + dts1.getNumColumns() + 4] = (mblt == null) ? DataType.getMissingCell() : (mblt.getV_adv() == null ? new IntCell(0) : mblt.getV_adv() ? new IntCell(1) : new IntCell(-1));
+		cells[dts0.getNumColumns() + dts1.getNumColumns() + 5] = (mblt == null) ? DataType.getMissingCell() : new DoubleCell(mblt.getVorbefundScore());
+
 		DataRow outputRow = new DefaultRow(key, cells);
 		buf.addRowToTable(outputRow);
     }
 
 	private DataTableSpec getSpec(DataTableSpec inSpec0, DataTableSpec inSpec1) {
-		DataColumnSpec[] outSpec = new DataColumnSpec[inSpec0.getNumColumns() + inSpec1.getNumColumns() + 1];		
+		DataColumnSpec[] outSpec = new DataColumnSpec[inSpec0.getNumColumns() + inSpec1.getNumColumns() + 6];		
 		for (int i=0;i<inSpec0.getNumColumns();i++) {
 			DataColumnSpec inSpecCol = inSpec0.getColumnSpec(i);
 			outSpec[i] = new DataColumnSpecCreator(inSpecCol.getName(), inSpecCol.getType()).createSpec();
@@ -419,6 +438,12 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 			outSpec[inSpec0.getNumColumns()+i] = new DataColumnSpecCreator(inSpecCol.getName(), inSpecCol.getType()).createSpec();
 		}
 		outSpec[inSpec0.getNumColumns() + inSpec1.getNumColumns()] = new DataColumnSpecCreator("Match Quality", DoubleCell.TYPE).createSpec();
+		outSpec[inSpec0.getNumColumns() + inSpec1.getNumColumns() + 1] = new DataColumnSpecCreator("v_PN_simi", DoubleCell.TYPE).createSpec();
+		outSpec[inSpec0.getNumColumns() + inSpec1.getNumColumns() + 2] = new DataColumnSpecCreator("v_Status", IntCell.TYPE).createSpec();
+		outSpec[inSpec0.getNumColumns() + inSpec1.getNumColumns() + 3] = new DataColumnSpecCreator("v_Date", IntCell.TYPE).createSpec();
+		outSpec[inSpec0.getNumColumns() + inSpec1.getNumColumns() + 4] = new DataColumnSpecCreator("v_Adv", IntCell.TYPE).createSpec();
+		outSpec[inSpec0.getNumColumns() + inSpec1.getNumColumns() + 5] = new DataColumnSpecCreator("v_Befund", DoubleCell.TYPE).createSpec();
+
 		return new DataTableSpec(outSpec);
 	}
 

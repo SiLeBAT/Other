@@ -90,4 +90,12 @@ public class MyLimsDs {
 	public Long getProbenahme() {
 		return Probenahme;
 	}
+	
+	private MyBLTResults mblt = null;
+	
+	public MyBLTResults getMblt(boolean refresh) {
+		if (refresh || mblt == null) mblt = new MyBLTResults();
+		return mblt;
+	}
+	
 }
