@@ -13,6 +13,7 @@ import java.util.Map;
 
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataRow;
+import org.knime.core.data.def.IntCell;
 import org.knime.core.data.def.StringCell;
 
 public class MyBvlDs {
@@ -20,17 +21,21 @@ public class MyBvlDs {
 	private final SimpleDateFormat bvlFormatter = new SimpleDateFormat("dd-MMM-yy"); //"17-Feb-15";
 
 	private String PROBEN_NR = null;
+	private Integer TEILPROBEN_NR = null;
 	private String VORBEFUND = null;
 	private String ZERL_MATRIX = null;
 	private String PROBENAHME_DAT = null;
+	private Long PROBENAHME_MILLIS = null;
 	private DataRow dr;
 	private int col_BvlProbenNr;
+	private int col_BvlTeilProbenNr;
 	private int col_BvlVorbefund;
 	private int col_BvlAdvCode;
 	private int col_BvlSamplingDate;
 	
-	public MyBvlDs(int col_BvlProbenNr, int col_BvlVorbefund, int col_BvlAdvCode, int col_BvlSamplingDate) {
+	public MyBvlDs(int col_BvlProbenNr, int col_BvlTeilProbenNr, int col_BvlVorbefund, int col_BvlAdvCode, int col_BvlSamplingDate) {
 		this.col_BvlProbenNr = col_BvlProbenNr;		
+		this.col_BvlTeilProbenNr = col_BvlTeilProbenNr;		
 		this.col_BvlVorbefund = col_BvlVorbefund;		
 		this.col_BvlAdvCode = col_BvlAdvCode;		
 		this.col_BvlSamplingDate = col_BvlSamplingDate;		
@@ -40,6 +45,10 @@ public class MyBvlDs {
 		if (col_BvlProbenNr >= 0) {
 			DataCell dc = dr.getCell(col_BvlProbenNr);			
 			if (!dc.isMissing()) PROBEN_NR = ((StringCell) dc).getStringValue();
+		}
+		if (col_BvlTeilProbenNr >= 0) {
+			DataCell dc = dr.getCell(col_BvlTeilProbenNr);			
+			if (!dc.isMissing()) TEILPROBEN_NR = ((IntCell) dc).getIntValue();
 		}
 		if (col_BvlVorbefund >= 0) {
 			DataCell dc = dr.getCell(col_BvlVorbefund);
@@ -51,11 +60,14 @@ public class MyBvlDs {
 		}
 		if (col_BvlSamplingDate >= 0) {
 			DataCell dc = dr.getCell(col_BvlSamplingDate);
-			if (!dc.isMissing()) PROBENAHME_DAT = ((StringCell) dc).getStringValue();
+			if (!dc.isMissing()) {
+				PROBENAHME_DAT = ((StringCell) dc).getStringValue();
+				PROBENAHME_MILLIS = getProbenahmeDate();
+			}
 }
 	}
 	public String getKey() {
-		return PROBEN_NR + ";:_" + VORBEFUND + ";:_" + ZERL_MATRIX + ";:_" + PROBENAHME_DAT;
+		return PROBEN_NR + ";:_" + TEILPROBEN_NR + ";:_" + VORBEFUND + ";:_" + ZERL_MATRIX + ";:_" + PROBENAHME_DAT;
 	}
 	
 	public DataRow getDr() {
@@ -68,6 +80,9 @@ public class MyBvlDs {
 	public String getPROBEN_NR() {
 		return PROBEN_NR;
 	}
+	public Integer getTEILPROBEN_NR() {
+		return TEILPROBEN_NR;
+	}
 	public String getVORBEFUND() {
 		return VORBEFUND;
 	}
@@ -78,6 +93,7 @@ public class MyBvlDs {
 		return PROBENAHME_DAT;
 	}
 	public Long getProbenahmeDate() {
+		if (PROBENAHME_MILLIS != null) return PROBENAHME_MILLIS;
 		try {
 			return bvlFormatter.parse(PROBENAHME_DAT).getTime();
 		} catch (ParseException e) {

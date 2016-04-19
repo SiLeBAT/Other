@@ -11,6 +11,7 @@ public class MyLimsDs {
 	private String Vorbefund = null;
 	private String Ergebnis = null;
 	private String Status = null;
+	private String ProjectName = null;
 	private String MatrixACode = null;
 	private Long Probenahme = null;
 	private DataRow dr;
@@ -20,14 +21,16 @@ public class MyLimsDs {
 	private int col_limsStatus;
 	private int col_LimsAdvCode;
 	private int col_LimsSamplingDate;
+	private int col_LimsProjectName;
 	
-	public MyLimsDs(int col_limsKundenNr, int col_LimsVorbefund, int col_limsResult, int col_limsStatus, int col_LimsAdvCode, int col_LimsSamplingDate) {
+	public MyLimsDs(int col_limsKundenNr, int col_LimsVorbefund, int col_limsResult, int col_limsStatus, int col_LimsAdvCode, int col_LimsSamplingDate, int col_LimsProjectName) {
 		this.col_limsKundenNr = col_limsKundenNr;		
 		this.col_LimsVorbefund = col_LimsVorbefund;		
 		this.col_limsResult = col_limsResult;		
 		this.col_limsStatus = col_limsStatus;		
 		this.col_LimsAdvCode = col_LimsAdvCode;		
 		this.col_LimsSamplingDate = col_LimsSamplingDate;		
+		this.col_LimsProjectName = col_LimsProjectName;		
 	}
 	
 	private void fillData() {
@@ -54,6 +57,10 @@ public class MyLimsDs {
 		if (col_limsStatus >= 0) {
 			DataCell dc = dr.getCell(col_limsStatus);
 			if (dc != null && !dc.isMissing()) Status = ((StringCell) dc).getStringValue();
+		}
+		if (col_LimsProjectName >= 0) {
+			DataCell dc = dr.getCell(col_LimsProjectName);
+			if (dc != null && !dc.isMissing()) ProjectName = ((StringCell) dc).getStringValue();
 		}
 	}
 	public String getKey() {
@@ -90,6 +97,15 @@ public class MyLimsDs {
 	public Long getProbenahme() {
 		return Probenahme;
 	}
+	
+	public String getProjectName() {
+		return ProjectName;
+	}
+
+	public void setProjectName(String projectName) {
+		ProjectName = projectName;
+	}
+
 	
 	private MyBLTResults mblt = null;
 	
