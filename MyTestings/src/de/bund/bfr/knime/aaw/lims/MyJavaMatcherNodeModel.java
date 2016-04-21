@@ -121,7 +121,7 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 				//System.err.println("LIMS: " + mld.getKey() + " already existing...");
 			}
 			else {
-				limsMap.put(mld.getKey(), new ArrayList<>());
+				limsMap.put(mld.getKey(), new ArrayList<MyLimsDs>());
 			}
 			List<MyLimsDs> l = limsMap.get(mld.getKey());
 			l.add(mld);
@@ -142,7 +142,7 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 		BufferedDataContainer buf = exec.createDataContainer(getSpec(dts0,dts1));
 		double percent;
     	int rowLfd = 0;
-    	long ttt = System.currentTimeMillis();
+    	//long ttt = System.currentTimeMillis();
 		for (String key : bvlMap.keySet()) {
 			boolean success = false;
 			MyBvlDs mbd = bvlMap.get(key);

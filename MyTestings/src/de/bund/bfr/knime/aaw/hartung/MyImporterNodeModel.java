@@ -78,7 +78,7 @@ public class MyImporterNodeModel extends NodeModel {
 		HSSFRow row;
 
 		BufferedDataContainer buf = exec.createDataContainer(getSpec());
-		int rowNumber = 0;
+		long rowNumber = 0;
 		sheet = wb.getSheet("import");
 		if (sheet != null) {
         	Integer jahr = null;
@@ -175,7 +175,7 @@ public class MyImporterNodeModel extends NodeModel {
 			                    	if (str != null && str.trim().length() > 2 && str.startsWith("**")) saison = str.substring(2).trim();
 			                    	Testings tst = null;
 			                    	boolean anzahlFound = false;
-		                    		boolean endStarFound = false;
+		                    		//boolean endStarFound = false;
 		                    		boolean kbeThere = false;
 			                    	for (int j=7;j<19;j++) {
 				                    	cell = row.getCell(j); // Spalte H-S
@@ -201,7 +201,7 @@ public class MyImporterNodeModel extends NodeModel {
 						                    		}
 						                    		else if (str.trim().endsWith("*")) {
 						                    			if (kbeThere) {
-							                    			endStarFound = true;
+							                    			//endStarFound = true;
 						                    				tst = new Testings();
 						                    				tst.setAgentCol(j);
 						                    			}
@@ -478,6 +478,7 @@ public class MyImporterNodeModel extends NodeModel {
 
 		// buf.addRowToTable(new DefaultRow(i+"", IO.createCell(delivery.getId()), IO.createCell(next)));
 		buf.close();
+		wb.close();
         return new BufferedDataTable[]{buf.getTable()};
     }
     private RowProps getA2G(HSSFRow row, RowProps oldRowProps, String defSourceC) {
