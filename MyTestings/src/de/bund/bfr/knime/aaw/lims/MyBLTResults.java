@@ -2,7 +2,7 @@ package de.bund.bfr.knime.aaw.lims;
 
 public class MyBLTResults {
 
-	private double vorbefundScore, v_pnScore;
+	private double vorbefundScore, v_pnScore, betriebsartMatch, probenahmeortMatch;
 	private Boolean v_date, v_adv, v_status;
 	
 	public double getVorbefundScore() {
@@ -34,5 +34,17 @@ public class MyBLTResults {
 	}
 	public void setV_status(Boolean v_status) {
 		this.v_status = v_status;
+	}
+	public double getBetriebsartMatch() {
+		return betriebsartMatch;
+	}
+	public void setBetriebsartMatch(double betriebsartMatch) {
+		this.betriebsartMatch = betriebsartMatch;
+	}
+	public double getProbenahmeortMatch() {
+		return probenahmeortMatch;
+	}
+	public void setProbenahmeortMatch(double probenahmeortMatch) {
+		this.probenahmeortMatch = probenahmeortMatch;
 	}
 }

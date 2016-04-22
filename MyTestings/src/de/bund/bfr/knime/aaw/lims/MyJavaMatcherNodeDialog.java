@@ -27,27 +27,37 @@ public class MyJavaMatcherNodeDialog extends DefaultNodeSettingsPane {
     	SettingsModelString bvlSample = new SettingsModelString(MyJavaMatcherNodeModel.BVL_SAMPLE, "");
     	SettingsModelString bvlMatrixCode = new SettingsModelString(MyJavaMatcherNodeModel.BVL_MATRIX_CODE, "");
     	SettingsModelString bvlSamplingDate = new SettingsModelString(MyJavaMatcherNodeModel.BVL_SAMPLING_DATE, "");
+    	SettingsModelString bvlSamplingOrt = new SettingsModelString(MyJavaMatcherNodeModel.BVL_SAMPLING_ORT, "");
+    	SettingsModelString bvlBetriebsart = new SettingsModelString(MyJavaMatcherNodeModel.BVL_BETRIEBSART, "");
      	addDialogComponent(new DialogComponentString(sms, "Enter a columnname -> Lab-ProbenNummer:"));
      	addDialogComponent(new DialogComponentString(tpn, "Enter a columnname for Teilprobe:"));
     	addDialogComponent(new DialogComponentString(bvlSample, "Columnname for Sample Vorbefund:"));
     	addDialogComponent(new DialogComponentString(bvlMatrixCode, "Columnname for ADV-Matrix-Code:"));
     	addDialogComponent(new DialogComponentString(bvlSamplingDate, "Columnname for sampling date:"));
+    	addDialogComponent(new DialogComponentString(bvlSamplingOrt, "Columnname for sampling Ort:"));
+    	addDialogComponent(new DialogComponentString(bvlBetriebsart, "Columnname for Betriebsart:"));
 
     	createNewGroup("LIMS:"); 
     	SettingsModelString smsLims = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_KUNDENPROBENNR, "");
+    	SettingsModelString limsAVV = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_AVV, "");
     	SettingsModelString limsSample = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_SAMPLE, "");
     	SettingsModelString limsMatrixCode = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_MATRIX_CODE, "");
     	SettingsModelString limsSamplingDate = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_SAMPLING_DATE, "");
     	SettingsModelString limsSampleResult = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_SAMPLE_RESULT, "");
     	SettingsModelString limsSampleStatus = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_SAMPLE_STATUS, "");
     	SettingsModelString limsProjectName = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_PROJECT_NAME, "");
+    	SettingsModelString limsSamplingOrt = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_SAMPLING_ORT, "");
+    	SettingsModelString limsBetriebsart = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_BETRIEBSART, "");
     	addDialogComponent(new DialogComponentString(smsLims, "Enter a columnname -> Kundennummer:"));
+    	addDialogComponent(new DialogComponentString(limsAVV, "Enter a columnname -> AVV:"));
     	addDialogComponent(new DialogComponentString(limsSample, "Columnname for Sample Vorbefund:"));
     	addDialogComponent(new DialogComponentString(limsMatrixCode, "Columnname for ADV-Matrix-Code:"));
     	addDialogComponent(new DialogComponentString(limsSamplingDate, "Columnname for sampling date:"));
     	addDialogComponent(new DialogComponentString(limsSampleResult, "Columnname for Sample result:"));
     	addDialogComponent(new DialogComponentString(limsSampleStatus, "Columnname for result status:"));
     	addDialogComponent(new DialogComponentString(limsProjectName, "Columnname for project name:"));
+    	addDialogComponent(new DialogComponentString(limsSamplingOrt, "Columnname for sampling Ort:"));
+    	addDialogComponent(new DialogComponentString(limsBetriebsart, "Columnname for Betriebsart:"));
 	}
 }
 

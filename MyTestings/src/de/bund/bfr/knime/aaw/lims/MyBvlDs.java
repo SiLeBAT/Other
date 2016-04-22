@@ -26,19 +26,25 @@ public class MyBvlDs {
 	private String ZERL_MATRIX = null;
 	private String PROBENAHME_DAT = null;
 	private Long PROBENAHME_MILLIS = null;
+	private String ProbenahmeOrt = null;
+	private String Betriebsart = null;
 	private DataRow dr;
 	private int col_BvlProbenNr;
 	private int col_BvlTeilProbenNr;
 	private int col_BvlVorbefund;
 	private int col_BvlAdvCode;
 	private int col_BvlSamplingDate;
+	private int col_BvlSamplingOrt;
+	private int col_BvlBetriebsart;
 	
-	public MyBvlDs(int col_BvlProbenNr, int col_BvlTeilProbenNr, int col_BvlVorbefund, int col_BvlAdvCode, int col_BvlSamplingDate) {
+	public MyBvlDs(int col_BvlProbenNr, int col_BvlTeilProbenNr, int col_BvlVorbefund, int col_BvlAdvCode, int col_BvlSamplingDate, int col_BvlSamplingOrt, int col_BvlBetriebsart) {
 		this.col_BvlProbenNr = col_BvlProbenNr;		
 		this.col_BvlTeilProbenNr = col_BvlTeilProbenNr;		
 		this.col_BvlVorbefund = col_BvlVorbefund;		
 		this.col_BvlAdvCode = col_BvlAdvCode;		
 		this.col_BvlSamplingDate = col_BvlSamplingDate;		
+		this.col_BvlSamplingOrt = col_BvlSamplingOrt;		
+		this.col_BvlBetriebsart = col_BvlBetriebsart;		
 	}
 	
 	private void fillData() {
@@ -64,10 +70,18 @@ public class MyBvlDs {
 				PROBENAHME_DAT = ((StringCell) dc).getStringValue();
 				PROBENAHME_MILLIS = getProbenahmeDate();
 			}
-}
+		}
+		if (col_BvlSamplingOrt >= 0) {
+			DataCell dc = dr.getCell(col_BvlSamplingOrt);
+			if (dc != null && !dc.isMissing()) ProbenahmeOrt = ((StringCell) dc).getStringValue();
+		}
+		if (col_BvlBetriebsart >= 0) {
+			DataCell dc = dr.getCell(col_BvlBetriebsart);
+			if (dc != null && !dc.isMissing()) Betriebsart = ((StringCell) dc).getStringValue();
+		}
 	}
 	public String getKey() {
-		return PROBEN_NR + ";:_" + TEILPROBEN_NR + ";:_" + VORBEFUND + ";:_" + ZERL_MATRIX + ";:_" + PROBENAHME_DAT;
+		return PROBEN_NR + ";:_" + TEILPROBEN_NR + ";:_" + VORBEFUND + ";:_" + ZERL_MATRIX + ";:_" + PROBENAHME_DAT + ";:_" + ProbenahmeOrt + ";:_" + Betriebsart;
 	}
 	
 	public DataRow getDr() {
@@ -100,6 +114,13 @@ public class MyBvlDs {
 			e.printStackTrace();
 			return null;
 		}
+	}
+	public String getProbenahmeOrt() {
+		return ProbenahmeOrt;
+	}
+
+	public String getBetriebsart() {
+		return Betriebsart;
 	}
 	
 	private Map<List<MyLimsDs>, Double> similarityMap = new HashMap<>();

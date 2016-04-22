@@ -39,6 +39,7 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 	static final String BVL_PROBENNR = "selCol";
 	static final String BVL_TEILPROBENNR = "bvlteilprobennummer";
 	static final String LIMS_KUNDENPROBENNR = "selColLims";
+	static final String LIMS_AVV = "limsavv";
 	static final String BVL_SAMPLE = "bvlsample";
 	static final String LIMS_SAMPLE = "limssample";
 	static final String LIMS_SAMPLE_RESULT = "limssampleresult";
@@ -48,12 +49,17 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 	static final String BVL_SAMPLING_DATE = "bvlsamplingdate";
 	static final String LIMS_SAMPLING_DATE = "limssamplingdate";
 	static final String LIMS_PROJECT_NAME = "limsprojectname";
+	static final String BVL_SAMPLING_ORT = "bvlsamplingort";
+	static final String BVL_BETRIEBSART = "bvlbetriebsart";
+	static final String LIMS_SAMPLING_ORT = "limssamplingort";
+	static final String LIMS_BETRIEBSART = "limsbetriebsart";
 	
-	private final SettingsModelString m_bvlProbenNr = new SettingsModelString(BVL_PROBENNR, "none");
+	private final SettingsModelString m_bvlProbenNr = new SettingsModelString(BVL_PROBENNR, "");
 	private final SettingsModelString m_bvlTeilProbenNr = new SettingsModelString(BVL_TEILPROBENNR, "");
-	private final SettingsModelString m_limsKundenProbenNr = new SettingsModelString(LIMS_KUNDENPROBENNR, "none");
-	private final SettingsModelString m_bvlSample = new SettingsModelString(BVL_SAMPLE, "none");
-	private final SettingsModelString m_limsSample = new SettingsModelString(LIMS_SAMPLE, "none");
+	private final SettingsModelString m_limsKundenProbenNr = new SettingsModelString(LIMS_KUNDENPROBENNR, "");
+	private final SettingsModelString m_limsAVV = new SettingsModelString(LIMS_AVV, "");
+	private final SettingsModelString m_bvlSample = new SettingsModelString(BVL_SAMPLE, "");
+	private final SettingsModelString m_limsSample = new SettingsModelString(LIMS_SAMPLE, "");
 	private final SettingsModelString m_limsSampleResult = new SettingsModelString(LIMS_SAMPLE_RESULT, "");
 	private final SettingsModelString m_limsSampleStatus = new SettingsModelString(LIMS_SAMPLE_STATUS, "");
 	private final SettingsModelString m_bvlMatrixCode = new SettingsModelString(BVL_MATRIX_CODE, "");
@@ -61,8 +67,11 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 	private final SettingsModelString m_bvlSamplingDate = new SettingsModelString(BVL_SAMPLING_DATE, "");
 	private final SettingsModelString m_limsSamplingDate = new SettingsModelString(LIMS_SAMPLING_DATE, "");
 	private final SettingsModelString m_limsProjectName = new SettingsModelString(LIMS_PROJECT_NAME, "");
+	private final SettingsModelString m_limsBetriebsart = new SettingsModelString(LIMS_BETRIEBSART, "");
+	private final SettingsModelString m_limsSamplingOrt = new SettingsModelString(LIMS_SAMPLING_ORT, "");
+	private final SettingsModelString m_bvlBetriebsart = new SettingsModelString(BVL_BETRIEBSART, "");
+	private final SettingsModelString m_bvlSamplingOrt = new SettingsModelString(BVL_SAMPLING_ORT, "");
 	
-	private final long ONE_DAY = 24*60*60*1000;
 
 	/**
      * Constructor for the node model.
@@ -81,15 +90,6 @@ public class MyJavaMatcherNodeModel extends NodeModel {
     	}
     	return theCol;
     }
-    private Boolean checkDates(Long date1, Long date2) {
-    	if (date1 == null || date2 == null) return null;
-		boolean criterium = date1 >= date2 - ONE_DAY && date1 <= date2 + ONE_DAY;
-		return criterium;
-    }
-    private Boolean checkAdv(String adv1, String adv2) {
-    	if (adv1 == null || adv2 == null) return null;
-    	return adv1.equals(adv2);
-    }
     /**
      * {@inheritDoc}
      */
@@ -103,6 +103,7 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 		int col_BvlProbenNr = getCol(dts0, m_bvlProbenNr.getStringValue()); // "PROBEN_NR"
 		int col_BvlTeilProbenNr = getCol(dts0, m_bvlTeilProbenNr.getStringValue()); // "PROBEN_NR"m_bvlTeilProbenNr
 		int col_limsKundenNr = getCol(dts1, m_limsKundenProbenNr.getStringValue()); // "KundenProbenr"
+		int col_limsAVV = getCol(dts1, m_limsAVV.getStringValue()); // "AVV"
 		int col_BvlVorbefund = getCol(dts0, m_bvlSample.getStringValue()); // "PARAMETER_TEXT1"
 		int col_LimsVorbefund = getCol(dts1, m_limsSample.getStringValue()); // "Vorbefund"
 		int col_limsResult = getCol(dts1, m_limsSampleResult.getStringValue()); // "Ergebnis"
@@ -112,10 +113,14 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 		int col_BvlSamplingDate = getCol(dts0, m_bvlSamplingDate.getStringValue()); // "PROBENAHME_DAT"
 		int col_LimsSamplingDate = getCol(dts1, m_limsSamplingDate.getStringValue()); // "Probenahme"
 		int col_LimsProjectName = getCol(dts1, m_limsProjectName.getStringValue()); // "Projectname"
+		int col_BvlSamplingOrt = getCol(dts0, m_bvlSamplingOrt.getStringValue()); // ""
+		int col_BvlBetriebsart = getCol(dts0, m_bvlBetriebsart.getStringValue()); // ""
+		int col_LimsSamplingOrt = getCol(dts1, m_limsSamplingOrt.getStringValue()); // ""
+		int col_LimsBetriebsart = getCol(dts1, m_limsBetriebsart.getStringValue()); // ""
 
     	Map<String, List<MyLimsDs>> limsMap = new LinkedHashMap<>();
 		for (DataRow row1 : inData[1]) {
-			MyLimsDs mld = new MyLimsDs(col_limsKundenNr, col_LimsVorbefund, col_limsResult, col_limsStatus, col_LimsAdvCode, col_LimsSamplingDate, col_LimsProjectName);
+			MyLimsDs mld = new MyLimsDs(col_limsKundenNr, col_limsAVV, col_LimsVorbefund, col_limsResult, col_limsStatus, col_LimsAdvCode, col_LimsSamplingDate, col_LimsProjectName, col_LimsSamplingOrt, col_LimsBetriebsart);
 			mld.setDr(row1);
 			if (limsMap.containsKey(mld.getKey())) {
 				//System.err.println("LIMS: " + mld.getKey() + " already existing...");
@@ -128,7 +133,7 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 		}
     	Map<String, MyBvlDs> bvlMap = new LinkedHashMap<>();
 		for (DataRow row0 : inData[0]) {
-			MyBvlDs mbd = new MyBvlDs(col_BvlProbenNr, col_BvlTeilProbenNr, col_BvlVorbefund, col_BvlAdvCode, col_BvlSamplingDate);
+			MyBvlDs mbd = new MyBvlDs(col_BvlProbenNr, col_BvlTeilProbenNr, col_BvlVorbefund, col_BvlAdvCode, col_BvlSamplingDate, col_BvlSamplingOrt, col_BvlBetriebsart);
 			mbd.setDr(row0);
 			if (bvlMap.containsKey(mbd.getKey())) {
 				System.err.println("BVL: " + mbd.getKey() + " already existing...");
@@ -143,15 +148,19 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 		double percent;
     	int rowLfd = 0;
     	//long ttt = System.currentTimeMillis();
-		for (String key : bvlMap.keySet()) {
+		for (String key : bvlMap.keySet()) {			
 			boolean success = false;
 			MyBvlDs mbd = bvlMap.get(key);
 			String bdo = mbd.getPROBEN_NR().replaceAll("[^0-9]","");
 			for (String limsKey : limsMap.keySet()) {
 				List<MyLimsDs> mldl = limsMap.get(limsKey);
 				String limsKPN = mldl.get(0).getKundenProbenr();
+				String limsAVV = mldl.get(0).getAVV();
 				double score = StringSimilarity.diceCoefficientOptimized(mbd.getPROBEN_NR(), limsKPN);			
-				mbd.addStringComparison(mldl, score);
+				double scoreAVV = StringSimilarity.diceCoefficientOptimized(mbd.getPROBEN_NR(), limsAVV);
+				double maxS = Math.max(score, scoreAVV);
+				if (score > 0 && scoreAVV > 0 && score != scoreAVV) maxS = maxS - 0.01;
+				mbd.addStringComparison(mldl, maxS);
 			}
 			percent = ((double)rowLfd)/bvlMap.size();
 			//if (rowLfd % 100 == 0) System.err.println(rowLfd + "\t" + percent + "\t" + (System.currentTimeMillis()-ttt));
@@ -161,30 +170,47 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 			double topScore = 0;
 			List<MyLimsDs> bestScore = new ArrayList<>();
 			for (Map.Entry<List<MyLimsDs>, Double> entry : sm.entrySet()) {
-				double matchQuality = entry.getValue();
+				double pnScore = entry.getValue();
 				for (MyLimsDs mld : entry.getKey())  {
-					boolean contains = mld.getKundenProbenr().indexOf(mbd.getPROBEN_NR()) >= 0 || mbd.getPROBEN_NR().indexOf(mld.getKundenProbenr()) >= 0;
-					String ldo = mld.getKundenProbenr().replaceAll("[^0-9]","");
-					boolean numberOnlyContains = ldo.indexOf(bdo) >= 0 || bdo.indexOf(ldo) >= 0;
-					if (matchQuality < 1 && !contains && !numberOnlyContains) matchQuality = matchQuality * 0.3;
+					boolean contains = false;
+					if (mld.getAVV() != null) contains = mld.getAVV().indexOf(mbd.getPROBEN_NR()) >= 0 || mbd.getPROBEN_NR().indexOf(mld.getAVV()) >= 0;
+					else contains = mld.getKundenProbenr().indexOf(mbd.getPROBEN_NR()) >= 0 || mbd.getPROBEN_NR().indexOf(mld.getKundenProbenr()) >= 0;
+					boolean numberOnlyContains = false;
+					if (mld.getAVV() != null) {
+						String ldoAVV = mld.getAVV().replaceAll("[^0-9]","");	
+						numberOnlyContains = ldoAVV.indexOf(bdo) >= 0 || bdo.indexOf(ldoAVV) >= 0;
+					}
+					else {
+						String ldo = mld.getKundenProbenr().replaceAll("[^0-9]","");
+						numberOnlyContains = ldo.indexOf(bdo) >= 0 || bdo.indexOf(ldo) >= 0;
+					}
+					
+					double matchQuality = pnScore;
+					MyBLTResults mblt = null;
+					if (pnScore < 1 && !contains && !numberOnlyContains) {
+						matchQuality = matchQuality * 0.3;
+						/*
+						mblt = mld.setMblt(mld, mbd);
+						matchQuality = mblt.getBetriebsartMatch() * 0.1 + mblt.getProbenahmeortMatch() * 0.1 + mblt.getVorbefundScore() * 0.1 +
+								(mblt.getV_adv() != null && mblt.getV_adv() ? 0.1 : 0) + (mblt.getV_date() != null && mblt.getV_date() ? 0.1 : 0);
+								*/
+					}
+					
+					if (mbd.getPROBEN_NR().equals("2015-00301670") && (mld.getKundenProbenr().equals("2015-00301677") || mld.getKundenProbenr().equals("2015-00301670"))) {
+						System.err.print("");
+					}
 					if (matchQuality >= topScore) {
-						MyBLTResults mblt = mld.getMblt(true);
-						mblt.setV_pnScore(matchQuality);
-						mblt.setV_status(mld.getStatus() == null ? null : mld.getStatus().toLowerCase().endsWith("v"));
-						Boolean b_date = checkDates(mbd.getProbenahmeDate(), mld.getProbenahme());
-						mblt.setV_date(b_date);
-						Boolean b_adv = checkAdv(mbd.getZERL_MATRIX(), mld.getMatrixACode());		
-						mblt.setV_adv(b_adv);
-						Double d_befund = StringSimilarity.diceCoefficientOptimized(mbd.getVORBEFUND(), mld.getVorbefund());
-						if (mld.getProjectName() != null && mbd.getVORBEFUND() != null && mld.getProjectName().startsWith("Moni-ESBL-") && mbd.getVORBEFUND().indexOf("ESBL") >= 0) {
-							d_befund = 1.0;
-						}
-						mblt.setVorbefundScore(d_befund);
+						if (mblt == null) mblt = mld.setMblt(mld, mbd);
+						mblt.setV_pnScore(pnScore);
 						
-						matchQuality = matchQuality * d_befund;
-						if (b_date == null) matchQuality = matchQuality * 0.8; else if (!b_date) matchQuality = 0; 
+
+						//if (mblt.getBetriebsartMatch() < 1) matchQuality = matchQuality * 0.5;
+						//if (mblt.getProbenahmeortMatch() < 0.8) matchQuality = matchQuality * 0.5;
+						
+						matchQuality = matchQuality * mblt.getVorbefundScore();
+						if (mblt.getV_date() == null) matchQuality = matchQuality * 0.8; else if (!mblt.getV_date()) matchQuality = matchQuality * 0.5; 
 						if (mblt.getV_status() != null && !mblt.getV_status()) matchQuality = matchQuality * 0.7;
-						if (b_adv == null) matchQuality = matchQuality * 0.5; else if (!b_adv) matchQuality = matchQuality * 0.5; 
+						if (mblt.getV_adv() == null) matchQuality = matchQuality * 0.5; else if (!mblt.getV_adv()) matchQuality = matchQuality * 0.5; 
 						
 						if (matchQuality >= topScore && mbd.getPROBEN_NR().startsWith("15TRB1054-001")) {
 							System.err.println(matchQuality + "\t" + mbd.getPROBEN_NR() + "\t" + mbd.getTEILPROBEN_NR() + "\t" + mbd.getVORBEFUND() + "\t" + mld.getDr());
@@ -287,6 +313,7 @@ public class MyJavaMatcherNodeModel extends NodeModel {
     	m_bvlProbenNr.saveSettingsTo(settings);
     	m_bvlTeilProbenNr.saveSettingsTo(settings);
     	m_limsKundenProbenNr.saveSettingsTo(settings);
+    	m_limsAVV.saveSettingsTo(settings);
     	m_bvlSample.saveSettingsTo(settings);
     	m_limsSample.saveSettingsTo(settings);
     	m_limsSampleResult.saveSettingsTo(settings);
@@ -296,6 +323,10 @@ public class MyJavaMatcherNodeModel extends NodeModel {
     	m_bvlSamplingDate.saveSettingsTo(settings);
     	m_limsSamplingDate.saveSettingsTo(settings);
     	m_limsProjectName.saveSettingsTo(settings);
+    	m_limsBetriebsart.saveSettingsTo(settings);
+    	m_limsSamplingOrt.saveSettingsTo(settings);
+    	m_bvlBetriebsart.saveSettingsTo(settings);
+    	m_bvlSamplingOrt.saveSettingsTo(settings);
     }
 
     /**
@@ -307,6 +338,7 @@ public class MyJavaMatcherNodeModel extends NodeModel {
     	m_bvlProbenNr.loadSettingsFrom(settings);
     	if (settings.containsKey(BVL_TEILPROBENNR)) m_bvlTeilProbenNr.loadSettingsFrom(settings);
     	if (settings.containsKey(LIMS_KUNDENPROBENNR)) m_limsKundenProbenNr.loadSettingsFrom(settings);
+    	if (settings.containsKey(LIMS_AVV)) m_limsAVV.loadSettingsFrom(settings);
     	if (settings.containsKey(BVL_SAMPLE)) m_bvlSample.loadSettingsFrom(settings);
     	if (settings.containsKey(LIMS_SAMPLE)) m_limsSample.loadSettingsFrom(settings);
     	if (settings.containsKey(LIMS_SAMPLE_RESULT)) m_limsSampleResult.loadSettingsFrom(settings);
@@ -316,6 +348,10 @@ public class MyJavaMatcherNodeModel extends NodeModel {
     	if (settings.containsKey(BVL_SAMPLING_DATE)) m_bvlSamplingDate.loadSettingsFrom(settings);
     	if (settings.containsKey(LIMS_SAMPLING_DATE)) m_limsSamplingDate.loadSettingsFrom(settings);
     	if (settings.containsKey(LIMS_PROJECT_NAME)) m_limsProjectName.loadSettingsFrom(settings);
+    	if (settings.containsKey(LIMS_BETRIEBSART)) m_limsBetriebsart.loadSettingsFrom(settings);
+    	if (settings.containsKey(LIMS_SAMPLING_ORT)) m_limsSamplingOrt.loadSettingsFrom(settings);
+    	if (settings.containsKey(BVL_BETRIEBSART)) m_bvlBetriebsart.loadSettingsFrom(settings);
+    	if (settings.containsKey(BVL_SAMPLING_ORT)) m_bvlSamplingOrt.loadSettingsFrom(settings);
     }
 
     /**
@@ -327,6 +363,7 @@ public class MyJavaMatcherNodeModel extends NodeModel {
     	m_bvlProbenNr.validateSettings(settings);
     	if (settings.containsKey(BVL_TEILPROBENNR)) m_bvlTeilProbenNr.validateSettings(settings);
     	if (settings.containsKey(LIMS_KUNDENPROBENNR)) m_limsKundenProbenNr.validateSettings(settings);
+    	if (settings.containsKey(LIMS_AVV)) m_limsAVV.validateSettings(settings);
     	if (settings.containsKey(BVL_SAMPLE)) m_bvlSample.validateSettings(settings);
     	if (settings.containsKey(LIMS_SAMPLE)) m_limsSample.validateSettings(settings);
     	if (settings.containsKey(LIMS_SAMPLE_RESULT)) m_limsSampleResult.validateSettings(settings);
@@ -336,6 +373,10 @@ public class MyJavaMatcherNodeModel extends NodeModel {
     	if (settings.containsKey(BVL_SAMPLING_DATE)) m_bvlSamplingDate.validateSettings(settings);
     	if (settings.containsKey(LIMS_SAMPLING_DATE)) m_limsSamplingDate.validateSettings(settings);
     	if (settings.containsKey(LIMS_PROJECT_NAME)) m_limsProjectName.validateSettings(settings);
+    	if (settings.containsKey(LIMS_BETRIEBSART)) m_limsBetriebsart.validateSettings(settings);
+    	if (settings.containsKey(LIMS_SAMPLING_ORT)) m_limsSamplingOrt.validateSettings(settings);
+    	if (settings.containsKey(BVL_BETRIEBSART)) m_bvlBetriebsart.validateSettings(settings);
+    	if (settings.containsKey(BVL_SAMPLING_ORT)) m_bvlSamplingOrt.validateSettings(settings);
     }
     
     /**
