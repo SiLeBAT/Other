@@ -152,15 +152,51 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 			boolean success = false;
 			MyBvlDs mbd = bvlMap.get(key);
 			String bdo = mbd.getPROBEN_NR().replaceAll("[^0-9]","");
+			if (mbd.getPROBEN_NR().equals("N15007019-002")) {
+				System.err.print("");
+			}
 			for (String limsKey : limsMap.keySet()) {
 				List<MyLimsDs> mldl = limsMap.get(limsKey);
 				String limsKPN = mldl.get(0).getKundenProbenr();
 				String limsAVV = mldl.get(0).getAVV();
+				if (limsKPN != null && limsKPN.equals("N15007019/2")) {
+					System.err.print("");
+				}
 				double score = StringSimilarity.diceCoefficientOptimized(mbd.getPROBEN_NR(), limsKPN);			
 				double scoreAVV = StringSimilarity.diceCoefficientOptimized(mbd.getPROBEN_NR(), limsAVV);
 				double maxS = Math.max(score, scoreAVV);
 				if (score > 0 && scoreAVV > 0 && score != scoreAVV) maxS = maxS - 0.01;
-				mbd.addStringComparison(mldl, maxS);
+				if (maxS < 0.7) { // Spezialfälle
+					 // z.B. aus Campy 2015, z.B. 50201151567 -> 1567/1
+					if (mbd.getPROBEN_NR().startsWith("5020115") && limsKPN.startsWith(mbd.getPROBEN_NR().substring(mbd.getPROBEN_NR().length() - 4) + "/" + mbd.getTEILPROBEN_NR())) maxS = 1;
+					// z.B. MRSA 1551211UKF  513
+					if (mbd.getPROBEN_NR().startsWith("1551211UKF") && limsKPN.startsWith("15UKF" + mbd.getPROBEN_NR().substring(mbd.getPROBEN_NR().length() - 3) + "/")) maxS = 1;
+					// 101201515559 Diagnostik
+					// 2015OWL016581 Diagnostik
+					int ind = limsKPN.indexOf("(");
+					if (ind >= 0) {
+						score = StringSimilarity.diceCoefficientOptimized(mbd.getPROBEN_NR(), limsKPN.substring(0, ind));
+						if (score > maxS) maxS = score;
+					}
+				}
+				int minLength = 3;
+				boolean contains = false;
+				if (limsAVV != null && mbd.getPROBEN_NR().length() >= minLength && limsAVV.length() >= minLength) contains = limsAVV.indexOf(mbd.getPROBEN_NR()) >= 0 || mbd.getPROBEN_NR().indexOf(limsAVV) >= 0;
+				if (!contains && mbd.getPROBEN_NR().length() >= minLength && limsKPN.length() >= minLength) contains = limsKPN.indexOf(mbd.getPROBEN_NR()) >= 0 || mbd.getPROBEN_NR().indexOf(limsKPN) >= 0;
+				boolean numberOnlyContains = false;
+				if (limsAVV != null) {
+					String ldoAVV = limsAVV.replaceAll("[^0-9]","");	
+					if (ldoAVV.length() >= minLength) numberOnlyContains = ldoAVV.indexOf(bdo) >= 0 || bdo.indexOf(ldoAVV) >= 0;
+				}
+				if (!numberOnlyContains) {
+					String ldo = limsKPN.replaceAll("[^0-9]","");
+					if (ldo.length() >= minLength) numberOnlyContains = ldo.indexOf(bdo) >= 0 || bdo.indexOf(ldo) >= 0;
+				}
+				
+				if (maxS >= 0.7 || contains || numberOnlyContains) {
+					if (!contains && !numberOnlyContains) maxS = maxS / 3;
+					mbd.addStringComparison(mldl, maxS);
+				}
 			}
 			percent = ((double)rowLfd)/bvlMap.size();
 			//if (rowLfd % 100 == 0) System.err.println(rowLfd + "\t" + percent + "\t" + (System.currentTimeMillis()-ttt));
@@ -172,60 +208,47 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 			for (Map.Entry<List<MyLimsDs>, Double> entry : sm.entrySet()) {
 				double pnScore = entry.getValue();
 				for (MyLimsDs mld : entry.getKey())  {
-					boolean contains = false;
-					if (mld.getAVV() != null) contains = mld.getAVV().indexOf(mbd.getPROBEN_NR()) >= 0 || mbd.getPROBEN_NR().indexOf(mld.getAVV()) >= 0;
-					else contains = mld.getKundenProbenr().indexOf(mbd.getPROBEN_NR()) >= 0 || mbd.getPROBEN_NR().indexOf(mld.getKundenProbenr()) >= 0;
-					boolean numberOnlyContains = false;
-					if (mld.getAVV() != null) {
-						String ldoAVV = mld.getAVV().replaceAll("[^0-9]","");	
-						numberOnlyContains = ldoAVV.indexOf(bdo) >= 0 || bdo.indexOf(ldoAVV) >= 0;
-					}
-					else {
-						String ldo = mld.getKundenProbenr().replaceAll("[^0-9]","");
-						numberOnlyContains = ldo.indexOf(bdo) >= 0 || bdo.indexOf(ldo) >= 0;
-					}
 					
 					double matchQuality = pnScore;
 					MyBLTResults mblt = null;
-					if (pnScore < 1 && !contains && !numberOnlyContains) {
-						matchQuality = matchQuality * 0.3;
+					//if (pnScore >= 0.99 || contains || numberOnlyContains) {
+						//matchQuality = matchQuality * 0.3;
 						/*
 						mblt = mld.setMblt(mld, mbd);
 						matchQuality = mblt.getBetriebsartMatch() * 0.1 + mblt.getProbenahmeortMatch() * 0.1 + mblt.getVorbefundScore() * 0.1 +
 								(mblt.getV_adv() != null && mblt.getV_adv() ? 0.1 : 0) + (mblt.getV_date() != null && mblt.getV_date() ? 0.1 : 0);
 								*/
-					}
-					
-					if (mbd.getPROBEN_NR().equals("2015-00301670") && (mld.getKundenProbenr().equals("2015-00301677") || mld.getKundenProbenr().equals("2015-00301670"))) {
-						System.err.print("");
-					}
-					if (matchQuality >= topScore) {
-						if (mblt == null) mblt = mld.setMblt(mld, mbd);
-						mblt.setV_pnScore(pnScore);
-						
+						if (mbd.getPROBEN_NR().equals("101201514787") && (mld.getKundenProbenr().equals("10-12015-14787"))) {
+							System.err.print("");
+						}
+						if (matchQuality >= topScore) {
+							if (mblt == null) mblt = mld.setMblt(mld, mbd);
+							mblt.setV_pnScore(pnScore);							
 
-						//if (mblt.getBetriebsartMatch() < 1) matchQuality = matchQuality * 0.5;
-						//if (mblt.getProbenahmeortMatch() < 0.8) matchQuality = matchQuality * 0.5;
-						
-						matchQuality = matchQuality * mblt.getVorbefundScore();
-						if (mblt.getV_date() == null) matchQuality = matchQuality * 0.8; else if (!mblt.getV_date()) matchQuality = matchQuality * 0.5; 
-						if (mblt.getV_status() != null && !mblt.getV_status()) matchQuality = matchQuality * 0.7;
-						if (mblt.getV_adv() == null) matchQuality = matchQuality * 0.5; else if (!mblt.getV_adv()) matchQuality = matchQuality * 0.5; 
-						
-						if (matchQuality >= topScore && mbd.getPROBEN_NR().startsWith("15TRB1054-001")) {
-							System.err.println(matchQuality + "\t" + mbd.getPROBEN_NR() + "\t" + mbd.getTEILPROBEN_NR() + "\t" + mbd.getVORBEFUND() + "\t" + mld.getDr());
+							//if (mblt.getBetriebsartMatch() < 1) matchQuality = matchQuality * 0.5;
+							//if (mblt.getProbenahmeortMatch() < 0.8) matchQuality = matchQuality * 0.5;
+							
+							matchQuality = matchQuality * mblt.getVorbefundScore();
+							if (mblt.getV_date() == null) matchQuality = matchQuality * 0.8; else if (!mblt.getV_date()) matchQuality = matchQuality * 0.5; 
+							if (mblt.getV_status() != null && !mblt.getV_status()) matchQuality = matchQuality * 0.7;
+							if (mblt.getV_adv() == null) matchQuality = matchQuality * 0.75; else if (!mblt.getV_adv()) matchQuality = matchQuality * 0.5; 
+							
+							if (matchQuality >= topScore && mbd.getPROBEN_NR().startsWith("15TRB1054-001")) {
+								System.err.println(matchQuality + "\t" + mbd.getPROBEN_NR() + "\t" + mbd.getTEILPROBEN_NR() + "\t" + mbd.getVORBEFUND() + "\t" + mld.getDr());
+							}
+							
+							if (matchQuality == topScore) {
+								bestScore.add(mld);
+							}
+							else if (matchQuality > topScore) {
+								bestScore.clear();
+								topScore = matchQuality;
+								bestScore.add(mld);
+							}
+			    			success = true;
 						}
-						
-						if (matchQuality == topScore) {
-							bestScore.add(mld);
-						}
-						else if (matchQuality > topScore) {
-							bestScore.clear();
-							topScore = matchQuality;
-							bestScore.add(mld);
-						}
-		    			success = true;
-					}
+					//}
+					
 				}
 			}
 			List<String> alreadyIn = new ArrayList<>();

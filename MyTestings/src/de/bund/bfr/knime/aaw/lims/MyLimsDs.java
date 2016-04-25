@@ -153,9 +153,8 @@ public class MyLimsDs {
 		Boolean b_adv = checkAdv(mbd.getZERL_MATRIX(), mld.getMatrixACode());		
 		mblt.setV_adv(b_adv);
 		Double d_befund = StringSimilarity.diceCoefficientOptimized(mbd.getVORBEFUND(), mld.getVorbefund());
-		if (mld.getProjectName() != null && mbd.getVORBEFUND() != null && mld.getProjectName().startsWith("Moni-ESBL-") && mbd.getVORBEFUND().indexOf("ESBL") >= 0) {
-			d_befund = 1.0;
-		}
+		if (mld.getProjectName() != null && mbd.getVORBEFUND() != null && mld.getProjectName().startsWith("Moni-ESBL-") && mbd.getVORBEFUND().indexOf("ESBL") >= 0) d_befund = 1.0;
+		if (mld.getVorbefund() != null && mbd.getVORBEFUND() != null && mld.getVorbefund().equals("MRSA") && mbd.getVORBEFUND().indexOf("MRSA positiv") >= 0) d_befund = 1.0;
 		mblt.setVorbefundScore(d_befund);
 		double betriebsartMatch = StringSimilarity.diceCoefficientOptimized(mbd.getBetriebsart(), mld.getBetriebsart());
 		double probenahmeortMatch = StringSimilarity.diceCoefficientOptimized(mbd.getProbenahmeOrt(), mld.getProbenahmeOrt());
@@ -172,6 +171,7 @@ public class MyLimsDs {
     }
     private Boolean checkAdv(String adv1, String adv2) {
     	if (adv1 == null || adv2 == null) return null;
+    	if (adv1.equals("899999") || adv2.equals("899999")) return null;
     	return adv1.equals(adv2);
     }
 }
