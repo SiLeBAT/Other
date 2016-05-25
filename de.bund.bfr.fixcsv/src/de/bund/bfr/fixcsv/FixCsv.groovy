@@ -30,9 +30,10 @@ class FixCsv {
 	static main(args) {
 		def oldFile = new File(FILE_NAME)
 		def newFile = new File(FILE_NAME.take(FILE_NAME.lastIndexOf('.')) + "_fixed.csv")
-		
-		newFile.write(oldFile.getText('utf-8').replaceAll(/"[^;"]+"/, 
-			{ it.replace("\"","\"\"") }).replaceAll(/(?m)^[^"]*"[^"]*$/, 
-			{ it.replace("\"","\"\"") }), 'utf-8')		
+		def text = oldFile.getText('utf-8').replaceAll(/"[^;"]+"/,
+				{ it.replace("\"","\"\"") }).replaceAll(/[^;"]"[^;"]/,
+				{ it.replace("\"","\"\"") })
+
+		newFile.write(text, 'utf-8')		
 	}
 }
