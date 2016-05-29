@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -117,57 +118,90 @@ public class Xsd2XmlNodeModel extends NodeModel {
         DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder docBuilderXsd = docBuilderFactory.newDocumentBuilder();
         Document document = docBuilderXsd.parse(xsdDatei);
-        NodeList list = document.getElementsByTagName("xs:element"); 
-    	Element first = (Element)list.item(0);
-    	Element second = (Element)first.getElementsByTagName("xs:element").item(0);
-    	NodeList other = second.getElementsByTagName("xs:element");
-
-    	
-    	Element rootElement = doc.createElement(first.getAttribute("name")); // "dataset"
-    	doc.appendChild(rootElement);
-    	
         BufferedDataTable in = inData[0];
-    		for (DataRow row : in) {
-        	    Element result = doc.createElement(second.getAttribute("name")); // "result"
-        	    rootElement.appendChild(result);
+                
+        NodeList list = document.getElementsByTagName("xs:element"); 
+        NodeList other = null;
+        for (int i=0;i<list.getLength();i++) {
+        	Element e = (Element)list.item(i);
+        	if (e.getAttribute("name").equalsIgnoreCase("result")) {
+    	    	other = e.getElementsByTagName("xs:element");
+    	    	break;
+        	}
+        }
+        HashMap<String, Integer> hm = new HashMap<>();
+        String[] cn = in.getDataTableSpec().getColumnNames();
+        for (int i=0;i<cn.length;i++) {
+        	hm.put(cn[i], i);
+        }
+		Element rootElement = doc.createElement("dataset");
+    	doc.appendChild(rootElement);        		
+		for (DataRow row : in) {
+    	    Element result = doc.createElement("result");
+    	    rootElement.appendChild(result);
+            for (int i = 0 ; i < other.getLength(); i++) {
+            	Element el = (Element)other.item(i);
+            	if( el.hasAttributes()) {
+            		String ela = el.getAttribute("name");
+            		if (hm.containsKey(ela) && !row.getCell(hm.get(ela)).isMissing()) {
+                	    Element el2 = doc.createElement(ela);
+                		el2.appendChild(doc.createTextNode(row.getCell(hm.get(ela)).toString()));
+                	    result.appendChild(el2);
+            		}
+            	}
+            }
+		}
+		
+		if (false) {
+	    	Element first = (Element)list.item(0);
+	    	Element second = (Element)first.getElementsByTagName("xs:element").item(0);
+	    	other = second.getElementsByTagName("xs:element");
 
-                for (int i = 0 ; i < other.getLength(); i++) {
-                	Element el = (Element)other.item(i);
-                	if( el.hasAttributes()) {
-                		/*
-                		String nam = el.getAttribute("name"); 
-                		String nam1 = first.getAttribute("type"); 
-                		System.out.println(nam + "\t" + nam1); 
-                		*/
-                		addElement(doc, result, el.getAttribute("name"), row, in.getDataTableSpec().getColumnNames());
-                	}
-                }
+	    	String nn = first.getAttribute("name"); // "dataset"
+	    	rootElement = doc.createElement(nn);
+	    	doc.appendChild(rootElement);
+	    	
+	    		for (DataRow row : in) {
+	        	    Element result = doc.createElement(second.getAttribute("name")); // "result"
+	        	    rootElement.appendChild(result);
 
-                /*
-                addElement(doc, result, "resultCode", row, 0);
-    			addElement(doc, result, "repYear", row, 1);
-    			addElement(doc, result, "repCountry", row, 2);
-    			addElement(doc, result, "lang", row, 3);
-    			addElement(doc, result, "zoonosis", row, 4);
-    			addElement(doc, result, "matrix", row, 5);
-    			addElement(doc, result, "totUnitsTested", row, 6);
-    			addElement(doc, result, "sampType", row, 11);
-    			addElement(doc, result, "sampContext", row, 12);
-    			addElement(doc, result, "progCode", row, 14);
-    			addElement(doc, result, "labCode", row, 18);
-    			addElement(doc, result, "labIsolCode", row, 19);
-    			addElement(doc, result, "labTotIsol", row, 20);
-    			addElement(doc, result, "sampY", row, 21);
-    			addElement(doc, result, "sampM", row, 22);
-    			addElement(doc, result, "anMethCode", row, 30);
-    			addElement(doc, result, "substance", row, 31);
-    			addElement(doc, result, "cutoffValue", row, 32);
-    			addElement(doc, result, "lowest", row, 33);
-    			addElement(doc, result, "highest", row, 34);
-    			addElement(doc, result, "MIC", row, 35);
-    			*/
-    		}
-    	    
+	                for (int i = 0 ; i < other.getLength(); i++) {
+	                	Element el = (Element)other.item(i);
+	                	if( el.hasAttributes()) {
+	                		/*
+	                		String nam = el.getAttribute("name"); 
+	                		String nam1 = first.getAttribute("type"); 
+	                		System.out.println(nam + "\t" + nam1); 
+	                		*/
+	                		addElement(doc, result, el.getAttribute("name"), row, in.getDataTableSpec().getColumnNames());
+	                	}
+	                }
+
+	                /*
+	                addElement(doc, result, "resultCode", row, 0);
+	    			addElement(doc, result, "repYear", row, 1);
+	    			addElement(doc, result, "repCountry", row, 2);
+	    			addElement(doc, result, "lang", row, 3);
+	    			addElement(doc, result, "zoonosis", row, 4);
+	    			addElement(doc, result, "matrix", row, 5);
+	    			addElement(doc, result, "totUnitsTested", row, 6);
+	    			addElement(doc, result, "sampType", row, 11);
+	    			addElement(doc, result, "sampContext", row, 12);
+	    			addElement(doc, result, "progCode", row, 14);
+	    			addElement(doc, result, "labCode", row, 18);
+	    			addElement(doc, result, "labIsolCode", row, 19);
+	    			addElement(doc, result, "labTotIsol", row, 20);
+	    			addElement(doc, result, "sampY", row, 21);
+	    			addElement(doc, result, "sampM", row, 22);
+	    			addElement(doc, result, "anMethCode", row, 30);
+	    			addElement(doc, result, "substance", row, 31);
+	    			addElement(doc, result, "cutoffValue", row, 32);
+	    			addElement(doc, result, "lowest", row, 33);
+	    			addElement(doc, result, "highest", row, 34);
+	    			addElement(doc, result, "MIC", row, 35);
+	    			*/
+	    		}
+		}    	    
     	 
         	
     	// write xml to file

@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry exported="true" kind="lib" path="libs/jlibs-core.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/xml-apis.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/xercesImpl.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/jlibs-xml.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/jdom-2.0.1.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>

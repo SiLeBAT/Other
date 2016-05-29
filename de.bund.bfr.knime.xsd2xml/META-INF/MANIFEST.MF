@@ -4,7 +4,11 @@ Bundle-Name: Xsd2Xml-Node extension for KNIME Workbench
 Bundle-SymbolicName: de.bund.bfr.knime.Xsd2Xml; singleton:=true
 Bundle-Version: 1.0.0
 Bundle-ClassPath: xsd2xml.jar,
- libs/jdom-2.0.1.jar
+ libs/jdom-2.0.1.jar,
+ libs/jlibs-xml.jar,
+ libs/xercesImpl.jar,
+ libs/xml-apis.jar,
+ libs/jlibs-core.jar
 Bundle-Activator: de.bund.bfr.knime.Xsd2Xml.Xsd2XmlNodePlugin
 Bundle-Vendor: 
 Require-Bundle: org.eclipse.core.runtime,
