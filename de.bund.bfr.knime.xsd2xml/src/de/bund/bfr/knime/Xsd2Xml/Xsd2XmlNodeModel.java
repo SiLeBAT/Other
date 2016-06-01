@@ -26,8 +26,18 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
+import org.knime.core.data.DataCell;
+import org.knime.core.data.DataColumnSpec;
+import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.RowKey;
+import org.knime.core.data.def.DefaultRow;
+import org.knime.core.data.def.StringCell;
+import org.knime.core.data.xml.XMLBlobCell;
+import org.knime.core.data.xml.XMLCell;
+import org.knime.core.data.xml.XMLCellFactory;
+import org.knime.core.node.BufferedDataContainer;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -68,22 +78,9 @@ public class Xsd2XmlNodeModel extends NodeModel {
      * Constructor for the node model.
      */
     protected Xsd2XmlNodeModel() {
-        super(1, 0);
+        super(1, 1);
     }
 
-    private void addElement(Document doc, Element result, String elName, DataRow row, String[] colNames) {
-    	int rowLfd = 0;
-    	for (; rowLfd < colNames.length; rowLfd++) {
-    		if (colNames[rowLfd].equals(elName)) break;
-    	}
-    	if (rowLfd < colNames.length) {
-    		if (!row.getCell(rowLfd).isMissing()) {
-        	    Element el = doc.createElement(elName);
-        		el.appendChild(doc.createTextNode(row.getCell(rowLfd).toString()));
-        	    result.appendChild(el);
-    		}
-    	}
-    }
     /**
      * {@inheritDoc}
      */
@@ -150,59 +147,7 @@ public class Xsd2XmlNodeModel extends NodeModel {
             		}
             	}
             }
-		}
-		
-		if (false) {
-	    	Element first = (Element)list.item(0);
-	    	Element second = (Element)first.getElementsByTagName("xs:element").item(0);
-	    	other = second.getElementsByTagName("xs:element");
-
-	    	String nn = first.getAttribute("name"); // "dataset"
-	    	rootElement = doc.createElement(nn);
-	    	doc.appendChild(rootElement);
-	    	
-	    		for (DataRow row : in) {
-	        	    Element result = doc.createElement(second.getAttribute("name")); // "result"
-	        	    rootElement.appendChild(result);
-
-	                for (int i = 0 ; i < other.getLength(); i++) {
-	                	Element el = (Element)other.item(i);
-	                	if( el.hasAttributes()) {
-	                		/*
-	                		String nam = el.getAttribute("name"); 
-	                		String nam1 = first.getAttribute("type"); 
-	                		System.out.println(nam + "\t" + nam1); 
-	                		*/
-	                		addElement(doc, result, el.getAttribute("name"), row, in.getDataTableSpec().getColumnNames());
-	                	}
-	                }
-
-	                /*
-	                addElement(doc, result, "resultCode", row, 0);
-	    			addElement(doc, result, "repYear", row, 1);
-	    			addElement(doc, result, "repCountry", row, 2);
-	    			addElement(doc, result, "lang", row, 3);
-	    			addElement(doc, result, "zoonosis", row, 4);
-	    			addElement(doc, result, "matrix", row, 5);
-	    			addElement(doc, result, "totUnitsTested", row, 6);
-	    			addElement(doc, result, "sampType", row, 11);
-	    			addElement(doc, result, "sampContext", row, 12);
-	    			addElement(doc, result, "progCode", row, 14);
-	    			addElement(doc, result, "labCode", row, 18);
-	    			addElement(doc, result, "labIsolCode", row, 19);
-	    			addElement(doc, result, "labTotIsol", row, 20);
-	    			addElement(doc, result, "sampY", row, 21);
-	    			addElement(doc, result, "sampM", row, 22);
-	    			addElement(doc, result, "anMethCode", row, 30);
-	    			addElement(doc, result, "substance", row, 31);
-	    			addElement(doc, result, "cutoffValue", row, 32);
-	    			addElement(doc, result, "lowest", row, 33);
-	    			addElement(doc, result, "highest", row, 34);
-	    			addElement(doc, result, "MIC", row, 35);
-	    			*/
-	    		}
-		}    	    
-    	 
+		}    	 
         	
     	// write xml to file
     	TransformerFactory transformerFactory = TransformerFactory.newInstance();
@@ -271,8 +216,25 @@ public class Xsd2XmlNodeModel extends NodeModel {
         }
     	         
         
-		return null;
+		BufferedDataContainer buf = exec.createDataContainer(getSpec());
+		DataCell[] cells = new DataCell[1];
+		cells[0] = XMLCellFactory.create(doc);
+		String sxml = "";
+		if (cells[0] instanceof XMLBlobCell) sxml = ( (XMLBlobCell) cells[0]).getStringValue();
+		else sxml = ( (XMLCell) cells[0]).getStringValue();
+		cells[0] = new StringCell(sxml);
+		
+		DataRow outputRow = new DefaultRow(RowKey.createRowKey(buf.size()), cells);
+		buf.addRowToTable(outputRow);
+    	buf.close();
+        return new BufferedDataTable[]{buf.getTable()};
     }
+	private DataTableSpec getSpec() {
+		DataColumnSpec[] outSpec = new DataColumnSpec[1];		
+		outSpec[0] = new DataColumnSpecCreator("xml", StringCell.TYPE).createSpec();
+
+		return new DataTableSpec(outSpec);
+	}
 	private Integer saveWF(final ExecutionContext exec, String xmlFile) throws Exception {
 		Integer result = null;
 		for (NodeContainer nc : WorkflowManager.ROOT.getNodeContainers()) {
@@ -344,7 +306,7 @@ public class Xsd2XmlNodeModel extends NodeModel {
     @Override
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
             throws InvalidSettingsException {
-    	return null;
+		return new DataTableSpec[] {getSpec()};
     }
 
     /**

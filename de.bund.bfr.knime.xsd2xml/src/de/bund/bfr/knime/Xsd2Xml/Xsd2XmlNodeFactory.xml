@@ -27,5 +27,6 @@
     
     <ports>
         <inPort index="0" name="In-Port name">Description of first input port...</inPort>
+        <outPort index="0" name="xml output">xml output</outPort>
     </ports>    
 </knimeNode>
