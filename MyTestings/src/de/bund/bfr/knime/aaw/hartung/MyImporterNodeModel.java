@@ -214,7 +214,7 @@ public class MyImporterNodeModel extends NodeModel {
 						                    		}
 						                    	}
 				                    		}
-					                    	if (filename.equals("C:\\Users\\Armin\\Desktop\\Hartung\\2011\\xls\\BY-LGL-Balsliemke_ZOFORM_Fragebogen_2011.XLS") && namename.equals("05.21")) {
+					                    	if (filename.endsWith("BY-LGL-Balsliemke_ZOFORM_Fragebogen_2011.XLS") && namename.equals("05.21")) {
 					                    		System.err.print("");
 					                    	}
 				                    		if (starFound || kbeFound) tests.put(j, tst);
@@ -260,7 +260,7 @@ public class MyImporterNodeModel extends NodeModel {
 			                    	
 			                    	// Nein, ok, dann weiter
 			                    	rowProps = getA2G(row, rowProps, defSourceC);
-			                		if (rowProps == null) continue;
+			                		if (rowProps == null || rowProps.getAmount() == 0) continue;
 			                    	if (rowProps.getSourceA() != null && (rowProps.getSourceA().startsWith("A. ") && rowProps.getSourceA().startsWith("B. "))) {
 				                		inedx = str.indexOf(". ") + 2;
 				                		index2 = str.indexOf(" ", inedx);
@@ -284,8 +284,14 @@ public class MyImporterNodeModel extends NodeModel {
 						                    	if (str != null && str.trim().length() > 0) {
 						                    		if (sumPositive == null) sumPositive = 0;
 						                    		String pos = str.trim();
-						                    		int posi = Integer.parseInt(pos);
-							                    	if (filename.equals("C:\\Users\\Armin\\Desktop\\Hartung\\2011\\xls\\hb.Kopie von ZOFORM.Frageboegen.f.2011Lua.XLS") && (rowIndex + plusIndex > 1850)) {
+						                    		int posi = 0;
+						                    		try {
+							                    		posi = Integer.parseInt(pos);						                    			
+						                    		}
+						                    		catch (Exception e) {
+						                    			System.err.println(e);
+						                    		}
+							                    	if (filename.endsWith("hb.Kopie von ZOFORM.Frageboegen.f.2011Lua.XLS") && (rowIndex + plusIndex > 1850)) {
 							                    		System.err.print("");
 							                    		//System.err.println((rowIndex + plusIndex) + "\t" + rowProps.getAmount() + "\t" + posi + "\t" + repeat);
 							                    	}
@@ -335,7 +341,7 @@ public class MyImporterNodeModel extends NodeModel {
 				                    	plusIndex++;
 				                    	row = sheet.getRow(rowIndex + plusIndex);
 				                    	RowProps tmpRowProps = getA2G(row, rowProps, defSourceC);
-				                    	if (tmpRowProps == null || !rowProps.equals(tmpRowProps)) {
+				                    	if (tmpRowProps == null || tmpRowProps.getAmount() == 0 || !rowProps.equals(tmpRowProps)) {
 				                    		plusIndex--;
 				                    		break;
 				                    	}
@@ -488,6 +494,10 @@ public class MyImporterNodeModel extends NodeModel {
     	
     	HSSFCell cell = row.getCell(0); // Spalte A
     	String str = getStrVal(cell);
+    	//System.err.println(row.getRowNum() + " -> " + str);
+    	if (row.getRowNum() == 461) {
+    		System.err.print("");
+    	}
     	if (str != null && str.trim().length() > 0) {
     		if (str.startsWith("!")) return null;
     		result.setSourceA(str.trim()); result.setSourceB(null);
@@ -523,9 +533,18 @@ public class MyImporterNodeModel extends NodeModel {
     	cell = row.getCell(6); // Spalte G
     	str = getStrVal(cell);
     	if (str != null && str.trim().length() > 0) Anzahl = str.trim();
-		if (Anzahl == null || Integer.parseInt(Anzahl) == 0) return null;
+		int posi = 0;
+		if (Anzahl != null) {
+			try {
+	    		 posi = Integer.parseInt(Anzahl);						                    			
+			}
+			catch (Exception e) {
+				System.err.println(e);
+			}
+		}
+		if (posi == 0) result.setAmount(0);//return null;
 		//if (Anzahl == null || Integer.parseInt(Anzahl) == 0) result.setAmount(null);
-		else result.setAmount(Integer.parseInt(Anzahl));
+		else result.setAmount(posi);
 		
 		return result;
     }
