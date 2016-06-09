@@ -505,7 +505,7 @@ public class MyImporterNodeModel extends NodeModel {
     	}
     	cell = row.getCell(1); // Spalte B
     	str = getStrVal(cell);
-    	if (str != null && str.trim().length() > 0) {
+    	if (str != null && str.trim().length() > 0 && !str.trim().equals("davon:     \\______________________")) {
     		result.setSourceB(str.trim());
     		if (result.getSourceC() == null) result.setSourceC(defSourceC);
     	}
