@@ -284,29 +284,30 @@ public class MyImporterNodeModel extends NodeModel {
 						                    	if (str != null && str.trim().length() > 0) {
 						                    		if (sumPositive == null) sumPositive = 0;
 						                    		String pos = str.trim();
-						                    		int posi = 0;
-						                    		try {
-							                    		posi = Integer.parseInt(pos);						                    			
-						                    		}
-						                    		catch (Exception e) {
-						                    			System.err.println(e);
-						                    		}
-							                    	if (filename.endsWith("hb.Kopie von ZOFORM.Frageboegen.f.2011Lua.XLS") && (rowIndex + plusIndex > 1850)) {
-							                    		System.err.print("");
-							                    		//System.err.println((rowIndex + plusIndex) + "\t" + rowProps.getAmount() + "\t" + posi + "\t" + repeat);
-							                    	}
 						                    		if (tst == null) { // self-defined agent
 								                    	cell = row.getCell(j - 1);
 								                    	str = getStrVal(cell);
 								                    	if (str != null && str.trim().length() > 0) {
-									                    	tst = new Testings();
-							                    			tst.setAgent(str.trim());
-							                    			if (j == 7 && !repeat) allPositive = posi;
-							                    			else if (j > 7)  sumPositive += posi;
-							                    			Quant q = new Quant("positiv", posi);
-							                    			tst.getQuants().put(j, q);
-							                    			tests.put(furtherAgentsIndex, tst);
-							                    			furtherAgentsIndex--;
+								                    		String[] parts = str.split("\n"); // sometimes more than only one agent in cell
+								                    		String[] poss = pos.split("\n");
+								                    		int posssi = 0;
+								                    		for (String p : parts) {
+								                    			if (!p.trim().isEmpty()) {
+								                    				for (;posssi<poss.length;posssi++) {
+								                    					if (!poss[posssi].isEmpty()) break;
+								                    				}
+										                    		int posi = posssi >= poss.length ? 0 : getInt(poss[posssi]);
+										                    		posssi++;
+											                    	tst = new Testings();
+									                    			tst.setAgent(p.trim());
+									                    			if (j == 7 && !repeat) allPositive = posi;
+									                    			else if (j > 7)  sumPositive += posi;
+									                    			Quant q = new Quant("positiv", posi);
+									                    			tst.getQuants().put(j, q);
+									                    			tests.put(furtherAgentsIndex, tst);
+									                    			furtherAgentsIndex--;
+								                    			}
+								                    		}
 								                    	}
 						                    		}
 						                    		else if (!repeat) {
@@ -320,6 +321,7 @@ public class MyImporterNodeModel extends NodeModel {
 						                    					}
 						                    				}
 						                    			}
+							                    		int posi = getInt(pos);
 						                    			tst.getQuants().get(j).setAmount(posi);
 						                    			if (j == 7) allPositive = posi;
 						                    			else sumPositive += posi;
@@ -487,6 +489,18 @@ public class MyImporterNodeModel extends NodeModel {
 		wb.close();
         return new BufferedDataTable[]{buf.getTable()};
     }
+    private int getInt(String number) {
+		int posi = 0;
+		if (number != null) {
+			try {
+	    		posi = Integer.parseInt(number);						                    			
+			}
+			catch (Exception e) {
+				System.err.println(e);
+			} 
+		}
+		return posi;
+    }
     private RowProps getA2G(HSSFRow row, RowProps oldRowProps, String defSourceC) {
     	if (row == null) return null;
     	RowProps result = new RowProps();
@@ -533,15 +547,7 @@ public class MyImporterNodeModel extends NodeModel {
     	cell = row.getCell(6); // Spalte G
     	str = getStrVal(cell);
     	if (str != null && str.trim().length() > 0) Anzahl = str.trim();
-		int posi = 0;
-		if (Anzahl != null) {
-			try {
-	    		 posi = Integer.parseInt(Anzahl);						                    			
-			}
-			catch (Exception e) {
-				System.err.println(e);
-			}
-		}
+		int posi = getInt(Anzahl);
 		if (posi == 0) result.setAmount(0);//return null;
 		//if (Anzahl == null || Integer.parseInt(Anzahl) == 0) result.setAmount(null);
 		else result.setAmount(posi);
