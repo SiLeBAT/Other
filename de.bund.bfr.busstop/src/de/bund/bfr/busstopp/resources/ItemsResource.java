@@ -1,5 +1,6 @@
 package de.bund.bfr.busstopp.resources;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -15,10 +16,13 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.Response;
 
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
+import de.bund.bfr.busstopp.Constants;
 import de.bund.bfr.busstopp.dao.Dao;
 import de.bund.bfr.busstopp.dao.ItemLoader;
 import de.bund.bfr.busstopp.model.Item;
@@ -105,5 +109,20 @@ public class ItemsResource {
 			response.setError(e.getMessage());
 		}
 		return response;
+	}
+
+
+	@GET
+	@Path("rdt_json")
+	@Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+	public Response getRdtJson() {
+		String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + "/bbk.json";
+	    ResponseBuilder response = Response.noContent();
+	    File file = new File(filename);
+	    if (file.exists()) {
+		    response = Response.ok((Object) file);
+		    response.header("Content-Disposition", "attachment; filename=" + file.getName());
+	    }
+	    return response.build();
 	}
 }
