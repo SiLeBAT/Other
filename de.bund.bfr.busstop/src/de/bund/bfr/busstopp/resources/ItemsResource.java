@@ -123,6 +123,6 @@ public class ItemsResource {
 		    response = Response.ok((Object) file);
 		    response.header("Content-Disposition", "attachment; filename=" + file.getName());
 	    }
-	    return response.build();
+	    return response.header("Access-Control-Allow-Origin", "*").build();
 	}
 }

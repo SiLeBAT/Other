@@ -24,12 +24,16 @@
   <security-role>
     <role-name>lanuv</role-name>
   </security-role>
+  <security-role>
+    <role-name>bfr</role-name>
+  </security-role>
   <security-constraint>
     <web-resource-collection>
       <web-resource-name>Entire Application</web-resource-name>
       <url-pattern>/*</url-pattern>
     </web-resource-collection>
     <auth-constraint>
+      <role-name>bfr</role-name>
       <role-name>lanuv</role-name>
       <role-name>manager</role-name>
     </auth-constraint>
@@ -41,33 +45,4 @@
     <auth-method>BASIC</auth-method>
     <realm-name>Evaluation Area</realm-name>
   </login-config>
-  <filter>
-    <filter-name>CORS</filter-name>
-    <filter-class>com.thetransactioncompany.cors.CORSFilter</filter-class>
-    <init-param>
- 		<param-name>cors.allowOrigin</param-name>
-    	<param-value>*</param-value>
-	</init-param>
-	<init-param>
- 		<param-name>cors.supportedMethods</param-name>
-    	<param-value>GET, POST, HEAD, PUT, DELETE</param-value>
-	</init-param>
-	<init-param>
-		<param-name>cors.supportedHeaders</param-name>
-		<param-value>*</param-value>
-	</init-param>
-	<init-param>
-	    <param-name>cors.exposedHeaders</param-name>
-	    <param-value>Set-Cookie</param-value>
-	</init-param>
-	<init-param>
-	    <param-name>cors.supportsCredentials</param-name>
-	    <param-value>true</param-value>
-	</init-param>    
-  </filter>
-  <filter-mapping>
-    <filter-name>CORS</filter-name>
-    <url-pattern>/*</url-pattern>
-  </filter-mapping>
-
 </web-app>

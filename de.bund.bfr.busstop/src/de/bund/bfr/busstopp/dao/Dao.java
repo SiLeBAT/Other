@@ -20,18 +20,20 @@ public enum Dao {
 
 			// returns pathnames for files and directory
 			File[] paths = f.listFiles();
-			Arrays.sort(paths, Collections.reverseOrder());
+			if (paths != null && paths.length > 0) {
+				Arrays.sort(paths, Collections.reverseOrder());
 
-			// for each pathname in pathname array
-			for (File path : paths) {				
-				//System.out.println(path);
-				if (path.isDirectory()) {
-					long l = Long.parseLong(path.getName());
-					try {
-						ItemLoader item = new ItemLoader(l, path);
-						if (!item.isDeleted()) contentProvider.put(l, item);						
+				// for each pathname in pathname array
+				for (File path : paths) {				
+					//System.out.println(path);
+					if (path.isDirectory()) {
+						long l = Long.parseLong(path.getName());
+						try {
+							ItemLoader item = new ItemLoader(l, path);
+							if (!item.isDeleted()) contentProvider.put(l, item);						
+						}
+						catch (Exception e) {e.printStackTrace();}
 					}
-					catch (Exception e) {e.printStackTrace();}
 				}
 			}
 		} catch (Exception e) {
