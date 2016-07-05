@@ -123,6 +123,6 @@ public class ItemsResource {
 		    response = Response.ok((Object) file);
 		    response.header("Content-Disposition", "attachment; filename=" + file.getName());
 	    }
-	    return response.header("Access-Control-Allow-Origin", "*").header("Access-Control-Allow-Methods", "POST, GET, OPTIONS").header("Access-Control-Max-Age", "1000").header("Access-Control-Allow-Headers", "Content-Type").build();
+	    return response.header("Access-Control-Allow-Origin", "*").header("Access-Control-Allow-Methods", "GET").header("Access-Control-Max-Age", "1000").build();
 	}
 }
