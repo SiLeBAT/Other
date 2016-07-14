@@ -83,11 +83,21 @@ public class ItemResource {
 	private ResponseBuilder getDownloadResponse(String filename) {
 	    ResponseBuilder response = Response.noContent();
 	    File file = new File(filename);
-	    if (file.exists()) {
+	    if (file.exists() && file.isFile()) {
 		    response = Response.ok((Object) file);
 		    response.header("Content-Disposition", "attachment; filename=" + file.getName());
 	    }
 		return response;
+	}
+	@GET
+	@Path("file")
+	@Produces(MediaType.APPLICATION_OCTET_STREAM)
+	public Response getFile() {
+		ItemLoader c = Dao.instance.getModel().get(id);
+		if (c == null) return Response.noContent().build();
+		String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + c.getXml().getId() + "/" + c.getXml().getIn().getFilename();
+		ResponseBuilder response = getDownloadResponse(filename);
+	    return response.build();
 	}
 	@GET
 	@Path("workflow")
@@ -97,7 +107,7 @@ public class ItemResource {
 		if (c == null) return Response.noContent().build();
 		String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + c.getXml().getId() + "/" + c.getXml().getOut().getWorkflow();
 		ResponseBuilder response = getDownloadResponse(filename);
-	    return response.build();
+		return response.build();
 	}
 	@GET
 	@Path("report")

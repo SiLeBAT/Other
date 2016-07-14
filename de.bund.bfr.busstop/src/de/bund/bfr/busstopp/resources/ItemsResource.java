@@ -95,14 +95,20 @@ public class ItemsResource {
 		response.setAction("UPLOAD");
 		try {
 			long newId = System.currentTimeMillis();
-			String filename = contentDispositionHeader.getFileName();
+			if (contentDispositionHeader != null) {
+				String filename = contentDispositionHeader.getFileName();
 
-			ItemLoader item = new ItemLoader(newId, filename, comment);
-			item.save(fileInputStream);
-			Dao.instance.getModel().put(newId, item);
+				ItemLoader item = new ItemLoader(newId, filename, comment);
+				item.save(fileInputStream);
+				Dao.instance.getModel().put(newId, item);
 
-			response.setSuccess(true);
-			response.setId(newId);
+				response.setSuccess(true);
+				response.setId(newId);
+			}
+			else {
+				response.setSuccess(false);
+				response.setError("Parameters not correct! Did you use 'file'?");
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 			response.setSuccess(false);
