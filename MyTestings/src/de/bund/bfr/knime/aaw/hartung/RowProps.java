@@ -9,6 +9,8 @@ public class RowProps {
 	private String Grund;
 	private String Ebene;
 	private Integer Amount;
+	private String PAB = null;
+	private String MAD = null;
 	
 	public RowProps() {
 		
@@ -21,6 +23,19 @@ public class RowProps {
 		this.Grund = Grund;
 		this.Ebene = Ebene;
 		this.Amount = Amount;
+	}
+
+	public String getMAD() {
+		return MAD;
+	}
+	public void setMAD(String mAD) {
+		MAD = mAD;
+	}
+	public String getPAB() {
+		return PAB;
+	}
+	public void setPAB(String pAB) {
+		PAB = pAB;
 	}
 
 	public String getSourceA() {
@@ -78,6 +93,9 @@ public class RowProps {
 
 	public void setAmount(Integer amount) {
 		Amount = amount;
+	}
+	public String getCOD() {
+		return getGrund() + "," + getMethode() + "," + getEbene();
 	}
 
 	public RowProps clone() {

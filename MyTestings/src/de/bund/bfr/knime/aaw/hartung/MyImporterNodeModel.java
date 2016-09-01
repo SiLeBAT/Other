@@ -88,10 +88,15 @@ public class MyImporterNodeModel extends NodeModel {
         	String ansprechpartnerMail = null;
         	Boolean akkreditiert = null;
         	String defSourceC = null;
+        	String labor = null;
         	LinkedHashMap<Integer, Testings> tests = new LinkedHashMap<Integer, Testings>();
         	for (int i=0;i<sheet.getPhysicalNumberOfRows();i++) {
         		row = sheet.getRow(i);
         		if (row == null) break;
+        		if (i == 0) { 
+        			labor = getStrVal(row.getCell(3)); // D1
+        			if (labor != null && labor.length() >= 2) labor = labor.substring(2);
+        		}
         		HSSFCell cell = row.getCell(0); // Spalte A
         		String str = getStrVal(cell);
         		if (str == null || (!str.trim().startsWith("A. ") && !str.trim().startsWith("B. "))) continue;
@@ -123,7 +128,7 @@ public class MyImporterNodeModel extends NodeModel {
 		                    	//Bundesland
 		                    	cell = row.getCell(14); // Spalte O
 		                    	str = getStrVal(cell);
-		                    	if (str != null && str.trim().length() > 2) bl = str.substring(2).trim();
+		                    	if (str != null && str.trim().length() > 2 && str.startsWith("**")) bl = str.substring(2).trim();
 
 		                    	// Ansprechpartner, Labname, AnsprechpartnerMail, Akkreditiert, Staat, Saison, Agents
 		                    	String staat = null;
@@ -195,7 +200,7 @@ public class MyImporterNodeModel extends NodeModel {
 						                    			starFound = true;
 						                    			tst = new Testings();
 						                    			tst.setAgent(str.substring(2).trim());	
-						                    			// default ist "positiv", kann nachher noch überschrieben werden von KBE/g
+						                    			// default ist "positiv", kann nachher noch ï¿½berschrieben werden von KBE/g
 						                    			Quant q = new Quant("positiv", null);
 						                    			tst.getQuants().put(j, q);
 						                    		}
@@ -251,7 +256,7 @@ public class MyImporterNodeModel extends NodeModel {
 			                    	String astJahr = getStrVal(cell);
 			                    	cell = row.getCell(13); // Spalte N
 			                    	String bland = getStrVal(cell);
-			                    	if (bitte != null && bitte.trim().equals("bitte ggf. Zeilen einfügen")
+			                    	if (bitte != null && bitte.trim().equals("bitte ggf. Zeilen einfï¿½gen")
 			                    			|| astJahr != null && astJahr.trim().equals("**" + jahr)
 			                    			|| bland != null && bland.trim().equals("Bundesland:")) {
 			                    		i = rowIndex + plusIndex - 1;
@@ -368,8 +373,8 @@ public class MyImporterNodeModel extends NodeModel {
 					        				}
 					        				if (hasTests || j == 7) {
 						        				DataCell[] cells = new DataCell[57];
-						        				cells[0] = DataType.getMissingCell();
-						        				cells[1] = DataType.getMissingCell();
+						        				cells[0] = DataType.getMissingCell(); // DEL
+						        				cells[1] = new IntCell((int) (rowNumber+1)); // regr
 						        				cells[2] = new StringCell(namename);//name.getNameName().substring(name.getNameName().indexOf("_") + 1));
 						        				cells[3] = (staat == null ? DataType.getMissingCell() : new StringCell(staat));
 						        				cells[4] = DataType.getMissingCell();
@@ -377,7 +382,7 @@ public class MyImporterNodeModel extends NodeModel {
 						        				cells[6] = (saison == null ? DataType.getMissingCell() : new StringCell(saison));
 						        				cells[7] = (bl == null ? DataType.getMissingCell() : new StringCell(bl));
 						        				cells[8] = DataType.getMissingCell();
-						        				cells[9] = DataType.getMissingCell();
+						        				cells[9] = labor == null ? DataType.getMissingCell() : new StringCell(labor); // Labor
 						        				cells[10] = (laborname == null ? DataType.getMissingCell() : new StringCell(laborname));
 						        				cells[11] = (akkreditiert == null ? DataType.getMissingCell() : akkreditiert ? BooleanCell.TRUE : BooleanCell.FALSE);
 						        				cells[12] = (rowProps.getSourceA() == null && rowProps.getSourceB() == null ? DataType.getMissingCell() : rowProps.getSourceB() == null ? new StringCell(rowProps.getSourceA()) : new StringCell(rowProps.getSourceB()));
@@ -393,19 +398,19 @@ public class MyImporterNodeModel extends NodeModel {
 						        				cells[22] = DataType.getMissingCell();
 						        				cells[23] = DataType.getMissingCell();
 						        				cells[24] = DataType.getMissingCell();
-						        				cells[25] = DataType.getMissingCell();
+						        				cells[25] = (rowProps.getCOD() == null ? DataType.getMissingCell() : new StringCell(rowProps.getCOD()));
 						        				cells[26] = DataType.getMissingCell();
 						        				cells[27] = DataType.getMissingCell();
 						        				cells[28] = DataType.getMissingCell();
 						        				cells[29] = (rowProps.getMethode() == null ? DataType.getMissingCell() : new StringCell(rowProps.getMethode()));
 						        				cells[30] = (rowProps.getGrund() == null ? DataType.getMissingCell() : new StringCell(rowProps.getGrund()));
 						        				cells[31] = (rowProps.getEbene() == null ? DataType.getMissingCell() : new StringCell(rowProps.getEbene()));
-						        				cells[32] = DataType.getMissingCell();
-						        				cells[33] = DataType.getMissingCell();
+						        				cells[32] = (rowProps.getMAD() == null ? DataType.getMissingCell() : new StringCell(rowProps.getMAD()));
+						        				cells[33] = (rowProps.getPAB() == null ? DataType.getMissingCell() : new StringCell(rowProps.getPAB()));
 						        				cells[34] = (tst.getAgent() == null ? DataType.getMissingCell() : new StringCell(tst.getAgent()));
 						        				cells[35] = DataType.getMissingCell();
-						        				boolean isGruppe = rowProps.getSourceC() != null && (rowProps.getSourceC().equals("Herden/Gehöfte") || rowProps.getSourceC().equals("Herden") || rowProps.getSourceC().equals("Gewicht (in T)"));
-						        				boolean isIndividual = rowProps.getSourceC() != null && (rowProps.getSourceC().equals("Einzeltiere") || rowProps.getSourceC().equals("Gehöft") || rowProps.getSourceC().equals("Sendungen") || rowProps.getSourceC().equals("Probenzahl"));
+						        				boolean isGruppe = rowProps.getSourceC() != null && (rowProps.getSourceC().equals("Herden/Gehï¿½fte") || rowProps.getSourceC().equals("Herden") || rowProps.getSourceC().equals("Gewicht (in T)"));
+						        				boolean isIndividual = rowProps.getSourceC() != null && (rowProps.getSourceC().equals("Einzeltiere") || rowProps.getSourceC().equals("Gehï¿½ft") || rowProps.getSourceC().equals("Sendungen") || rowProps.getSourceC().equals("Probenzahl"));
 						        				cells[36] = (!isGruppe ? DataType.getMissingCell() : new StringCell(rowProps.getSourceC()));
 						        				cells[37] = DataType.getMissingCell();
 						        				cells[38] = (!isGruppe || rowProps.getAmount() == null ? DataType.getMissingCell() : new StringCell(rowProps.getAmount()+""));
@@ -526,7 +531,7 @@ public class MyImporterNodeModel extends NodeModel {
     	cell = row.getCell(2); // Spalte C
     	str = getStrVal(cell);
     	if (str != null && str.trim().length() > 0) result.setSourceC(str.trim());
-    	// Herden/Gehöfte vs. Einzeltiere .... Gewicht (in T) vs. Sendungen
+    	// Herden/Gehï¿½fte vs. Einzeltiere .... Gewicht (in T) vs. Sendungen
 
     	String Methode = null;
     	cell = row.getCell(3); // Spalte D
@@ -534,15 +539,35 @@ public class MyImporterNodeModel extends NodeModel {
     	if (str != null && str.trim().length() > 0) Methode = str.trim();
     	result.setMethode(Methode);
     	String Grund = null;
+    	String MAD = null;
     	cell = row.getCell(4); // Spalte E
     	str = getStrVal(cell);
-    	if (str != null && str.trim().length() > 0) Grund = str.trim();
+    	if (str != null && str.trim().length() > 0) {
+    		Grund = str.trim();
+    		int index = Grund.indexOf(",");
+    		if (index > 0) {
+    			MAD = Grund.substring(index+1);
+    			Grund = Grund.substring(0, index);
+    		}
+    	}
+    	result.setMAD(MAD);
     	result.setGrund(Grund);
     	String Ebene = null;
+    	String PAB = null;
     	cell = row.getCell(5); // Spalte F
     	str = getStrVal(cell);
-    	if (str != null && str.trim().length() > 0) Ebene = str.trim();
+    	if (str != null && str.trim().length() > 0) {
+    		Ebene = str.trim();
+    		if (Ebene.equalsIgnoreCase("k")) {
+    			Ebene = "01";
+    			PAB = "K";
+    		}
+			if (!checkInteger(Ebene)) {
+				System.err.println("Row " + row.getRowNum() + ": Ebene ist kein Integerwert (" + Ebene + ")!!!");
+			}
+    	}
     	result.setEbene(Ebene);
+    	result.setPAB(PAB);
     	String Anzahl = null;
     	cell = row.getCell(6); // Spalte G
     	str = getStrVal(cell);
@@ -554,10 +579,17 @@ public class MyImporterNodeModel extends NodeModel {
 		
 		return result;
     }
+    private boolean checkInteger(String s) {
+    	try {
+    		Integer.parseInt(s);
+    	}
+    	catch (Exception e) {return false;}
+    	return true;
+    }
 	private DataTableSpec getSpec() {
 		DataColumnSpec[] spec = new DataColumnSpec[57];
 		spec[0] = new DataColumnSpecCreator("DEL", StringCell.TYPE).createSpec();
-		spec[1] = new DataColumnSpecCreator("regr", StringCell.TYPE).createSpec();
+		spec[1] = new DataColumnSpecCreator("regr", IntCell.TYPE).createSpec();
 		spec[2] = new DataColumnSpecCreator("TABR", StringCell.TYPE).createSpec();
 		spec[3] = new DataColumnSpecCreator("COUNTRY", StringCell.TYPE).createSpec();
 		spec[4] = new DataColumnSpecCreator("COUCOD", StringCell.TYPE).createSpec();
