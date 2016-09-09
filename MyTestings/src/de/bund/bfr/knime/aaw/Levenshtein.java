@@ -1,11 +1,11 @@
 package de.bund.bfr.knime.aaw;
 
 /*******************************************************************************
- * PMM-Lab © 2012, Federal Institute for Risk Assessment (BfR), Germany
+ * PMM-Lab Â© 2012, Federal Institute for Risk Assessment (BfR), Germany
  * 
  * PMM-Lab is a set of KNIME-Nodes and KNIME workflows running within the KNIME software plattform (http://www.knime.org.).
  * 
- * PMM-Lab © 2012, Federal Institute for Risk Assessment (BfR), Germany
+ * PMM-Lab Â© 2012, Federal Institute for Risk Assessment (BfR), Germany
  * Contact: armin.weiser@bfr.bund.de or matthias.filter@bfr.bund.de 
  * 
  * Developers and contributors to the PMM-Lab project are 

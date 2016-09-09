@@ -200,7 +200,7 @@ public class MyImporterNodeModel extends NodeModel {
 						                    			starFound = true;
 						                    			tst = new Testings();
 						                    			tst.setAgent(str.substring(2).trim());	
-						                    			// default ist "positiv", kann nachher noch �berschrieben werden von KBE/g
+						                    			// default ist "positiv", kann nachher noch ï¿½berschrieben werden von KBE/g
 						                    			Quant q = new Quant("positiv", null);
 						                    			tst.getQuants().put(j, q);
 						                    		}
@@ -256,7 +256,7 @@ public class MyImporterNodeModel extends NodeModel {
 			                    	String astJahr = getStrVal(cell);
 			                    	cell = row.getCell(13); // Spalte N
 			                    	String bland = getStrVal(cell);
-			                    	if (bitte != null && bitte.trim().equals("bitte ggf. Zeilen einf�gen")
+			                    	if (bitte != null && bitte.trim().equals("bitte ggf. Zeilen einfï¿½gen")
 			                    			|| astJahr != null && astJahr.trim().equals("**" + jahr)
 			                    			|| bland != null && bland.trim().equals("Bundesland:")) {
 			                    		i = rowIndex + plusIndex - 1;
@@ -409,8 +409,8 @@ public class MyImporterNodeModel extends NodeModel {
 						        				cells[33] = (rowProps.getPAB() == null ? DataType.getMissingCell() : new StringCell(rowProps.getPAB()));
 						        				cells[34] = (tst.getAgent() == null ? DataType.getMissingCell() : new StringCell(tst.getAgent()));
 						        				cells[35] = DataType.getMissingCell();
-						        				boolean isGruppe = rowProps.getSourceC() != null && (rowProps.getSourceC().equals("Herden/Geh�fte") || rowProps.getSourceC().equals("Herden") || rowProps.getSourceC().equals("Gewicht (in T)"));
-						        				boolean isIndividual = rowProps.getSourceC() != null && (rowProps.getSourceC().equals("Einzeltiere") || rowProps.getSourceC().equals("Geh�ft") || rowProps.getSourceC().equals("Sendungen") || rowProps.getSourceC().equals("Probenzahl"));
+						        				boolean isGruppe = rowProps.getSourceC() != null && (rowProps.getSourceC().equals("Herden/Gehï¿½fte") || rowProps.getSourceC().equals("Herden") || rowProps.getSourceC().equals("Gewicht (in T)"));
+						        				boolean isIndividual = rowProps.getSourceC() != null && (rowProps.getSourceC().equals("Einzeltiere") || rowProps.getSourceC().equals("Gehï¿½ft") || rowProps.getSourceC().equals("Sendungen") || rowProps.getSourceC().equals("Probenzahl"));
 						        				cells[36] = (!isGruppe ? DataType.getMissingCell() : new StringCell(rowProps.getSourceC()));
 						        				cells[37] = DataType.getMissingCell();
 						        				cells[38] = (!isGruppe || rowProps.getAmount() == null ? DataType.getMissingCell() : new StringCell(rowProps.getAmount()+""));
@@ -531,7 +531,7 @@ public class MyImporterNodeModel extends NodeModel {
     	cell = row.getCell(2); // Spalte C
     	str = getStrVal(cell);
     	if (str != null && str.trim().length() > 0) result.setSourceC(str.trim());
-    	// Herden/Geh�fte vs. Einzeltiere .... Gewicht (in T) vs. Sendungen
+    	// Herden/Gehï¿½fte vs. Einzeltiere .... Gewicht (in T) vs. Sendungen
 
     	String Methode = null;
     	cell = row.getCell(3); // Spalte D

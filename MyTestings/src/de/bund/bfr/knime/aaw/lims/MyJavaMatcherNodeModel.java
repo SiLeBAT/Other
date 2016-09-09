@@ -166,7 +166,7 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 				double scoreAVV = StringSimilarity.diceCoefficientOptimized(mbd.getPROBEN_NR(), limsAVV);
 				double maxS = Math.max(score, scoreAVV);
 				if (score > 0 && scoreAVV > 0 && score != scoreAVV) maxS = maxS - 0.01;
-				if (maxS < 0.7) { // Spezialfälle
+				if (maxS < 0.7) { // SpezialfÃ¤lle
 					 // z.B. aus Campy 2015, z.B. 50201151567 -> 1567/1
 					if (mbd.getPROBEN_NR().startsWith("5020115") && limsKPN.startsWith(mbd.getPROBEN_NR().substring(mbd.getPROBEN_NR().length() - 4) + "/" + mbd.getTEILPROBEN_NR())) maxS = 1;
 					// z.B. MRSA 1551211UKF  513
