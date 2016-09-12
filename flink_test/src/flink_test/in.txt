@@ -1,5 +1,0 @@
-file://c:/text1.txt
-http://www.google.de
-file://c:/text2.txt
-http://www.test.de
-file://c:/text3.txt

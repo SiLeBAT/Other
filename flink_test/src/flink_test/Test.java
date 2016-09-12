@@ -19,27 +19,82 @@
  *******************************************************************************/
 package flink_test;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import org.apache.flink.api.common.functions.FilterFunction;
-import org.apache.flink.api.java.DataSet;
+import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.ExecutionEnvironment;
+import org.apache.flink.shaded.com.google.common.collect.HashMultimap;
+import org.apache.flink.shaded.com.google.common.collect.SetMultimap;
 
 public class Test {
 
 	public static void main(String[] args) throws Exception {
+		SetMultimap<String, String> incidentNodes = HashMultimap.create();
+		SetMultimap<String, String> outgoingEdges = HashMultimap.create();
+
+		Files.lines(new File(Test.class.getResource("/flink_test/graph.csv").getPath()).toPath()).forEach(line -> {
+			String[] edgeDef = line.split(",");
+			String edge = edgeDef[0];
+			String node1 = edgeDef[1];
+			String node2 = edgeDef[2];
+
+			incidentNodes.put(edge, node1);
+			incidentNodes.put(edge, node2);
+			outgoingEdges.put(node1, edge);
+			outgoingEdges.put(node2, edge);
+		});
+
+		List<String> nodes = new ArrayList<>(outgoingEdges.keySet());
+		List<String> edges = new ArrayList<>(incidentNodes.keySet());
+
 		ExecutionEnvironment env = ExecutionEnvironment.createLocalEnvironment();
-		DataSet<String> data = env.readTextFile(Test.class.getResource("/flink_test/in.txt").toString());
-		List<String> list = data.filter(new FilterFunction<String>() {
+
+		List<Double> result = env.generateSequence(0, nodes.size() - 1).map(new MapFunction<Long, Double>() {
 			private static final long serialVersionUID = 1L;
 
-			public boolean filter(String value) {
-				return value.startsWith("http://");
+			@Override
+			public Double map(Long index) throws Exception {
+				String nodeId = nodes.get(index.intValue());
+				Deque<String> nodeQueue = new LinkedList<>();
+				Map<String, Integer> visitedNodes = new HashMap<>(nodes.size(), 1.0f);
+				Set<String> visitedEdges = new HashSet<>(edges.size(), 1.0f);
+				int distanceSum = 0;
+
+				visitedNodes.put(nodeId, 0);
+				nodeQueue.addLast(nodeId);
+
+				while (!nodeQueue.isEmpty()) {
+					String currentNodeId = nodeQueue.removeFirst();
+					int targetNodeDistance = visitedNodes.get(currentNodeId) + 1;
+
+					for (String edgeId : outgoingEdges.get(currentNodeId)) {
+						if (visitedEdges.add(edgeId)) {
+							for (String targetNodeId : incidentNodes.get(edgeId)) {
+								if (!currentNodeId.equals(targetNodeId) && !visitedNodes.containsKey(targetNodeId)) {
+									visitedNodes.put(targetNodeId, targetNodeDistance);
+									nodeQueue.addLast(targetNodeId);
+									distanceSum += targetNodeDistance;
+								}
+							}
+						}
+					}
+				}
+
+				return 1.0 / (distanceSum + (nodes.size() - visitedNodes.size()) * nodes.size());
 			}
 		}).collect();
 
-		for (String s : list) {
-			System.out.println(s);
+		for (int i = 0; i < nodes.size(); i++) {
+			System.out.println(nodes.get(i) + "\t" + result.get(i));
 		}
 	}
 }
