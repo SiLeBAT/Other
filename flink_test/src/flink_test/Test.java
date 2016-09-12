@@ -37,6 +37,7 @@ import org.apache.flink.shaded.com.google.common.collect.SetMultimap;
 
 public class Test {
 
+	@SuppressWarnings("serial")
 	public static void main(String[] args) throws Exception {
 		SetMultimap<String, String> incidentNodes = HashMultimap.create();
 		SetMultimap<String, String> outgoingEdges = HashMultimap.create();
@@ -59,7 +60,6 @@ public class Test {
 		ExecutionEnvironment env = ExecutionEnvironment.createLocalEnvironment();
 
 		List<Double> result = env.generateSequence(0, nodes.size() - 1).map(new MapFunction<Long, Double>() {
-			private static final long serialVersionUID = 1L;
 
 			@Override
 			public Double map(Long index) throws Exception {
