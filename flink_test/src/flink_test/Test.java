@@ -19,8 +19,9 @@
  *******************************************************************************/
 package flink_test;
 
-import java.io.File;
-import java.nio.file.Files;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
@@ -42,22 +43,24 @@ public class Test {
 		SetMultimap<String, String> incidentNodes = HashMultimap.create();
 		SetMultimap<String, String> outgoingEdges = HashMultimap.create();
 
-		Files.lines(new File(Test.class.getResource("/flink_test/graph.csv").getPath()).toPath()).forEach(line -> {
-			String[] edgeDef = line.split(",");
-			String edge = edgeDef[0];
-			String node1 = edgeDef[1];
-			String node2 = edgeDef[2];
+		new BufferedReader(
+				new InputStreamReader(Test.class.getResourceAsStream("/flink_test/graph.csv"), StandardCharsets.UTF_8))
+						.lines().forEach(line -> {
+							String[] edgeDef = line.split(",");
+							String edge = edgeDef[0];
+							String node1 = edgeDef[1];
+							String node2 = edgeDef[2];
 
-			incidentNodes.put(edge, node1);
-			incidentNodes.put(edge, node2);
-			outgoingEdges.put(node1, edge);
-			outgoingEdges.put(node2, edge);
-		});
+							incidentNodes.put(edge, node1);
+							incidentNodes.put(edge, node2);
+							outgoingEdges.put(node1, edge);
+							outgoingEdges.put(node2, edge);
+						});
 
 		List<String> nodes = new ArrayList<>(outgoingEdges.keySet());
 		List<String> edges = new ArrayList<>(incidentNodes.keySet());
 
-		ExecutionEnvironment env = ExecutionEnvironment.createLocalEnvironment();
+		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
 		List<Double> result = env.generateSequence(0, nodes.size() - 1).map(new MapFunction<Long, Double>() {
 
