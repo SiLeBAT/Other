@@ -11,6 +11,8 @@ import java.util.Set;
 
 import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFCreationHelper;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFFont;
@@ -76,7 +78,7 @@ public class ExcelWriter {
 		}
 		String format = "dd.mm.yyyy";
 		for (int i : dateStyles) {
-			setStyle(null, null, i, i, false, false, false, false, format, null);
+			setStyle(null, null, i, i, false, false, false, false, false, format, null);
 		}
 	}
 
@@ -97,8 +99,13 @@ public class ExcelWriter {
 	}
 
 	public void setStyle(Integer rowStart, Integer rowEnd, Integer colStart, Integer colEnd, boolean isBold,
-			boolean isCenter, boolean hasRightBorder, boolean hasBottomBorder,
+			boolean isCenter, boolean isRight, boolean hasRightBorder, boolean hasBottomBorder,
 			String dataFormat, Color color) {
+		setStyle(rowStart, rowEnd, colStart, colEnd, isBold, isCenter, isRight, hasRightBorder, hasBottomBorder, dataFormat, color, null, null);
+	}
+	public void setStyle(Integer rowStart, Integer rowEnd, Integer colStart, Integer colEnd, boolean isBold,
+			boolean isCenter, boolean isRight, boolean hasRightBorder, boolean hasBottomBorder,
+			String dataFormat, Color color, Integer colMergeStart, Integer colMergeCount) {
 		XSSFFont font = workbook.createFont();
 		if (isBold)
 			font.setBold(isBold);
@@ -110,8 +117,8 @@ public class ExcelWriter {
 			style.setFillPattern(XSSFCellStyle.SOLID_FOREGROUND);
 			//style.setFillPattern(XSSFCellStyle.FINE_DOTS);
 		}
-		if (isCenter)
-			style.setAlignment(XSSFCellStyle.ALIGN_CENTER);
+		if (isRight) style.setAlignment(XSSFCellStyle.ALIGN_RIGHT);
+		else if (isCenter) style.setAlignment(XSSFCellStyle.ALIGN_CENTER);
 		style.setFont(font);
 
 		if (hasRightBorder)
@@ -124,13 +131,44 @@ public class ExcelWriter {
 			style.setDataFormat(createHelper.createDataFormat().getFormat(
 					dataFormat));
 		}
-
+				
 		for (int i = (rowStart == null ? 0 : rowStart); i <= (rowEnd == null ? sheet.getLastRowNum() : rowEnd); i++) {
 			XSSFRow row = sheet.getRow(i);
 			if (row != null) {
 				for (int j = (colStart == null ? row.getFirstCellNum() : colStart); j <= (colEnd == null ? row.getLastCellNum() : colEnd); j++) {
 					XSSFCell cell = row.getCell(j);
 					setS(cell, style);
+				}
+			}
+		}
+		
+		// merge cells
+		if (rowStart != null && rowEnd != null && colMergeStart != null && colMergeCount != null) {
+			for (int i=rowStart;i<=rowEnd;i++) {
+				for (int j=colMergeStart;j<sheet.getRow(i).getLastCellNum();j+=colMergeCount) {
+					sheet.addMergedRegion(new CellRangeAddress(i,i,j,j+colMergeCount-1));											
+				}
+			}
+		}
+	}
+	public void setFormat4Cols(Integer rowStart, Integer rowEnd, Integer colStart, Integer colDistance, String dataFormat) {
+		if (colStart != null && colDistance != null && dataFormat != null) {
+			XSSFCreationHelper createHelper = workbook.getCreationHelper();
+			short s = createHelper.createDataFormat().getFormat(dataFormat);
+			
+			if (rowStart == null) rowStart = 0;
+			if (rowEnd == null) rowEnd = sheet.getLastRowNum();
+			for (int i=rowStart;i<=rowEnd;i++) {
+				XSSFRow row = sheet.getRow(i);
+				if (row != null) {
+					for (int j=colStart;j<row.getLastCellNum();j+=colDistance) {
+						XSSFCell cell = row.getCell(j);
+						if (cell != null) {
+							XSSFCellStyle cstyle = (XSSFCellStyle) cell.getCellStyle().clone();
+							cstyle.setDataFormat(s);
+							cell.setCellStyle(cstyle);
+						}
+					}
 				}
 			}
 		}
@@ -172,6 +210,10 @@ public class ExcelWriter {
 	public void autoSizeColumns(int numCols) {
 		for (int i = 0; i < numCols; i++)
 			sheet.autoSizeColumn(i);
+	}
+	
+	public void autoSizeAllColumns() {
+		if (sheet != null && sheet.getRow(0) != null) autoSizeColumns(sheet.getRow(0).getLastCellNum());
 	}
 
 	public XSSFCellStyle getWBStyle() {

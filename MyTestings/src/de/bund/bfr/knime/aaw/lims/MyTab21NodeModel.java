@@ -207,7 +207,7 @@ catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();t
     	System.err.println("preTab0:\t" + (System.currentTimeMillis()-ttt));
     	String pfn = getFilename(baseFolder.getStringValue(), "preTab" + (containsStrings ? "_ESBL" : "21"));
 
-    	ew.setStyle(0, 0, null, null, true, true, false, true, null, null); // RowHeader
+    	ew.setStyle(0, 0, null, null, true, true, false, false, true, null, null); // RowHeader
     	if (doAutosize) ew.autoSizeColumn(5);
     	ew.save(pfn);
     	System.err.println("preTab1:\t" + (System.currentTimeMillis()-ttt));
@@ -316,15 +316,15 @@ catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();t
        	   		
        	    	String fn = getFilename(baseFolder.getStringValue(), "ESBL_" + p.getName());
        	    	ew = new ExcelWriter(tab3);
-       	    	ew.setStyle(0, 0, null, null, true, true, false, true, null, null); // RowHeader
-       	    	ew.setStyle(null, null, 0, 0, true, false, true, false, null, null); // ColumnHeader
-       	    	ew.setStyle(null, null, 3, 3, false, false, true, false, null, null); // TrennBorder
-       	    	ew.setStyle(null, null, 3 + stringList.size(), 3 + stringList.size(), false, false, true, false, null, null); // LastColumnBorder1
-       	    	ew.setStyle(null, null, 3 + stringList.size() + (4-dblListStart), 3 + stringList.size() + (4-dblListStart), false, false, true, false, null, null); // LimitBorder (>=8)
+       	    	ew.setStyle(0, 0, null, null, true, true, false, false, true, null, null); // RowHeader
+       	    	ew.setStyle(null, null, 0, 0, true, false, false, true, false, null, null); // ColumnHeader
+       	    	ew.setStyle(null, null, 3, 3, false, false, false, true, false, null, null); // TrennBorder
+       	    	ew.setStyle(null, null, 3 + stringList.size(), 3 + stringList.size(), false, false, false, true, false, null, null); // LastColumnBorder1
+       	    	ew.setStyle(null, null, 3 + stringList.size() + (4-dblListStart), 3 + stringList.size() + (4-dblListStart), false, false, false, true, false, null, null); // LimitBorder (>=8)
        	    	for (Integer dlr : dlrl)
-       	    		ew.setStyle(dlr, dlr, 3 + stringList.size() + (5-dblListStart), null, false, false, false, false, null, Color.RED); // LimitBorder (>=8)
-       	    	ew.setStyle(null, null, 3 + stringList.size() + doubleList.size(), 3 + stringList.size() + doubleList.size(), false, false, true, false, null, null); // LastColumnBorder2
-       	    	ew.setStyle(tab3.size() - 1, tab3.size() - 1, null, null, false, false, false, true, null, null); // LastRowBorder
+       	    		ew.setStyle(dlr, dlr, 3 + stringList.size() + (5-dblListStart), null, false, false, false, false, false, null, Color.RED); // LimitBorder (>=8)
+       	    	ew.setStyle(null, null, 3 + stringList.size() + doubleList.size(), 3 + stringList.size() + doubleList.size(), false, false, false, true, false, null, null); // LastColumnBorder2
+       	    	ew.setStyle(tab3.size() - 1, tab3.size() - 1, null, null, false, false, false, false, true, null, null); // LastRowBorder
        	    	ew.autoSizeColumns(tab3Row.size());
        	    	ew.save(fn);
        		}
@@ -347,15 +347,15 @@ catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();t
         	}
    	    	String fn = getFilename(baseFolder.getStringValue(), "ESBL_gesamt");
    	    	ew = new ExcelWriter(tab1);
-   	    	ew.setStyle(0, 0, null, null, true, true, false, true, null, null); // RowHeader
-   	    	ew.setStyle(null, null, 0, 0, true, false, true, false, null, null); // ColumnHeader
-   	    	ew.setStyle(null, null, 3, 3, false, false, true, false, null, null); // TrennBorder
-   	    	ew.setStyle(null, null, 3 + stringList.size(), 3 + stringList.size(), false, false, true, false, null, null); // LastColumnBorder1
-   	    	ew.setStyle(null, null, 3 + stringList.size() + (4-dblListStart), 3 + stringList.size() + (4-dblListStart), false, false, true, false, null, null); // LimitBorder (>=8)
+   	    	ew.setStyle(0, 0, null, null, true, true, false, false, true, null, null); // RowHeader
+   	    	ew.setStyle(null, null, 0, 0, true, false, false, true, false, null, null); // ColumnHeader
+   	    	ew.setStyle(null, null, 3, 3, false, false, false, true, false, null, null); // TrennBorder
+   	    	ew.setStyle(null, null, 3 + stringList.size(), 3 + stringList.size(), false, false, false, true, false, null, null); // LastColumnBorder1
+   	    	ew.setStyle(null, null, 3 + stringList.size() + (4-dblListStart), 3 + stringList.size() + (4-dblListStart), false, false, false, true, false, null, null); // LimitBorder (>=8)
    	    	for (Integer dlr : dlrl)
-   	    		ew.setStyle(dlr, dlr, 3 + stringList.size() + (5-dblListStart), null, false, false, false, false, null, Color.RED); // LimitBorder (>=8)
-   	    	ew.setStyle(null, null, 3 + stringList.size() + doubleList.size(), 3 + stringList.size() + doubleList.size(), false, false, true, false, null, null); // LastColumnBorder2
-   	    	ew.setStyle(tab1.size() - 1, tab1.size() - 1, null, null, false, false, false, true, null, null); // LastRowBorder
+   	    		ew.setStyle(dlr, dlr, 3 + stringList.size() + (5-dblListStart), null, false, false, false, false, false, null, Color.RED); // LimitBorder (>=8)
+   	    	ew.setStyle(null, null, 3 + stringList.size() + doubleList.size(), 3 + stringList.size() + doubleList.size(), false, false, false, true, false, null, null); // LastColumnBorder2
+   	    	ew.setStyle(tab1.size() - 1, tab1.size() - 1, null, null, false, false, false, false, true, null, null); // LastRowBorder
    	    	ew.autoSizeColumns(tab1Row.size());
    	    	ew.save(fn);
         	System.err.println("tab1:\t" + (System.currentTimeMillis()-ttt));
@@ -415,6 +415,89 @@ catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();t
        	   		tab1.add(tab1Row);
        		}
         	System.err.println("tab1:\t" + (System.currentTimeMillis()-ttt));
+
+        	// Tab1_22
+        	LinkedHashSet<List<Object>> tab122 = new LinkedHashSet<List<Object>>();
+       		List<Integer> tab122Borders = new ArrayList<Integer>();
+       		List<Integer> tab122BordersV = new ArrayList<Integer>();
+
+       		List<Object> tab122Row = new ArrayList<Object>();
+    		tab122Row.add("Programm");
+        	for (String pkey : pkeys) {
+        		tab122Row.add(pkey); tab122Row.add("");
+        		tab122BordersV.add(tab122Row.size()-1);
+        	}
+    		tab122.add(tab122Row);
+    		
+    		tab122Row = new ArrayList<Object>();
+    		tab122Row.add("Tierart");
+        	for (String pkey : pkeys) {
+        		tab122Row.add(""); tab122Row.add("");
+        		tab122BordersV.add(tab122Row.size()-1);
+        	}
+    		tab122.add(tab122Row);
+    		
+    		tab122Row = new ArrayList<Object>();
+    		tab122Row.add("Probenahmeort");
+        	for (String pkey : pkeys) {
+        		tab122Row.add(""); tab122Row.add("");
+        		tab122BordersV.add(tab122Row.size()-1);
+        	}
+    		tab122.add(tab122Row);
+    		
+    		tab122Row = new ArrayList<Object>();
+    		tab122Row.add("Matrix");
+        	for (String pkey : pkeys) {
+        		tab122Row.add(""); tab122Row.add("");
+        		tab122BordersV.add(tab122Row.size()-1);
+        	}
+    		tab122.add(tab122Row);
+    		
+    		tab122Row = new ArrayList<Object>();
+    		tab122Row.add("");
+        	for (String pkey : pkeys) {
+        		tab122Row.add("N"); tab122Row.add("%");
+        		tab122BordersV.add(tab122Row.size()-1);
+        	}
+    		tab122.add(tab122Row);
+    		
+    		tab122Borders.add(tab122.size() - 1);
+    		tab122Row = new ArrayList<Object>();
+    		tab122Row.add("Anzahl untersucht");
+        	for (String pkey : pkeys) {
+        		Programm p = ps.get(pkey);
+        		tab122Row.add(p.getNumSamples()); tab122Row.add("");
+        		tab122BordersV.add(tab122Row.size()-1);
+        	}
+    		tab122.add(tab122Row);
+    		tab122Borders.add(tab122.size() - 1);
+   		
+       		for (Integer wkey : wkeys) {
+       			Wirkstoff w = ws.get(wkey);
+       			tab122Row = new ArrayList<Object>();
+       			String lang = w.getName();
+       			tab122Row.add(lang);
+       			for (String pkey : pkeys) {
+       				Programm p = ps.get(pkey);
+       				HashMap<String, Integer> pw = p.getNumPositive();
+       				int num = pw.containsKey(w.getKurz()) ? pw.get(w.getKurz()) : 0;
+    	   	   		tab122Row.add(num); tab122Row.add(100.0 * num / p.getNumSamples());
+       			}
+       			tab122.add(tab122Row);
+       		}
+       		
+    		tab122Borders.add(tab122.size() - 1);
+       		for (int i=0;i<=maxResi;i++) {
+       	   		tab122Row = new ArrayList<Object>();
+       	   		tab122Row.add(i == 0 ? "Sensibel" : i + "x resistent");
+       			for (String pkey : pkeys) {
+       				Programm p = ps.get(pkey);
+       				int num = p.getNumResistent(i);
+       	   	   		tab122Row.add(num); tab122Row.add(100.0 * num / p.getNumSamples());
+       			}
+       	   		tab122.add(tab122Row);
+       		}
+        	System.err.println("tab122:\t" + (System.currentTimeMillis()-ttt));
 
         	// Tab2
         	LinkedHashSet<List<Object>> tab2 = new LinkedHashSet<List<Object>>();
@@ -484,12 +567,12 @@ catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();t
        	   		}
        	    	String fn = getFilename(baseFolder.getStringValue(), "MHKs_" + p.getName());
        	    	ew = new ExcelWriter(tab3);
-       	    	ew.setStyle(0, 0, null, null, true, true, false, true, null, null); // RowHeader
-       	    	ew.setStyle(null, null, 0, 0, true, false, true, false, null, null); // ColumnHeader
-       	    	ew.setStyle(null, null, 3, 3, false, false, true, false, null, null); // TrennBorder
-       	    	ew.setStyle(null, null, 3 + doubleList.size(), 3 + doubleList.size(), false, false, true, false, null, null); // LastColumnBorder
-       	    	ew.setStyle(tab3.size() - maxResi - 2, tab3.size() - maxResi - 2, null, null, false, false, false, true, null, null); // LastRowBorder
-       	    	ew.setStyle(tab3.size() - 1, tab3.size() - 1, null, null, false, false, false, true, null, null); // LastRowBorder
+       	    	ew.setStyle(0, 0, null, null, true, true, false, false, true, null, null); // RowHeader
+       	    	ew.setStyle(null, null, 0, 0, true, false, false, true, false, null, null); // ColumnHeader
+       	    	ew.setStyle(null, null, 3, 3, false, false, false, true, false, null, null); // TrennBorder
+       	    	ew.setStyle(null, null, 3 + doubleList.size(), 3 + doubleList.size(), false, false, false, true, false, null, null); // LastColumnBorder
+       	    	ew.setStyle(tab3.size() - maxResi - 2, tab3.size() - maxResi - 2, null, null, false, false, false, false, true, null, null); // LastRowBorder
+       	    	ew.setStyle(tab3.size() - 1, tab3.size() - 1, null, null, false, false, false, false, true, null, null); // LastRowBorder
        	    	if (doAutosize) ew.autoSizeColumns(tab3Row.size());
        	    	ew.save(fn);
        		}
@@ -497,20 +580,33 @@ catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();t
 
         	String fn = getFilename(baseFolder.getStringValue(), "Tab21");
         	ew = new ExcelWriter(tab1);
-        	ew.setStyle(0, 0, null, null, true, true, false, true, null, null); // RowHeader
-        	ew.setStyle(null, null, 0, 0, true, false, true, false, null, null); // ColumnHeader
-        	for (int bl : tab1Borders) ew.setStyle(bl, bl, null, null, false, false, false, true, null, null); // TrennBorder
-        	for (int bl : tab1BordersV) ew.setStyle(null, null, bl, bl, false, false, true, false, null, null); // TrennBorder
-        	ew.setStyle(tab1.size() - 1, tab1.size() - 1, null, null, false, false, false, true, null, null); // LastRowBorder
+        	ew.setStyle(0, 0, null, null, true, true, false, false, true, null, null); // RowHeader
+        	ew.setStyle(null, null, 0, 0, true, false, false, true, false, null, null); // ColumnHeader
+        	for (int bl : tab1Borders) ew.setStyle(bl, bl, null, null, false, false, false, false, true, null, null); // TrennBorder
+        	for (int bl : tab1BordersV) ew.setStyle(null, null, bl, bl, false, false, false, true, false, null, null); // TrennBorder
+        	ew.setStyle(tab1.size() - 1, tab1.size() - 1, null, null, false, false, false, false, true, null, null); // LastRowBorder
         	if (doAutosize) ew.autoSizeColumns(tab1Row.size());
+        	ew.save(fn);
+        	fn = getFilename(baseFolder.getStringValue(), "Tab22");
+        	ew = new ExcelWriter(tab122);
+        	ew.setStyle(0, 3, null, null, true, true, false, false, true, null, null, 1, 2); // RowHeader
+        	ew.setStyle(4, 4, null, null, true, true, true, false, true, null, null); // N %
+        	ew.setStyle(null, null, 0, 0, true, false, false, true, false, null, null); // ColumnHeader
+        	for (int bl : tab122Borders) ew.setStyle(bl, bl, null, null, false, false, false, false, true, null, null); // TrennBorder
+        	for (int bl : tab122BordersV) ew.setStyle(null, null, bl, bl, false, false, false, true, false, null, null); // TrennBorder
+        	ew.setStyle(tab122.size() - 1, tab122.size() - 1, null, null, false, false, false, false, true, null, null); // LastRowBorder
+        	ew.setFormat4Cols(6, null, 2, 2, "0.0"); // cols with dataFormat
+        	
+        	if (doAutosize) ew.autoSizeColumns(tab122Row.size());
+        	ew.autoSizeAllColumns(); 
         	ew.save(fn);
         	fn = getFilename(baseFolder.getStringValue(), "WGruppen");
         	ew = new ExcelWriter(tab2);
-        	for (int bl : tab2Borders) ew.setStyle(bl, bl, null, null, false, false, false, true, null, null); // TrennBorder
-        	ew.setStyle(0, 0, null, null, true, true, false, true, null, null); // RowHeader
-        	ew.setStyle(null, null, 0, 0, true, false, true, false, null, null); // ColumnHeader
-        	ew.setStyle(null, null, 4, 4, false, false, true, false, null, null); // LastColumnBorder
-        	ew.setStyle(null, null, 2, 2, false, false, false, false, "#.###", null); // DoubleColumn
+        	for (int bl : tab2Borders) ew.setStyle(bl, bl, null, null, false, false, false, false, true, null, null); // TrennBorder
+        	ew.setStyle(0, 0, null, null, true, true, false, false, true, null, null); // RowHeader
+        	ew.setStyle(null, null, 0, 0, true, false, false, true, false, null, null); // ColumnHeader
+        	ew.setStyle(null, null, 4, 4, false, false, false, true, false, null, null); // LastColumnBorder
+        	ew.setStyle(null, null, 2, 2, false, false, false, false, false, "#.###", null); // DoubleColumn
         	if (doAutosize) ew.autoSizeColumns(tab2Row.size());
         	ew.save(fn);
         	System.err.println("excelwriting:\t" + (System.currentTimeMillis()-ttt));    		

@@ -3,6 +3,7 @@ package de.bund.bfr.knime.aaw.lims;
 public class Wirkstoff {
 
 	private String name, gruppe, kurz;
+
 	private Integer indexSort;
 	private double cutoff, cutoff2, rangeLow, rangeHigh;
 
