@@ -25,6 +25,9 @@
     <role-name>lanuv</role-name>
   </security-role>
   <security-role>
+    <role-name>cgi</role-name>
+  </security-role>
+  <security-role>
     <role-name>bfr</role-name>
   </security-role>
   <security-constraint>
@@ -34,6 +37,7 @@
     </web-resource-collection>
     <auth-constraint>
       <role-name>bfr</role-name>
+      <role-name>cgi</role-name>
       <role-name>lanuv</role-name>
       <role-name>manager</role-name>
     </auth-constraint>
