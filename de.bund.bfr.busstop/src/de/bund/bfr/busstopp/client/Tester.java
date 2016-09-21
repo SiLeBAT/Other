@@ -79,20 +79,21 @@ public class Tester {
     // Get XML for application
     System.out.println(service.path("rest").path("items").request().accept(MediaType.APPLICATION_XML).get(String.class));
 
-    System.out.println(service.path("rest").path("items").path("rdt_json").request().accept(MediaType.APPLICATION_JSON).get(String.class));
+    //System.out.println(service.path("rest").path("items").path("rdt_json").request().accept(MediaType.APPLICATION_JSON).get(String.class));
 
     //Delete ItemLoader with id 1
     //Response response = service.path("rest").path("items").path("1459295825378").request().delete(); System.out.println("Form response " + response.getStatus() + "\n" + response.readEntity(String.class));
 
     //Upload a ItemLoader
+    upload(usr, pwd, "/Users/arminweiser/Desktop/xml_test/bbk/bbk1.xml", "kommentar_gs");
     //upload(usr, pwd, "C:/Users/Armin/Desktop/Pressemitteilung.docx", "kommentar_gs");
     //upload(usr, pwd, "C:/Users/weiser/Desktop/NRW.txt", "kommentar_e154");
     //upload(usr, pwd, "C:/Users/weiser/Desktop/lims_todo.txt", "kommentar_tel");
   }
 
   private static URI getBaseURI() {
-	    return UriBuilder.fromUri("http://localhost:8080/de.bund.bfr.busstopp").build();
-	    //return UriBuilder.fromUri("https://foodrisklabs.bfr.bund.de/de.bund.bfr.busstopp/").build();
+	    //return UriBuilder.fromUri("http://localhost:8080/de.bund.bfr.busstopp").build();
+	    return UriBuilder.fromUri("https://foodrisklabs.bfr.bund.de/de.bund.bfr.busstopp/").build();
   }
   private static Client getCertClient(String usr, String pwd) throws KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException {
 	  SslConfigurator sslConfig = SslConfigurator.newInstance()
