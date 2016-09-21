@@ -108,7 +108,7 @@ public class ItemsResource {
 				response.setId(newId);
 				
 				boolean isValid = new XmlValidator().validate(filePath);
-				new SendEmail().doSend("'" + filename + "' validiert: " + isValid);
+				new SendEmail().doSend("'" + filename + "' mit id '" + newId + "' wurde validiert: " + isValid, filePath);
 			}
 			else {
 				response.setSuccess(false);
