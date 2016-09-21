@@ -15,9 +15,13 @@ import de.nrw.verbraucherschutz.idv.daten.Kontrollpunktmeldung;
 
 public class XmlValidator {
 
+	public static void main(String[] args) throws JAXBException {
+		System.err.println(new XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/Anleitung_pmmlab.txt"));
+	}
+
 	@SuppressWarnings("unchecked")
 	public boolean validate(String filename) {
-		boolean result = true;
+		boolean result = false;
 		Unmarshaller reader;
 		try {
 			reader = JAXBContext.newInstance(Kontrollpunktmeldung.class.getPackage().getName())
@@ -35,14 +39,13 @@ public class XmlValidator {
 					@SuppressWarnings("unused")
 					Kontrollpunktmeldung meldung = ((JAXBElement<Kontrollpunktmeldung>) reader.unmarshal(file)).getValue();
 					
+					result = true;
 				}
 			}
 		} catch (JAXBException e) {
 			e.printStackTrace();
-			result = false;
 		} catch (SAXException e) {
 			e.printStackTrace();
-			result = false;
 		}
 		return result;		
 	}
