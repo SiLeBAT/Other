@@ -86,6 +86,7 @@ public class Tester {
 
     //Upload a ItemLoader
     upload(usr, pwd, "/Users/arminweiser/Desktop/xml_test/bbk/bbk1.xml", "kommentar_gs");
+    upload(usr, pwd, "/Users/arminweiser/Desktop/xml_test/Anleitung_pmmlab.txt", "kommentar_gs");
     //upload(usr, pwd, "C:/Users/Armin/Desktop/Pressemitteilung.docx", "kommentar_gs");
     //upload(usr, pwd, "C:/Users/weiser/Desktop/NRW.txt", "kommentar_e154");
     //upload(usr, pwd, "C:/Users/weiser/Desktop/lims_todo.txt", "kommentar_tel");

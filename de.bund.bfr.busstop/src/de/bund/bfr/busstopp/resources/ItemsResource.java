@@ -104,11 +104,16 @@ public class ItemsResource {
 				String filePath = item.save(fileInputStream);
 				Dao.instance.getModel().put(newId, item);
 
-				response.setSuccess(true);
-				response.setId(newId);
-				
 				boolean isValid = new XmlValidator().validate(filePath);
+				response.setSuccess(isValid);
+				response.setId(newId);
+								
 				new SendEmail().doSend("'" + filename + "' mit id '" + newId + "' wurde validiert: " + isValid, filePath);
+				
+				if (!isValid) {
+					response.setError("'" + filename + "' konnte nicht validiert werden!");
+					item.delete();
+				}
 			}
 			else {
 				response.setSuccess(false);
