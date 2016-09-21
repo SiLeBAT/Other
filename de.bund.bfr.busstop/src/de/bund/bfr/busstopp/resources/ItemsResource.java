@@ -27,6 +27,8 @@ import de.bund.bfr.busstopp.dao.Dao;
 import de.bund.bfr.busstopp.dao.ItemLoader;
 import de.bund.bfr.busstopp.model.Item;
 import de.bund.bfr.busstopp.model.ResponseX;
+import de.bund.bfr.busstopp.util.SendEmail;
+import de.bund.bfr.busstopp.util.XmlValidator;
 
 // Will map the resource to the URL items
 @Path("/items")
@@ -99,11 +101,14 @@ public class ItemsResource {
 				String filename = contentDispositionHeader.getFileName();
 
 				ItemLoader item = new ItemLoader(newId, filename, comment);
-				item.save(fileInputStream);
+				String filePath = item.save(fileInputStream);
 				Dao.instance.getModel().put(newId, item);
 
 				response.setSuccess(true);
 				response.setId(newId);
+				
+				boolean isValid = new XmlValidator().validate(filePath);
+				new SendEmail().doSend("'" + filename + "' validiert: " + isValid);
 			}
 			else {
 				response.setSuccess(false);

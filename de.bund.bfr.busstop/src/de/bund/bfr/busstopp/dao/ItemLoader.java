@@ -71,12 +71,13 @@ public class ItemLoader {
 		}
 		return everything;
 	}
-	public void save(InputStream fileInputStream) throws IOException {
+	public String save(InputStream fileInputStream) throws IOException {
 		String filePath = Constants.SERVER_UPLOAD_LOCATION_FOLDER + xml.getId() + "/" + xml.getIn().getFilename();
 		String commentPath = Constants.SERVER_UPLOAD_LOCATION_FOLDER + xml.getId() + "/" + Constants.COMMENT_FILENAME;
 		// save the file to the server
 		saveFile(fileInputStream, filePath);
 		saveFile(xml.getIn().getComment(), commentPath);
+		return filePath;
 	}
 
 	private void saveFile(String input, String filePath) throws IOException {
