@@ -23,24 +23,27 @@ public class ItemLoader {
 		xml.getIn().setComment(comment);
 	}
 	public ItemLoader(Long id, File folder) {
-		xml.setId(id);
-		File[] paths = folder.listFiles();
-		for (File path : paths) {
-			if (path.getName().equals(Constants.COMMENT_FILENAME)) {
-				try {
-					xml.getIn().setComment(loadFile(path));
-				} catch (IOException e) {
-					e.printStackTrace();
+		try {
+			xml.setId(id);
+			File[] paths = folder.listFiles();
+			for (File path : paths) {
+				if (path.getName().equals(Constants.COMMENT_FILENAME)) {
+					try {
+						xml.getIn().setComment(loadFile(path));
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				else if (path.getName().equals(Constants.DELETED_FILENAME)) {
+					deleted = true;
+				}
+				else {
+					xml.getIn().setFilename(path.getName());
+					break;				
 				}
 			}
-			else if (path.getName().equals(Constants.DELETED_FILENAME)) {
-				deleted = true;
-			}
-			else {
-				xml.getIn().setFilename(path.getName());
-				break;				
-			}
 		}
+		catch (Exception e) {e.printStackTrace();}
 	}
 	
 	public Item getXml() {
@@ -71,12 +74,13 @@ public class ItemLoader {
 		}
 		return everything;
 	}
-	public void save(InputStream fileInputStream) throws IOException {
+	public String save(InputStream fileInputStream) throws IOException {
 		String filePath = Constants.SERVER_UPLOAD_LOCATION_FOLDER + xml.getId() + "/" + xml.getIn().getFilename();
 		String commentPath = Constants.SERVER_UPLOAD_LOCATION_FOLDER + xml.getId() + "/" + Constants.COMMENT_FILENAME;
 		// save the file to the server
 		saveFile(fileInputStream, filePath);
 		saveFile(xml.getIn().getComment(), commentPath);
+		return filePath;
 	}
 
 	private void saveFile(String input, String filePath) throws IOException {

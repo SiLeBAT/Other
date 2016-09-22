@@ -17,6 +17,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.Response;
 
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -27,6 +28,9 @@ import de.bund.bfr.busstopp.dao.Dao;
 import de.bund.bfr.busstopp.dao.ItemLoader;
 import de.bund.bfr.busstopp.model.Item;
 import de.bund.bfr.busstopp.model.ResponseX;
+import de.bund.bfr.busstopp.util.SendEmail;
+import de.bund.bfr.busstopp.util.XmlValidator;
+import de.bund.bfr.busstopp.util.ZipArchive;
 
 // Will map the resource to the URL items
 @Path("/items")
@@ -38,6 +42,8 @@ public class ItemsResource {
 	UriInfo uriInfo;
 	@Context
 	Request request;
+    @Context
+    SecurityContext securityContext;
 
 	// Return the list of items to the user in the browser
 	@GET
@@ -74,7 +80,7 @@ public class ItemsResource {
 	// Allows to type http://localhost:8080/de.bund.bfr.busstopp/rest/app/1
 	@Path("{id}")
 	public ItemResource getItem(@PathParam("id") Long id) {
-		return new ItemResource(uriInfo, request, id);
+		return new ItemResource(uriInfo, request, securityContext, id);
 	}
 
 	// jersey.config.server.wadl.disableWadl=true
@@ -93,30 +99,83 @@ public class ItemsResource {
 
 		ResponseX response = new ResponseX();
 		response.setAction("UPLOAD");
-		try {
-			long newId = System.currentTimeMillis();
-			if (contentDispositionHeader != null) {
-				String filename = contentDispositionHeader.getFileName();
+		if (securityContext.isUserInRole("x2bfr")) {
+			try {
+				long newId = System.currentTimeMillis();
+				if (contentDispositionHeader != null) {
+					String filename = contentDispositionHeader.getFileName();
 
-				ItemLoader item = new ItemLoader(newId, filename, comment);
-				item.save(fileInputStream);
-				Dao.instance.getModel().put(newId, item);
+					ItemLoader item = new ItemLoader(newId, filename, comment);
+					String filePath = item.save(fileInputStream);
+					Dao.instance.getModel().put(newId, item);
 
-				response.setSuccess(true);
-				response.setId(newId);
-			}
-			else {
+					boolean isValid = new XmlValidator().validate(filePath);
+					response.setSuccess(isValid);
+					response.setId(newId);
+														
+					if (!isValid) {
+						response.setError("'" + filename + "' konnte nicht validiert werden!");
+						try {
+							item.delete();
+						} catch (IOException e) {
+						}
+						Dao.instance.getModel().remove(newId);
+					}
+
+					new SendEmail().doSend("'" + filename + "' mit id '" + newId + "' wurde validiert: " + isValid, filePath);
+				}
+				else {
+					response.setSuccess(false);
+					response.setError("Parameters not correct! Did you use 'file'?");
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
 				response.setSuccess(false);
-				response.setError("Parameters not correct! Did you use 'file'?");
+				response.setError(e.getMessage());
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
+		}
+		else {
 			response.setSuccess(false);
-			response.setError(e.getMessage());
+			response.setError("No permission to access this feature!");
 		}
 		return response;
 	}
 
+
+	@GET
+	@Path("files")
+	@Produces(MediaType.APPLICATION_OCTET_STREAM)
+	public Response getFiles() {
+		if (securityContext.isUserInRole("bfr")) {
+			try {
+				File zipfile = File.createTempFile("busstop_xmls", ".zip");
+				ZipArchive za = new ZipArchive(zipfile.getAbsolutePath());
+				List<Item> li = getOutputs();
+				for (Item i : li) {
+					Long id = i.getId();
+					ItemLoader c = Dao.instance.getModel().get(id);
+					if (c != null) {
+						String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + c.getXml().getId() + "/" + c.getXml().getIn().getFilename();
+						za.add(new File(filename), id);
+					}
+				}
+				za.close();
+			    ResponseBuilder response = Response.noContent();
+			    if (zipfile.exists() && zipfile.isFile()) {
+				    response = Response.ok((Object) zipfile);
+				    response.header("Content-Disposition", "attachment; filename=" + zipfile.getName());
+			    }
+			    return response.build();
+			}
+			catch (Exception e) {
+				e.printStackTrace();
+				return Response.noContent().build();
+			}
+		}
+		else {
+			return Response.noContent().build();
+		}
+	}
 
 	@GET
 	@Path("rdt_json")
@@ -130,5 +189,23 @@ public class ItemsResource {
 		    response.header("Content-Disposition", "attachment; filename=" + file.getName());
 	    }
 	    return response.header("Access-Control-Allow-Origin", "*").header("Access-Control-Allow-Methods", "GET, OPTIONS").header("Access-Control-Max-Age", "1000").build();
+	}
+
+	@GET
+	@Path("clearbin")
+	@Produces({ MediaType.APPLICATION_XML})
+	public ResponseX clearBin() {
+		ResponseX response = new ResponseX();
+		response.setAction("CLEARBIN");
+		if (securityContext.isUserInRole("bfr")) {
+			int numDeleted = Dao.instance.clearBin();
+			response.setId((long) numDeleted);
+			response.setSuccess(true);
+		}
+		else {
+			response.setSuccess(false);
+			response.setError("No permission to access this feature!");
+		}
+		return response;
 	}
 }
