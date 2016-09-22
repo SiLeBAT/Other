@@ -28,11 +28,8 @@ public enum Dao {
 					//System.out.println(path);
 					if (path.isDirectory()) {
 						long l = Long.parseLong(path.getName());
-						try {
-							ItemLoader item = new ItemLoader(l, path);
-							if (!item.isDeleted()) contentProvider.put(l, item);						
-						}
-						catch (Exception e) {e.printStackTrace();}
+						ItemLoader item = new ItemLoader(l, path);
+						if (!item.isDeleted()) contentProvider.put(l, item);						
 					}
 				}
 			}
@@ -45,4 +42,41 @@ public enum Dao {
 		return contentProvider;
 	}
 
+	public int clearBin() {
+		int result = 0;
+		try {
+			// create new file
+			File f = new File(Constants.SERVER_UPLOAD_LOCATION_FOLDER);
+
+			// returns pathnames for files and directory
+			File[] paths = f.listFiles();
+			if (paths != null && paths.length > 0) {
+				// for each pathname in pathname array
+				for (File path : paths) {				
+					//System.out.println(path);
+					if (path.isDirectory()) {
+						long l = Long.parseLong(path.getName());
+						ItemLoader item = new ItemLoader(l, path);
+						if (item.isDeleted()) { //  || item.getXml().getIn().getFilename().indexOf(":") >= 0
+							deleteDir(path);
+							result++;
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			// if any error occurs
+			e.printStackTrace();
+		}		
+		return result;
+	}
+	private void deleteDir(File file) {
+	    File[] contents = file.listFiles();
+	    if (contents != null) {
+	        for (File f : contents) {
+	            deleteDir(f);
+	        }
+	    }
+	    file.delete();
+	}		
 }

@@ -30,6 +30,12 @@
   <security-role>
     <role-name>bfr</role-name>
   </security-role>
+  <security-role>
+    <role-name>x2bfr</role-name>
+  </security-role>
+  <security-role>
+    <role-name>bfr2x</role-name>
+  </security-role>
   <security-constraint>
     <web-resource-collection>
       <web-resource-name>Entire Application</web-resource-name>
@@ -40,6 +46,8 @@
       <role-name>cgi</role-name>
       <role-name>lanuv</role-name>
       <role-name>manager</role-name>
+      <role-name>x2bfr</role-name>
+      <role-name>bfr2x</role-name>
     </auth-constraint>
     <user-data-constraint>
       <transport-guarantee>NONE</transport-guarantee>
