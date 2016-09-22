@@ -36,7 +36,7 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.shaded.com.google.common.collect.HashMultimap;
 import org.apache.flink.shaded.com.google.common.collect.SetMultimap;
 
-public class Test {
+public class FlinkTest {
 
 	@SuppressWarnings("serial")
 	public static void main(String[] args) throws Exception {
@@ -44,7 +44,7 @@ public class Test {
 		SetMultimap<String, String> outgoingEdges = HashMultimap.create();
 
 		new BufferedReader(
-				new InputStreamReader(Test.class.getResourceAsStream("/flink_test/graph.csv"), StandardCharsets.UTF_8))
+				new InputStreamReader(FlinkTest.class.getResourceAsStream("/flink_test/graph.csv"), StandardCharsets.UTF_8))
 						.lines().forEach(line -> {
 							String[] edgeDef = line.split(",");
 							String edge = edgeDef[0];
