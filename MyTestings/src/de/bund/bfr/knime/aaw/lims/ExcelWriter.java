@@ -3,7 +3,9 @@ package de.bund.bfr.knime.aaw.lims;
 import java.awt.Color;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -11,7 +13,8 @@ import java.util.Set;
 
 import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFCreationHelper;
-import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Header;
+import org.apache.poi.ss.usermodel.Footer;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
@@ -37,7 +40,12 @@ public class ExcelWriter {
 
 	public ExcelWriter(LinkedHashSet<List<Object>> data) {
 		this();
-
+		Footer footer = sheet.getFooter();
+		footer.setLeft("BfR, FG 43, Epidemiologie, Zoonosen und Antibiotikaresistenz");
+		Header header = sheet.getHeader();
+		header.setLeft("Zoonosen-Stichprobenplan 2017 Anhang 11\nVerteilung der Proben auf die Länder");
+		header.setCenter("Nationale Prävalenzschätzung");
+		header.setRight(new SimpleDateFormat("dd.MM.yyyy").format(System.currentTimeMillis()));
 		Set<Integer> dateStyles = new HashSet<Integer>();
 		// Iterate over data and write to sheet
 		int rownum = 0;
