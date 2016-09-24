@@ -17,6 +17,7 @@ public class XmlValidator {
 	public static void main(String[] args) {
 		System.err.println(new XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/Anleitung_pmmlab.txt"));
 		System.err.println(new XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/bbk/bbk1.xml"));
+		System.err.println(new XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/out.xml"));
 	}
 
 	public boolean validate(String filename) {
@@ -27,7 +28,7 @@ public class XmlValidator {
             Validator validator = schema.newValidator();
             validator.validate(new StreamSource(new File(filename)));
         } catch (IOException | SAXException e) {
-            //System.out.println("Exception: "+e.getMessage());
+            System.out.println("Exception: "+e.getMessage());
             return false;
         }
         return true;
