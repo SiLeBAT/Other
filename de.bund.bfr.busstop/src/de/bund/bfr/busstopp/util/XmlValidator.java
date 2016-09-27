@@ -5,20 +5,17 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.Iterator;
 
 import javax.xml.XMLConstants;
 import javax.xml.soap.MessageFactory;
 import javax.xml.soap.MimeHeaders;
 import javax.xml.soap.SOAPBody;
-import javax.xml.soap.SOAPConstants;
 import javax.xml.soap.SOAPEnvelope;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
 import javax.xml.soap.SOAPPart;
 import javax.xml.validation.SchemaFactory;
 
-import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
