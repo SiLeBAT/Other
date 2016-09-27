@@ -79,7 +79,7 @@ public class FlinkTest {
 		ParameterTool params = ParameterTool.fromArgs(args);
 
 		final int numPages = params.getInt("numPages", 45518);
-		final int maxIterations = params.getInt("iterations", 10);
+		final int maxIterations = params.getInt("iterations", 100);
 
 		// set up execution environment
 		final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
