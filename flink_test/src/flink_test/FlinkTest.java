@@ -78,7 +78,7 @@ public class FlinkTest {
 
 		ParameterTool params = ParameterTool.fromArgs(args);
 
-		final int numPages = params.getInt("numPages");
+		final int numPages = params.getInt("numPages", 45518);
 		final int maxIterations = params.getInt("iterations", 10);
 
 		// set up execution environment
@@ -227,8 +227,8 @@ public class FlinkTest {
 	// *************************************************************************
 
 	private static DataSet<String> getPagesDataSet(ExecutionEnvironment env, ParameterTool params) {
-		return env.readCsvFile(params.get("pages")).fieldDelimiter(",").lineDelimiter("\n").types(String.class)
-				.map(new MapFunction<Tuple1<String>, String>() {
+		return env.readCsvFile(params.get("pages", "nodes.csv")).fieldDelimiter(",").lineDelimiter("\n")
+				.types(String.class).map(new MapFunction<Tuple1<String>, String>() {
 					@Override
 					public String map(Tuple1<String> v) {
 						return v.f0;
@@ -237,7 +237,7 @@ public class FlinkTest {
 	}
 
 	private static DataSet<Tuple2<String, String>> getLinksDataSet(ExecutionEnvironment env, ParameterTool params) {
-		return env.readCsvFile(params.get("links")).fieldDelimiter(",").lineDelimiter("\n").types(String.class,
-				String.class);
+		return env.readCsvFile(params.get("links", "edges.csv")).fieldDelimiter(",").lineDelimiter("\n")
+				.types(String.class, String.class);
 	}
 }
