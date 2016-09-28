@@ -110,6 +110,7 @@ public class ItemsResource {
 					Dao.instance.getModel().put(newId, item);
 
 					boolean isValid = new XmlValidator().validate(filePath);
+					isValid = true;
 					response.setSuccess(isValid);
 					response.setId(newId);
 														
