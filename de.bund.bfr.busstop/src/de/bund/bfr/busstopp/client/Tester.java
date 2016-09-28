@@ -80,12 +80,14 @@ public class Tester {
     // Get XML for application
     System.out.println(service.path("rest").path("items").request().accept(MediaType.APPLICATION_XML).get(String.class));
 
+    System.out.println(service.path("rest").path("items").path("deleteall").request().accept(MediaType.APPLICATION_XML).get(String.class));
     //Delete ItemLoader with id 1    
     //Response response = service.path("rest").path("items").path("1474926314907").request().delete(); System.out.println("Form response " + response.getStatus() + "\n" + response.readEntity(String.class));
 
     //System.out.println(service.path("rest").path("items").path("rdt_json").request().accept(MediaType.APPLICATION_JSON).get(String.class));
     //InputStream stream = service.path("rest").path("items").path("files").request().accept(MediaType.APPLICATION_OCTET_STREAM).get(InputStream.class);
-
+    //InputStream stream = service.path("rest").path("items").path("1475072126404").path("file").request().accept(MediaType.APPLICATION_OCTET_STREAM).get(InputStream.class);
+    
     //Upload a ItemLoader
     //upload(usr, pwd, "/Users/arminweiser/Downloads/null.txt", "kommentar_gs1");
     //upload(usr, pwd, "/Users/arminweiser/Desktop/xml_test/bbk/bbk1.xml", "kommentar_gs1");
@@ -93,11 +95,13 @@ public class Tester {
     //upload(usr, pwd, "C:/Users/Armin/Desktop/Pressemitteilung.docx", "kommentar_gs3");
     //upload(usr, pwd, "C:/Users/weiser/Desktop/NRW.txt", "kommentar_e154");
     //upload(usr, pwd, "C:/Users/weiser/Desktop/LIMS_Requests.txt", "kommentar_tely");
+    //upload(usr, pwd, "C:/Users/weiser/Desktop/LIMS_Requests.txt", "kommentar_tely");
   }
 
   private static URI getBaseURI() {
-	    //return UriBuilder.fromUri("http://localhost:8080/de.bund.bfr.busstopp").build();
-	    return UriBuilder.fromUri("https://foodrisklabs.bfr.bund.de/de.bund.bfr.busstopp/").build();
+	    return UriBuilder.fromUri("http://localhost:8080/de.bund.bfr.busstopp").build();
+	    //return UriBuilder.fromUri("https://foodrisklabs.bfr.bund.de/de.bund.bfr.busstopp/").build();
+	    //return UriBuilder.fromUri("https://localhost:8443/de.bund.bfr.busstopp/").build();
   }
   private static Client getCertClient(String usr, String pwd) throws KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException {
 	  SslConfigurator sslConfig = SslConfigurator.newInstance()

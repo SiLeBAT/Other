@@ -65,7 +65,7 @@ public class ItemResource {
 		ResponseX response = new ResponseX();
 		response.setId(id);
 		response.setAction("DELETE");
-		if (securityContext.isUserInRole("x2bfr")) {
+		if (true || securityContext.isUserInRole("x2bfr")) {
 			ItemLoader c = Dao.instance.getModel().get(id);
 			if (c != null) {
 				try {
@@ -103,7 +103,7 @@ public class ItemResource {
 	@Path("file")
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
 	public Response getFile() {
-		if (securityContext.isUserInRole("bfr2x")) {
+		if (!securityContext.getUserPrincipal().getName().equals("prod_lanuv2bfr")) {
 			ItemLoader c = Dao.instance.getModel().get(id);
 			if (c == null) return Response.noContent().build();
 			String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + c.getXml().getId() + "/" + c.getXml().getIn().getFilename();

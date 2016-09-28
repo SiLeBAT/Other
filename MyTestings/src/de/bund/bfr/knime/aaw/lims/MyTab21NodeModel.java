@@ -151,6 +151,21 @@ try {
 				DataCell dc = row.getCell(dtsci);
 				if (!dc.isMissing()) p.setSerovarName(((StringValue) dc).getStringValue());
     		}
+    		dtsci = dts.findColumnIndex("Tierart");
+    		if (dtsci >= 0) {
+				DataCell dc = row.getCell(dtsci);
+				if (!dc.isMissing()) p.setTierart(((StringValue) dc).getStringValue());
+    		}
+    		dtsci = dts.findColumnIndex("Matrix");
+    		if (dtsci >= 0) {
+				DataCell dc = row.getCell(dtsci);
+				if (!dc.isMissing()) p.setMatrix(((StringValue) dc).getStringValue());
+    		}
+    		dtsci = dts.findColumnIndex("Probenahmeort");
+    		if (dtsci >= 0) {
+				DataCell dc = row.getCell(dtsci);
+				if (!dc.isMissing()) p.setProbenahmeort(((StringValue) dc).getStringValue());
+    		}
 
     		for (int i=0;i<dts.getNumColumns();i++) {
     			DataCell dc = row.getCell(i);
@@ -432,7 +447,8 @@ catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();t
     		tab122Row = new ArrayList<Object>();
     		tab122Row.add("Tierart");
         	for (String pkey : pkeys) {
-        		tab122Row.add(""); tab122Row.add("");
+        		Programm p = ps.get(pkey);
+        		tab122Row.add(p.getTierart()); tab122Row.add("");
         		tab122BordersV.add(tab122Row.size()-1);
         	}
     		tab122.add(tab122Row);
@@ -440,7 +456,8 @@ catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();t
     		tab122Row = new ArrayList<Object>();
     		tab122Row.add("Probenahmeort");
         	for (String pkey : pkeys) {
-        		tab122Row.add(""); tab122Row.add("");
+        		Programm p = ps.get(pkey);
+        		tab122Row.add(p.getProbenahmeort()); tab122Row.add("");
         		tab122BordersV.add(tab122Row.size()-1);
         	}
     		tab122.add(tab122Row);
@@ -448,7 +465,8 @@ catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();t
     		tab122Row = new ArrayList<Object>();
     		tab122Row.add("Matrix");
         	for (String pkey : pkeys) {
-        		tab122Row.add(""); tab122Row.add("");
+        		Programm p = ps.get(pkey);
+        		tab122Row.add(p.getMatrix()); tab122Row.add("");
         		tab122BordersV.add(tab122Row.size()-1);
         	}
     		tab122.add(tab122Row);

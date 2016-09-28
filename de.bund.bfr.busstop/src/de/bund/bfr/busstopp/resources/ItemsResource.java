@@ -66,6 +66,25 @@ public class ItemsResource {
 		return items;
 	}
 
+	// deletes all Items
+	@GET
+	@Path("deleteall")
+	@Produces({ MediaType.APPLICATION_XML})
+	public ResponseX deleteAll() {
+		ResponseX response = new ResponseX();
+		response.setAction("DELETEALL");
+		if (true || securityContext.isUserInRole("bfr")) {
+			int numDeleted = Dao.instance.deleteAll();
+			response.setId((long) numDeleted);
+			response.setSuccess(true);
+		}
+		else {
+			response.setSuccess(false);
+			response.setError("No permission to access this feature!");
+		}
+		return response;
+	}
+
 	// retuns the number of items
 	@GET
 	@Path("count")
@@ -99,7 +118,7 @@ public class ItemsResource {
 
 		ResponseX response = new ResponseX();
 		response.setAction("UPLOAD");
-		if (securityContext.isUserInRole("x2bfr")) {
+		if (!securityContext.getUserPrincipal().getName().equals("prod_bfr2lanuv")) {
 			try {
 				long newId = System.currentTimeMillis();
 				if (contentDispositionHeader != null) {

@@ -8,7 +8,7 @@ import java.util.List;
 public class Programm {
 
 	private String name;
-	private String serovarName;
+	private String serovarName, matrix, tierart, probenahmeort;
 	private int numSamples;
 	private HashMap<String, List<Double>> wirkstoffVals;
 	private HashMap<Integer, Integer> numResistentArr;
@@ -50,6 +50,30 @@ public class Programm {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public String getMatrix() {
+		return matrix;
+	}
+
+	public void setMatrix(String matrix) {
+		this.matrix = matrix;
+	}
+
+	public String getTierart() {
+		return tierart;
+	}
+
+	public void setTierart(String tierart) {
+		this.tierart = tierart;
+	}
+
+	public String getProbenahmeort() {
+		return probenahmeort;
+	}
+
+	public void setProbenahmeort(String probenahmeort) {
+		this.probenahmeort = probenahmeort;
 	}
 
 	public int getNumSamples() {
