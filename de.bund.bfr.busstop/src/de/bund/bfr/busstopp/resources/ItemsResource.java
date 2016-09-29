@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -45,7 +46,7 @@ public class ItemsResource {
 	Request request;
     @Context
     SecurityContext securityContext;
-
+    
 	// Return the list of items to the user in the browser
 	@GET
 	@Produces(MediaType.TEXT_XML)
@@ -70,16 +71,18 @@ public class ItemsResource {
 	// deletes all Items
 	@DELETE
 	@Produces({ MediaType.APPLICATION_XML})
-	public ResponseX deleteAll() {
+	public ResponseX deleteAll(@Context HttpServletResponse responseContext) {
 		ResponseX response = new ResponseX();
 		response.setAction("DELETEALL");
+		responseContext.setStatus(HttpServletResponse.SC_OK);
 		if (true || securityContext.isUserInRole("bfr")) {
 			int numDeleted = Dao.instance.deleteAll();
-			response.setId((long) numDeleted);
+			response.setCount(numDeleted);
 			response.setSuccess(true);
 		}
 		else {
-			response.setSuccess(false);
+			response.setSuccess(false);		
+			responseContext.setStatus(HttpServletResponse.SC_FORBIDDEN);
 			response.setError("No permission to access this feature!");
 		}
 		return response;
@@ -114,10 +117,12 @@ public class ItemsResource {
 	@Produces({ MediaType.APPLICATION_XML})
 	public ResponseX itemFile(@FormDataParam("file") InputStream fileInputStream,
 			@FormDataParam("file") FormDataContentDisposition contentDispositionHeader,
-			@FormDataParam("comment") String comment) {
+			@FormDataParam("comment") String comment,
+			@Context HttpServletResponse responseContext) {
 
 		ResponseX response = new ResponseX();
 		response.setAction("UPLOAD");
+		responseContext.setStatus(HttpServletResponse.SC_OK);
 		if (!securityContext.getUserPrincipal().getName().equals("prod_bfr2lanuv")) {
 			try {
 				long newId = System.currentTimeMillis();
@@ -134,7 +139,8 @@ public class ItemsResource {
 					response.setId(newId);
 														
 					if (!isValid) {
-						response.setError("'" + filename + "' konnte nicht validiert werden!");
+						responseContext.setStatus(HttpServletResponse.SC_PRECONDITION_FAILED);
+						response.setError("'" + filename + "' couldn't be validated!");
 						try {
 							item.delete();
 						} catch (IOException e) {
@@ -146,16 +152,19 @@ public class ItemsResource {
 				}
 				else {
 					response.setSuccess(false);
+					responseContext.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 					response.setError("Parameters not correct! Did you use 'file'?");
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
 				response.setSuccess(false);
+				responseContext.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 				response.setError(e.getMessage());
 			}
 		}
 		else {
 			response.setSuccess(false);
+			responseContext.setStatus(HttpServletResponse.SC_FORBIDDEN);
 			response.setError("No permission to access this feature!");
 		}
 		return response;
@@ -211,19 +220,21 @@ public class ItemsResource {
 	    return response.header("Access-Control-Allow-Origin", "*").header("Access-Control-Allow-Methods", "GET, OPTIONS").header("Access-Control-Max-Age", "1000").build();
 	}
 
-	@GET
-	@Path("clearbin")
+	@DELETE
+	@Path("bin")
 	@Produces({ MediaType.APPLICATION_XML})
-	public ResponseX clearBin() {
+	public ResponseX clearBin(@Context HttpServletResponse responseContext) {
 		ResponseX response = new ResponseX();
 		response.setAction("CLEARBIN");
+		responseContext.setStatus(HttpServletResponse.SC_OK);
 		if (securityContext.isUserInRole("bfr")) {
 			int numDeleted = Dao.instance.clearBin();
-			response.setId((long) numDeleted);
+			response.setCount(numDeleted);
 			response.setSuccess(true);
 		}
 		else {
 			response.setSuccess(false);
+			responseContext.setStatus(HttpServletResponse.SC_FORBIDDEN);
 			response.setError("No permission to access this feature!");
 		}
 		return response;

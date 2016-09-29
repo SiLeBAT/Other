@@ -3,6 +3,7 @@ package de.bund.bfr.busstopp.resources;
 import java.io.File;
 import java.io.IOException;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -61,10 +62,11 @@ public class ItemResource {
 
 	@DELETE
 	@Produces({ MediaType.APPLICATION_XML})
-	public ResponseX deleteItem() {
+	public ResponseX deleteItem(@Context HttpServletResponse responseContext) {
 		ResponseX response = new ResponseX();
 		response.setId(id);
 		response.setAction("DELETE");
+		responseContext.setStatus(HttpServletResponse.SC_OK);
 		if (true || securityContext.isUserInRole("x2bfr")) {
 			ItemLoader c = Dao.instance.getModel().get(id);
 			if (c != null) {
@@ -73,6 +75,7 @@ public class ItemResource {
 				} catch (IOException e) {
 					e.printStackTrace();
 					response.setSuccess(false);
+					responseContext.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 					response.setError(e.getMessage());
 				}
 				c = Dao.instance.getModel().remove(id);
@@ -80,11 +83,13 @@ public class ItemResource {
 			}
 			else  {
 				response.setSuccess(false);
+				responseContext.setStatus(HttpServletResponse.SC_PRECONDITION_FAILED);
 				response.setError("ID not found");
 			}
-		}
+		} 
 		else {
 			response.setSuccess(false);
+			responseContext.setStatus(HttpServletResponse.SC_FORBIDDEN);
 			response.setError("No permission to access this feature!");
 		}
 		return response;
