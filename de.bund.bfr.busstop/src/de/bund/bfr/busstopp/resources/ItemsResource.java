@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -20,6 +19,7 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.soap.SOAPException;
 import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.Response;
 
@@ -72,21 +72,21 @@ public class ItemsResource {
 	// deletes all Items
 	@DELETE
 	@Produces({ MediaType.APPLICATION_XML})
-	public ResponseX deleteAll(@Context HttpServletResponse responseContext) {
+	public Response deleteAll() {
 		ResponseX response = new ResponseX();
+		Status status = Response.Status.OK;
 		response.setAction("DELETEALL");
-		responseContext.setStatus(HttpServletResponse.SC_OK);
 		if (true || securityContext.isUserInRole("bfr")) {
 			int numDeleted = Dao.instance.deleteAll();
 			response.setCount(numDeleted);
 			response.setSuccess(true);
 		}
 		else {
-			response.setSuccess(false);		
-			responseContext.setStatus(HttpServletResponse.SC_FORBIDDEN);
+			response.setSuccess(false);	
+			status = Response.Status.FORBIDDEN;
 			response.setError("No permission to access this feature!");
 		}
-		return response;
+		return Response.status(status).entity(response).type(MediaType.APPLICATION_XML).build();
 	}
 
 	// retuns the number of items
@@ -116,14 +116,13 @@ public class ItemsResource {
 	@Path("/upload")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces({ MediaType.APPLICATION_XML})
-	public ResponseX itemFile(@FormDataParam("file") InputStream fileInputStream,
+	public Response itemFile(@FormDataParam("file") InputStream fileInputStream,
 			@FormDataParam("file") FormDataContentDisposition contentDispositionHeader,
-			@FormDataParam("comment") String comment,
-			@Context HttpServletResponse responseContext) {
+			@FormDataParam("comment") String comment) {
 
 		ResponseX response = new ResponseX();
+		Status status = Response.Status.OK;
 		response.setAction("UPLOAD");
-		responseContext.setStatus(HttpServletResponse.SC_OK);
 		if (!securityContext.getUserPrincipal().getName().equals("prod_bfr2lanuv")) {
 			try {
 				long newId = System.currentTimeMillis();
@@ -140,7 +139,7 @@ public class ItemsResource {
 					response.setId(newId);
 														
 					if (!isValid) {
-						responseContext.setStatus(HttpServletResponse.SC_PRECONDITION_FAILED);
+						status = Response.Status.PRECONDITION_FAILED;
 						response.setError("'" + filename + "' couldn't be validated!");
 						try {
 							item.delete();
@@ -153,22 +152,22 @@ public class ItemsResource {
 				}
 				else {
 					response.setSuccess(false);
-					responseContext.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-					response.setError("Parameters not correct! Did you use 'file'?");
+					status = Response.Status.BAD_REQUEST;
+				response.setError("Parameters not correct! Did you use 'file'?");
 				}
 			} catch (IOException | SOAPException e) {
 				e.printStackTrace();
 				response.setSuccess(false);
-				responseContext.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+				status = Response.Status.INTERNAL_SERVER_ERROR;
 				response.setError(e.getMessage());
 			}
 		}
 		else {
 			response.setSuccess(false);
-			responseContext.setStatus(HttpServletResponse.SC_FORBIDDEN);
+			status = Response.Status.FORBIDDEN;
 			response.setError("No permission to access this feature!");
 		}
-		return response;
+		return Response.status(status).entity(response).type(MediaType.APPLICATION_XML).build();
 	}
 
 
@@ -224,10 +223,10 @@ public class ItemsResource {
 	@DELETE
 	@Path("bin")
 	@Produces({ MediaType.APPLICATION_XML})
-	public ResponseX clearBin(@Context HttpServletResponse responseContext) {
+	public Response clearBin() {
 		ResponseX response = new ResponseX();
+		Status status = Response.Status.OK;
 		response.setAction("CLEARBIN");
-		responseContext.setStatus(HttpServletResponse.SC_OK);
 		if (securityContext.isUserInRole("bfr")) {
 			int numDeleted = Dao.instance.clearBin();
 			response.setCount(numDeleted);
@@ -235,9 +234,9 @@ public class ItemsResource {
 		}
 		else {
 			response.setSuccess(false);
-			responseContext.setStatus(HttpServletResponse.SC_FORBIDDEN);
+			status = Response.Status.FORBIDDEN;
 			response.setError("No permission to access this feature!");
 		}
-		return response;
+		return Response.status(status).entity(response).type(MediaType.APPLICATION_XML).build();
 	}
 }
