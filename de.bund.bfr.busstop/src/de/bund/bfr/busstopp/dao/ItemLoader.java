@@ -27,6 +27,7 @@ public class ItemLoader {
 			xml.setId(id);
 			File[] paths = folder.listFiles();
 			for (File path : paths) {
+				//System.out.println(path.getName() + " - " + path.getName().equals(Constants.DELETED_FILENAME));
 				if (path.getName().equals(Constants.COMMENT_FILENAME)) {
 					try {
 						xml.getIn().setComment(loadFile(path));
@@ -39,7 +40,7 @@ public class ItemLoader {
 				}
 				else {
 					xml.getIn().setFilename(path.getName());
-					break;				
+					//break;				
 				}
 			}
 		}
@@ -96,7 +97,6 @@ public class ItemLoader {
 			int read = 0;
 			byte[] bytes = new byte[1024];
 
-			outpuStream = new FileOutputStream(new File(serverLocation));
 			while ((read = uploadedInputStream.read(bytes)) != -1) {
 				outpuStream.write(bytes, 0, read);
 			}
@@ -105,6 +105,7 @@ public class ItemLoader {
 	}
 	public void delete() throws IOException {
 		String deletedPath = Constants.SERVER_UPLOAD_LOCATION_FOLDER + xml.getId() + "/" + Constants.DELETED_FILENAME;
-		saveFile("", deletedPath);
+		saveFile(" 123 ", deletedPath);
+		deleted = true;
 	}
 }
