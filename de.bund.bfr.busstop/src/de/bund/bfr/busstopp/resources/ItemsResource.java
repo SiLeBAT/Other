@@ -18,6 +18,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
+import javax.xml.soap.SOAPException;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.Response;
@@ -133,8 +134,8 @@ public class ItemsResource {
 					String filePath = item.save(fileInputStream);
 					Dao.instance.getModel().put(newId, item);
 
-					boolean isValid = new XmlValidator().validate(filePath);
-					isValid = true;
+					boolean isValid = new XmlValidator().validateViaRequest(filePath);
+					//isValid = true;
 					response.setSuccess(isValid);
 					response.setId(newId);
 														
@@ -155,7 +156,7 @@ public class ItemsResource {
 					responseContext.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 					response.setError("Parameters not correct! Did you use 'file'?");
 				}
-			} catch (IOException e) {
+			} catch (IOException | SOAPException e) {
 				e.printStackTrace();
 				response.setSuccess(false);
 				responseContext.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);

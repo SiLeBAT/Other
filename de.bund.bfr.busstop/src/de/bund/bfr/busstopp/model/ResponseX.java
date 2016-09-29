@@ -7,7 +7,7 @@ public class ResponseX {
 	
 	private boolean success;	
 	private Long id;
-	private int count;
+	private Integer count;
 
 	private String error;
 	private String action;
@@ -44,11 +44,11 @@ public class ResponseX {
 		this.success = success;
 	}
 
-	public int getCount() {
+	public Integer getCount() {
 		return count;
 	}
 
-	public void setCount(int count) {
+	public void setCount(Integer count) {
 		this.count = count;
 	}
 }
