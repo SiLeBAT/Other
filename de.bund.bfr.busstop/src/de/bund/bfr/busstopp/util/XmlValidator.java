@@ -31,7 +31,9 @@ public class XmlValidator {
 		System.err.println(new XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/Anleitung_pmmlab.txt"));
 		System.err.println(new XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/bbk/bbk1.xml"));
 		System.err.println(new XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/out.xml"));
-		System.err.println(new XmlValidator().createRequest("/Users/arminweiser/Downloads/null.txt"));
+		System.err.println(new XmlValidator().validateViaRequest("/Users/arminweiser/Downloads/null.txt"));
+		System.err.println(new XmlValidator().validateViaRequest("/Users/arminweiser/Downloads/null2.txt"));
+		System.err.println(new XmlValidator().validateViaRequest("/Users/arminweiser/Downloads/null3.txt"));
 	}
 
 	public boolean validate(String filename) {
@@ -54,7 +56,7 @@ public class XmlValidator {
 	/**
 	   * Creates a request from an XML template
 	   */
-	  private boolean createRequest(String filename) throws SOAPException, IOException {
+	  public boolean validateViaRequest(String filename) throws SOAPException, IOException {
 		boolean result = true;
 	    InputStream template = new FileInputStream(new File(filename));
 	    try {

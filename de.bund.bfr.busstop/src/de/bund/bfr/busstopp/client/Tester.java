@@ -3,7 +3,6 @@ package de.bund.bfr.busstopp.client;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
 import java.security.KeyManagementException;
