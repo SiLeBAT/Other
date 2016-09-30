@@ -28,10 +28,11 @@ import javax.xml.validation.*;
 public class XmlValidator {
 
 	public static void main(String[] args) throws SOAPException, IOException {
-		System.err.println(new XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/Anleitung_pmmlab.txt"));
-		System.err.println(new XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/bbk/bbk1.xml"));
-		System.err.println(new XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/out.xml"));
-		System.err.println(new XmlValidator().validateViaRequest("/Users/arminweiser/Downloads/null.txt"));
+		//System.err.println(new XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/Anleitung_pmmlab.txt"));
+		//System.err.println(new XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/bbk/bbk1.xml"));
+		//System.err.println(new XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/out.xml"));
+		//System.err.println(new XmlValidator().validateViaRequest("/Users/arminweiser/Downloads/null.txt"));
+		System.err.println(new XmlValidator().validateViaRequest("C:/Users/weiser/Downloads/kontrollpunktmeldung.txt"));
 	}
 
 	public boolean validate(String filename) {
@@ -56,6 +57,7 @@ public class XmlValidator {
 	   */
 	  public boolean validateViaRequest(String filename) throws SOAPException, IOException {
 		boolean result = true;
+		boolean found = false;
 	    InputStream template = new FileInputStream(new File(filename));
 	    try {
 	      MessageFactory mf = MessageFactory.newInstance(); // SOAPConstants.SOAP_1_1_PROTOCOL
@@ -70,13 +72,14 @@ public class XmlValidator {
                   if (nln.getNodeName().endsWith("kontrollpunktmeldung")) {
                       DOMSource ds = new DOMSource(nln);
                       //System.out.println(nln.getNodeName());
-                      result = validate(ds);            	  
+                      result = validate(ds); 
+                      found = true;
                   }
         	  }
         	  else break;
           }
 
-	      return result;
+	      return result && found;
 	    } catch (Exception e) {
 		    return false;
 	    } finally {
