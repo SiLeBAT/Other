@@ -60,7 +60,6 @@ public class FlinkTest {
 	@SuppressWarnings("serial")
 	public static void main(String[] args) throws Exception {
 		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-
 		List<Double> result = env.generateSequence(0, nodes.size() - 1).map(new MapFunction<Long, Double>() {
 
 			@Override
