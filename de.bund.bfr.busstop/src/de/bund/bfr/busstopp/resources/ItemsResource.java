@@ -192,6 +192,7 @@ public class ItemsResource {
 			    ResponseBuilder response = Response.noContent();
 			    if (zipfile.exists() && zipfile.isFile()) {
 				    response = Response.ok((Object) zipfile);
+				    //response.setContentType("application/zip");
 				    response.header("Content-Disposition", "attachment; filename=" + zipfile.getName());
 			    }
 			    return response.build();

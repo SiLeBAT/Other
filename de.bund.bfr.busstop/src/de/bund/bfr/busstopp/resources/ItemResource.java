@@ -166,16 +166,4 @@ public class ItemResource {
 			return "";
 		}
 	}
-	@GET
-	@Path("zip")
-	@Produces(MediaType.TEXT_PLAIN)
-	public String getAllZipped() {
-		if (securityContext.isUserInRole("bfr2x")) {
-			return "todo...";
-		}
-		else {
-			return "";
-		}
-	}
-	
 }

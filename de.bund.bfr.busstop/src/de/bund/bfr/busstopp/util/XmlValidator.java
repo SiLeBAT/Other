@@ -31,8 +31,8 @@ public class XmlValidator {
 		//System.err.println(new XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/Anleitung_pmmlab.txt"));
 		//System.err.println(new XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/bbk/bbk1.xml"));
 		//System.err.println(new XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/out.xml"));
-		//System.err.println(new XmlValidator().validateViaRequest("/Users/arminweiser/Downloads/null.txt"));
-		System.err.println(new XmlValidator().validateViaRequest("C:/Users/weiser/Downloads/kontrollpunktmeldung.txt"));
+		System.err.println(new XmlValidator().validateViaRequest("/Users/arminweiser/Downloads/null6.txt"));
+		//System.err.println(new XmlValidator().validateViaRequest("C:/Users/weiser/Downloads/kontrollpunktmeldung.txt"));
 	}
 
 	public boolean validate(String filename) {
@@ -41,8 +41,8 @@ public class XmlValidator {
 	private boolean validate(Source ds) {
         try {
             SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-       	  	URL xsd = getClass().getResource("/de/bund/bfr/busstopp/util/xsd/main/de.nrw.verbraucherschutz.idv.dienste.2016.2.warenrueckverfolgung.transport.schema.xsd");
-       	  	//URL xsd = getClass().getResource("/de/bund/bfr/busstopp/util/xsd/main/de.nrw.verbraucherschutz.idv.dienste.2016.2.warenrueckverfolgung.transport.wsdl");
+       	  	URL xsd = getClass().getResource("/de/bund/bfr/busstopp/util/xsd/dienste/de.nrw.verbraucherschutz.idv.dienste.2016.2.warenrueckverfolgung.transport.schema.xsd");
+       	  	//URL xsd = getClass().getResource("/de/bund/bfr/busstopp/util/xsd/dienste/de.nrw.verbraucherschutz.idv.dienste.2016.2.warenrueckverfolgung.transport.wsdl");
        	    Schema schema = factory.newSchema(xsd);
             Validator validator = schema.newValidator();
             validator.validate(ds);
