@@ -2,9 +2,12 @@ package de.bund.bfr.busstopp.resources;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
@@ -14,12 +17,18 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
+import javax.xml.soap.SOAPException;
+
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import de.bund.bfr.busstopp.Constants;
 import de.bund.bfr.busstopp.dao.Dao;
 import de.bund.bfr.busstopp.dao.ItemLoader;
 import de.bund.bfr.busstopp.model.Item;
 import de.bund.bfr.busstopp.model.ResponseX;
+import de.bund.bfr.busstopp.util.SendEmail;
+import de.bund.bfr.busstopp.util.XmlValidator;
 
 import javax.ws.rs.core.UriInfo;
 
@@ -111,7 +120,7 @@ public class ItemResource {
 		if (!securityContext.getUserPrincipal().getName().equals("prod_lanuv2bfr")) {
 			ItemLoader c = Dao.instance.getModel().get(id);
 			if (c == null) return Response.noContent().build();
-			String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + c.getXml().getId() + "/" + c.getXml().getIn().getFilename();
+			String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + c.getXml().getId() + "/" + c.getXml().getOut().getReport();
 			ResponseBuilder response = getDownloadResponse(filename);
 		    return response.build();
 		}
@@ -165,5 +174,56 @@ public class ItemResource {
 		else {
 			return "";
 		}
+	}
+	
+	@POST
+	@Path("/upload")
+	@Consumes(MediaType.MULTIPART_FORM_DATA)
+	@Produces({ MediaType.APPLICATION_XML})
+	public Response resultFile(@FormDataParam("file") InputStream fileInputStream,
+			@FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
+
+		ResponseX response = new ResponseX();
+		Status status = Response.Status.OK;
+		response.setAction("UPLOADRESULTS");
+		if (securityContext.getUserPrincipal().getName().equals("bfr_admin")) {
+			try {
+				if (contentDispositionHeader != null) {
+					ItemLoader c = Dao.instance.getModel().get(id);
+					if (c == null) return Response.noContent().build();
+					c.getXml().getOut().setReport("report.xml");
+					String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + c.getXml().getId() + "/" + c.getXml().getOut().getReport();
+
+					String filePath = c.saveReport(fileInputStream);
+
+					boolean isValid = new XmlValidator().validateViaRequest(filePath);
+					response.setSuccess(isValid);
+					response.setId(id);
+														
+					if (!isValid) {
+						status = Response.Status.PRECONDITION_FAILED;
+						response.setError("'" + filename + "' couldn't be validated!");
+					}
+
+					new SendEmail().doSend("'" + filename + "' mit id '" + id + "' wurde validiert: " + isValid, filePath);
+				}
+				else {
+					response.setSuccess(false);
+					status = Response.Status.BAD_REQUEST;
+				response.setError("Parameters not correct! Did you use 'file'?");
+				}
+			} catch (IOException | SOAPException e) {
+				e.printStackTrace();
+				response.setSuccess(false);
+				status = Response.Status.INTERNAL_SERVER_ERROR;
+				response.setError(e.getMessage());
+			}
+		}
+		else {
+			response.setSuccess(false);
+			status = Response.Status.FORBIDDEN;
+			response.setError("No permission to access this feature!");
+		}
+		return Response.status(status).entity(response).type(MediaType.APPLICATION_XML).build();
 	}
 }

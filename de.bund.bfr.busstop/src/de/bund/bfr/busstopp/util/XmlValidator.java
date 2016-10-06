@@ -69,7 +69,8 @@ public class XmlValidator {
           for(int i=0;i<nl.getLength();i++) {
         	  if (result) {
                   Node nln = nl.item(i);
-                  if (nln.getNodeName().endsWith("kontrollpunktmeldung")) {
+                  String nn = nln.getNodeName();
+                  if (nn.endsWith("kontrollpunktmeldung")) { //  || nn.endsWith("analyseergebnis")
                       DOMSource ds = new DOMSource(nln);
                       //System.out.println(nln.getNodeName());
                       result = validate(ds); 

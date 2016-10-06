@@ -75,6 +75,11 @@ public class ItemLoader {
 		}
 		return everything;
 	}
+	public String saveReport(InputStream fileInputStream) throws IOException {
+		String filePath = Constants.SERVER_UPLOAD_LOCATION_FOLDER + xml.getId() + "/" + xml.getOut().getReport();
+		saveFile(fileInputStream, filePath);
+		return filePath;
+	}
 	public String save(InputStream fileInputStream) throws IOException {
 		String filePath = Constants.SERVER_UPLOAD_LOCATION_FOLDER + xml.getId() + "/" + xml.getIn().getFilename();
 		String commentPath = Constants.SERVER_UPLOAD_LOCATION_FOLDER + xml.getId() + "/" + Constants.COMMENT_FILENAME;

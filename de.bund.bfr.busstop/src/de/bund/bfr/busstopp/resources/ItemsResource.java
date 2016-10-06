@@ -170,7 +170,6 @@ public class ItemsResource {
 		return Response.status(status).entity(response).type(MediaType.APPLICATION_XML).build();
 	}
 
-
 	@GET
 	@Path("files")
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
