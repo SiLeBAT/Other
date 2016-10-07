@@ -55,6 +55,23 @@ public enum Dao {
 		return contentDelProvider;
 	}
 
+	public int clearBin(long id) {
+		int result = 0;
+		try {
+			File path = new File(Constants.SERVER_UPLOAD_LOCATION_FOLDER + File.separator + id);
+			if (path.isDirectory()) {
+				ItemLoader item = new ItemLoader(id, path);
+				if (item.isDeleted()) {
+					contentDelProvider.remove(id);
+					if (deleteDir(path)) result++;
+				}
+			}
+		} catch (Exception e) {
+			// if any error occurs
+			e.printStackTrace();
+		}		
+		return result;
+	}
 	public int clearBin() {
 		int result = 0;
 		try {

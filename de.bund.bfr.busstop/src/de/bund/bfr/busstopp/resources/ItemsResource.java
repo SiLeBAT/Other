@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -186,11 +187,8 @@ public class ItemsResource {
 				List<Item> li = getOutputs(true);
 				for (Item i : li) {
 					Long id = i.getId();
-					ItemLoader c = Dao.instance.getModel().get(id);
-					if (c != null) {
-						String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + c.getXml().getId() + "/" + c.getXml().getIn().getFilename();
-						za.add(new File(filename), id);
-					}
+					String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + id + "/" + i.getIn().getFilename();
+					za.add(new File(filename), id);
 				}
 				za.close();
 			    ResponseBuilder response = Response.noContent();

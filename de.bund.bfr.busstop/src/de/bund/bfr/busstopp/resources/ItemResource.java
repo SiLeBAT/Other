@@ -175,4 +175,24 @@ public class ItemResource {
 			return "";
 		}
 	}	
+	
+	@DELETE
+	@Path("bin")
+	@Produces({ MediaType.APPLICATION_XML})
+	public Response clearBin() {
+		ResponseX response = new ResponseX();
+		Status status = Response.Status.OK;
+		response.setAction("CLEARITEM");
+		if (securityContext.isUserInRole("bfr")) {
+			int numDeleted = Dao.instance.clearBin(id);
+			response.setCount(numDeleted);
+			response.setSuccess(true);
+		}
+		else {
+			response.setSuccess(false);
+			status = Response.Status.FORBIDDEN;
+			response.setError("No permission to access this feature!");
+		}
+		return Response.status(status).entity(response).type(MediaType.APPLICATION_XML).build();
+	}
 }
