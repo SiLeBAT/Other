@@ -12,12 +12,14 @@ public enum Dao {
 	instance;
 
 	private Map<Long, ItemLoader> contentProvider = new LinkedHashMap<>();
+	private Map<Long, ItemLoader> contentDelProvider = new LinkedHashMap<>();
 
 	private Dao() {
 		fillCP();
 	}
 	private void fillCP() {
 		contentProvider = new LinkedHashMap<>();
+		contentDelProvider = new LinkedHashMap<>();
 		try {
 			// create new file
 			File f = new File(Constants.SERVER_UPLOAD_LOCATION_FOLDER);
@@ -33,7 +35,8 @@ public enum Dao {
 					if (path.isDirectory()) {
 						long l = Long.parseLong(path.getName());
 						ItemLoader item = new ItemLoader(l, path);
-						if (!item.isDeleted()) contentProvider.put(l, item);						
+						if (!item.isDeleted()) contentProvider.put(l, item);	
+						else contentDelProvider.put(l, item);
 					}
 				}
 			}
@@ -44,6 +47,9 @@ public enum Dao {
 	}
 	public Map<Long, ItemLoader> getModel() {
 		return contentProvider;
+	}
+	public Map<Long, ItemLoader> getModelDel() {
+		return contentDelProvider;
 	}
 
 	public int clearBin() {
@@ -62,6 +68,7 @@ public enum Dao {
 						long l = Long.parseLong(path.getName());
 						ItemLoader item = new ItemLoader(l, path);
 						if (item.isDeleted()) { //  || item.getXml().getIn().getFilename().indexOf(":") >= 0
+							contentDelProvider.remove(l);
 							if (deleteDir(path)) result++;
 						}
 					}
@@ -76,7 +83,6 @@ public enum Dao {
 	public int deleteAll() {
 		int result = 0;
 		try {
-			// create new file
 			File f = new File(Constants.SERVER_UPLOAD_LOCATION_FOLDER);
 
 			// returns pathnames for files and directory
@@ -91,6 +97,7 @@ public enum Dao {
 						if (!item.isDeleted()) {
 							item.delete();
 							contentProvider.remove(l);
+							contentDelProvider.put(l, item);
 							result++;
 						}
 					}

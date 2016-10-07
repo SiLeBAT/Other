@@ -75,10 +75,8 @@ public class ItemLoader {
 		}
 		return everything;
 	}
-	public String saveReport(InputStream fileInputStream) throws IOException {
-		String filePath = Constants.SERVER_UPLOAD_LOCATION_FOLDER + xml.getId() + "/" + xml.getOut().getReport();
+	public static void saveReport(InputStream fileInputStream, String filePath) throws IOException {
 		saveFile(fileInputStream, filePath);
-		return filePath;
 	}
 	public String save(InputStream fileInputStream) throws IOException {
 		String filePath = Constants.SERVER_UPLOAD_LOCATION_FOLDER + xml.getId() + "/" + xml.getIn().getFilename();
@@ -89,13 +87,13 @@ public class ItemLoader {
 		return filePath;
 	}
 
-	private void saveFile(String input, String filePath) throws IOException {
+	private static void saveFile(String input, String filePath) throws IOException {
 		if (input == null) input = "";
 		InputStream stream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
 		saveFile(stream, filePath);
 	}
 	// save uploaded file to a defined location on the server
-	private void saveFile(InputStream uploadedInputStream, String serverLocation) throws IOException {
+	private static void saveFile(InputStream uploadedInputStream, String serverLocation) throws IOException {
 			File f = new File(serverLocation);
 			f.getParentFile().mkdirs();
 			OutputStream outpuStream = new FileOutputStream(f);

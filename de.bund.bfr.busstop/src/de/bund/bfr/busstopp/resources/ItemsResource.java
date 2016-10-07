@@ -52,19 +52,24 @@ public class ItemsResource {
 	@GET
 	@Produces(MediaType.TEXT_XML)
 	public List<Item> getItems4Browser() {
-		return getOutputs();
+		return getOutputs(false);
 	}
 
 	// Return the list of items for applications
 	@GET
 	@Produces({ MediaType.APPLICATION_XML}) // , MediaType.APPLICATION_JSON 
 	public List<Item> getItems() {
-		return getOutputs();
+		return getOutputs(false);
 	}
-	private List<Item> getOutputs() {
+	private List<Item> getOutputs(boolean inclDeleted) {
 		List<Item> items = new ArrayList<Item>();
 		for (ItemLoader u : Dao.instance.getModel().values()) {
 			items.add(u.getXml());
+		}
+		if (inclDeleted) {
+			for (ItemLoader u : Dao.instance.getModelDel().values()) {
+				items.add(u.getXml());
+			}			
 		}
 		return items;
 	}
@@ -125,15 +130,15 @@ public class ItemsResource {
 		response.setAction("UPLOAD");
 		if (!securityContext.getUserPrincipal().getName().equals("prod_bfr2lanuv")) {
 			try {
-				long newId = System.currentTimeMillis();
 				if (contentDispositionHeader != null) {
 					String filename = contentDispositionHeader.getFileName();
 
+					long newId = System.currentTimeMillis();
 					ItemLoader item = new ItemLoader(newId, filename, comment);
 					String filePath = item.save(fileInputStream);
 					Dao.instance.getModel().put(newId, item);
 
-					boolean isValid = new XmlValidator().validateViaRequest(filePath);
+					boolean isValid = new XmlValidator().validateViaRequest(filePath, "kontrollpunktmeldung");
 					//isValid = true;
 					response.setSuccess(isValid);
 					response.setId(newId);
@@ -178,7 +183,7 @@ public class ItemsResource {
 			try {
 				File zipfile = File.createTempFile("busstop_xmls", ".zip");
 				ZipArchive za = new ZipArchive(zipfile.getAbsolutePath());
-				List<Item> li = getOutputs();
+				List<Item> li = getOutputs(true);
 				for (Item i : li) {
 					Long id = i.getId();
 					ItemLoader c = Dao.instance.getModel().get(id);
@@ -219,6 +224,53 @@ public class ItemsResource {
 	    }
 	    return response.header("Access-Control-Allow-Origin", "*").header("Access-Control-Allow-Methods", "GET, OPTIONS").header("Access-Control-Max-Age", "1000").build();
 	}
+	@POST
+	@Path("/uploadreport")
+	@Consumes(MediaType.MULTIPART_FORM_DATA)
+	@Produces({ MediaType.APPLICATION_XML})
+	public Response resultFile(@FormDataParam("file") InputStream fileInputStream,
+			@FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
+
+		ResponseX response = new ResponseX();
+		Status status = Response.Status.OK;
+		response.setAction("UPLOADREPORT");
+		if (securityContext.getUserPrincipal().getName().equals("bfr_admin")) {
+			try {
+				if (contentDispositionHeader != null) {
+					long id = System.currentTimeMillis();
+					String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + "out_" + id + "/report.bfr";
+					ItemLoader.saveReport(fileInputStream, filename);
+
+					boolean isValid = new XmlValidator().validateViaRequest(filename, "analyseergebnis");
+					response.setSuccess(isValid);
+					response.setId(id);
+														
+					if (!isValid) {
+						status = Response.Status.PRECONDITION_FAILED;
+						response.setError("'" + filename + "' couldn't be validated!");
+					}
+
+					new SendEmail().doSend("'" + filename + "' mit id '" + id + "' wurde validiert: " + isValid, filename);
+				}
+				else {
+					response.setSuccess(false);
+					status = Response.Status.BAD_REQUEST;
+				response.setError("Parameters not correct! Did you use 'file'?");
+				}
+			} catch (IOException | SOAPException e) {
+				e.printStackTrace();
+				response.setSuccess(false);
+				status = Response.Status.INTERNAL_SERVER_ERROR;
+				response.setError(e.getMessage());
+			}
+		}
+		else {
+			response.setSuccess(false);
+			status = Response.Status.FORBIDDEN;
+			response.setError("No permission to access this feature!");
+		}
+		return Response.status(status).entity(response).type(MediaType.APPLICATION_XML).build();
+	}
 
 	@DELETE
 	@Path("bin")
@@ -239,4 +291,5 @@ public class ItemsResource {
 		}
 		return Response.status(status).entity(response).type(MediaType.APPLICATION_XML).build();
 	}
+	
 }

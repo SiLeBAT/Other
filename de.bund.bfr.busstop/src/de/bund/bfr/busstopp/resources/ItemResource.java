@@ -174,56 +174,5 @@ public class ItemResource {
 		else {
 			return "";
 		}
-	}
-	
-	@POST
-	@Path("/upload")
-	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	@Produces({ MediaType.APPLICATION_XML})
-	public Response resultFile(@FormDataParam("file") InputStream fileInputStream,
-			@FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
-
-		ResponseX response = new ResponseX();
-		Status status = Response.Status.OK;
-		response.setAction("UPLOADRESULTS");
-		if (securityContext.getUserPrincipal().getName().equals("bfr_admin")) {
-			try {
-				if (contentDispositionHeader != null) {
-					ItemLoader c = Dao.instance.getModel().get(id);
-					if (c == null) return Response.noContent().build();
-					c.getXml().getOut().setReport("report.xml");
-					String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + c.getXml().getId() + "/" + c.getXml().getOut().getReport();
-
-					String filePath = c.saveReport(fileInputStream);
-
-					boolean isValid = new XmlValidator().validateViaRequest(filePath);
-					response.setSuccess(isValid);
-					response.setId(id);
-														
-					if (!isValid) {
-						status = Response.Status.PRECONDITION_FAILED;
-						response.setError("'" + filename + "' couldn't be validated!");
-					}
-
-					new SendEmail().doSend("'" + filename + "' mit id '" + id + "' wurde validiert: " + isValid, filePath);
-				}
-				else {
-					response.setSuccess(false);
-					status = Response.Status.BAD_REQUEST;
-				response.setError("Parameters not correct! Did you use 'file'?");
-				}
-			} catch (IOException | SOAPException e) {
-				e.printStackTrace();
-				response.setSuccess(false);
-				status = Response.Status.INTERNAL_SERVER_ERROR;
-				response.setError(e.getMessage());
-			}
-		}
-		else {
-			response.setSuccess(false);
-			status = Response.Status.FORBIDDEN;
-			response.setError("No permission to access this feature!");
-		}
-		return Response.status(status).entity(response).type(MediaType.APPLICATION_XML).build();
-	}
+	}	
 }

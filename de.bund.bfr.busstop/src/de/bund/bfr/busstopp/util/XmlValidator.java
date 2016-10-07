@@ -28,38 +28,56 @@ import javax.xml.validation.*;
 public class XmlValidator {
 
 	public static void main(String[] args) throws SOAPException, IOException {
-		//System.err.println(new XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/Anleitung_pmmlab.txt"));
-		//System.err.println(new XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/bbk/bbk1.xml"));
-		//System.err.println(new XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/out.xml"));
-		System.err.println(new XmlValidator().validateViaRequest("/Users/arminweiser/Downloads/null6.txt"));
-		//System.err.println(new XmlValidator().validateViaRequest("C:/Users/weiser/Downloads/kontrollpunktmeldung.txt"));
+		// System.err.println(new
+		// XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/Anleitung_pmmlab.txt"));
+		// System.err.println(new
+		// XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/bbk/bbk1.xml"));
+		// System.err.println(new
+		// XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/out.xml"));
+		System.err.println(new XmlValidator().validateViaRequest("/Users/arminweiser/Downloads/null6.txt", "kontrollpunktmeldung"));
+		// System.err.println(new
+		// XmlValidator().validateViaRequest("C:/Users/weiser/Downloads/kontrollpunktmeldung.txt"));
 	}
 
 	public boolean validate(String filename) {
 		return validate(new StreamSource(new File(filename)));
 	}
+
 	private boolean validate(Source ds) {
-        try {
-            SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-       	  	URL xsd = getClass().getResource("/de/bund/bfr/busstopp/util/xsd/dienste/de.nrw.verbraucherschutz.idv.dienste.2016.2.warenrueckverfolgung.transport.schema.xsd");
-       	  	//URL xsd = getClass().getResource("/de/bund/bfr/busstopp/util/xsd/dienste/de.nrw.verbraucherschutz.idv.dienste.2016.2.warenrueckverfolgung.transport.wsdl");
-       	    Schema schema = factory.newSchema(xsd);
-            Validator validator = schema.newValidator();
-            validator.validate(ds);
-        } catch (IOException | SAXException e) {
-            System.out.println("Exception: "+e.getMessage());
-            return false;
-        }
-        return true;
+		try {
+			SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+			URL xsd = getClass().getResource(
+					//"/de/nrw/verbraucherschutz/idv/dienste/de.nrw.verbraucherschutz.idv.dienste.2016.2.warenrueckverfolgung.transport.schema.xsd");
+					"/de/bund/bfr/busstopp/util/xsd/dienste/de.nrw.verbraucherschutz.idv.dienste.2016.2.warenrueckverfolgung.transport.schema.xsd");
+			// URL xsd =
+			// getClass().getResource("/de/bund/bfr/busstopp/util/xsd/dienste/de.nrw.verbraucherschutz.idv.dienste.2016.2.warenrueckverfolgung.transport.wsdl");
+			Schema schema = factory.newSchema(xsd);
+			Validator validator = schema.newValidator();
+			validator.validate(ds);
+		} catch (IOException | SAXException e) {
+			System.out.println("Exception: " + e.getMessage());
+			return false;
+		}
+		return true;
 	}
+
 	/**
 	   * Creates a request from an XML template
 	   */
-	  public boolean validateViaRequest(String filename) throws SOAPException, IOException {
+	  public boolean validateViaRequest(String filename, String tag) throws SOAPException, IOException {
 		boolean result = true;
 		boolean found = false;
 	    InputStream template = new FileInputStream(new File(filename));
 	    try {
+	    	/*
+			Unmarshaller reader;
+				reader = JAXBContext.newInstance(Meldung.class.getPackage().getName()).createUnmarshaller();
+
+				reader.setSchema(SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
+						.newSchema(Meldung.class.getResource(
+								"/de/nrw/verbraucherschutz/idv/dienste/de.nrw.verbraucherschutz.idv.dienste.2016.2.warenrueckverfolgung.transport.schema.xsd")));
+								//"/de/bund/bfr/busstopp/util/xsd/dienste/de.nrw.verbraucherschutz.idv.dienste.2016.2.warenrueckverfolgung.transport.schema.xsd")));
+	      */
 	      MessageFactory mf = MessageFactory.newInstance(); // SOAPConstants.SOAP_1_1_PROTOCOL
 	      SOAPMessage message = mf.createMessage(new MimeHeaders(), template);
 	      SOAPPart sp = message.getSOAPPart();
@@ -70,11 +88,14 @@ public class XmlValidator {
         	  if (result) {
                   Node nln = nl.item(i);
                   String nn = nln.getNodeName();
-                  if (nn.endsWith("kontrollpunktmeldung")) { //  || nn.endsWith("analyseergebnis")
+                  if (nn.endsWith(":" + tag)) { //  || nn.endsWith("analyseergebnis")
                       DOMSource ds = new DOMSource(nln);
                       //System.out.println(nln.getNodeName());
                       result = validate(ds); 
                       found = true;
+                      if (result) {
+                    	  //Kontrollpunktmeldung kpm = ((JAXBElement<Kontrollpunktmeldung>) reader.unmarshal(ds)).getValue();
+                      }
                   }
         	  }
         	  else break;
@@ -86,5 +107,6 @@ public class XmlValidator {
 	    } finally {
 	      template.close();
 	    }
-	  }	
+	  }
+	  
 }
