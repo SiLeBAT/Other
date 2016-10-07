@@ -88,7 +88,7 @@ public class Tester {
     //InputStream stream = service.path("rest").path("items").path("1475072126404").path("file").request().accept(MediaType.APPLICATION_OCTET_STREAM).get(InputStream.class);
     
     //Upload a ItemLoader
-    //upload(usr, pwd, "/Users/arminweiser/Downloads/null.txt", "kommentar_gs1");
+    //upload(usr, pwd, "/Users/arminweiser/Downloads/null6.txt", "kommentar_gs1");
     //upload(usr, pwd, "/Users/arminweiser/Desktop/xml_test/bbk/bbk1.xml", "kommentar_gs1");
     //upload(usr, pwd, "/Users/arminweiser/Desktop/xml_test/Anleitung_pmmlab.txt", "kommentar_gs2");
     //upload(usr, pwd, "C:/Users/Armin/Desktop/Pressemitteilung.docx", "kommentar_gs3");
@@ -98,8 +98,8 @@ public class Tester {
   }
 
   private static URI getBaseURI() {
-	    //return UriBuilder.fromUri("http://localhost:8080/de.bund.bfr.busstopp").build();
-	    return UriBuilder.fromUri("https://foodrisklabs.bfr.bund.de/de.bund.bfr.busstopp/").build();
+	    return UriBuilder.fromUri("http://localhost:8080/de.bund.bfr.busstopp").build();
+	    //return UriBuilder.fromUri("https://foodrisklabs.bfr.bund.de/de.bund.bfr.busstopp/").build();
 	    //return UriBuilder.fromUri("https://localhost:8443/de.bund.bfr.busstopp/").build();
   }
   private static Client getCertClient(String usr, String pwd) throws KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException {
