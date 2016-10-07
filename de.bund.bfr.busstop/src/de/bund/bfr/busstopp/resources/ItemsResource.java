@@ -247,6 +247,9 @@ public class ItemsResource {
 						status = Response.Status.PRECONDITION_FAILED;
 						response.setError("'" + filename + "' couldn't be validated!");
 					}
+					else {
+						Dao.outFolder = Constants.SERVER_UPLOAD_LOCATION_FOLDER + "out_" + id;
+					}
 
 					new SendEmail().doSend("'" + filename + "' mit id '" + id + "' wurde validiert: " + isValid, filename);
 				}
