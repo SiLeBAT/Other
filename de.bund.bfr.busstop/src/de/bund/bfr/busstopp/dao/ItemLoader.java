@@ -14,6 +14,9 @@ import de.bund.bfr.busstopp.Constants;
 import de.bund.bfr.busstopp.model.Item;
 
 public class ItemLoader {
+	private static final String COMMENT_FILENAME = ".comment.txt";
+	private static final String DELETED_FILENAME = ".deleted.txt";
+
 	private Item xml = new Item();
 	private boolean deleted = false;
 
@@ -28,18 +31,19 @@ public class ItemLoader {
 			File[] paths = folder.listFiles();
 			for (File path : paths) {
 				//System.out.println(path.getName() + " - " + path.getName().equals(Constants.DELETED_FILENAME));
-				if (path.getName().equals(Constants.COMMENT_FILENAME)) {
+				String pn = path.getName();
+				if (pn.equals(COMMENT_FILENAME) || pn.equals(COMMENT_FILENAME.substring(1))) {
 					try {
 						xml.getIn().setComment(loadFile(path));
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
 				}
-				else if (path.getName().equals(Constants.DELETED_FILENAME)) {
+				else if (pn.equals(DELETED_FILENAME) || pn.equals(DELETED_FILENAME.substring(1))) {
 					deleted = true;
 				}
 				else {
-					xml.getIn().setFilename(path.getName());
+					xml.getIn().setFilename(pn);
 					//break;				
 				}
 			}
@@ -80,7 +84,7 @@ public class ItemLoader {
 	}
 	public String save(InputStream fileInputStream) throws IOException {
 		String filePath = Constants.SERVER_UPLOAD_LOCATION_FOLDER + xml.getId() + "/" + xml.getIn().getFilename();
-		String commentPath = Constants.SERVER_UPLOAD_LOCATION_FOLDER + xml.getId() + "/" + Constants.COMMENT_FILENAME;
+		String commentPath = Constants.SERVER_UPLOAD_LOCATION_FOLDER + xml.getId() + "/" + COMMENT_FILENAME;
 		// save the file to the server
 		saveFile(fileInputStream, filePath);
 		saveFile(xml.getIn().getComment(), commentPath);
@@ -107,8 +111,8 @@ public class ItemLoader {
 			outpuStream.close();
 	}
 	public void delete() throws IOException {
-		String deletedPath = Constants.SERVER_UPLOAD_LOCATION_FOLDER + xml.getId() + "/" + Constants.DELETED_FILENAME;
-		saveFile(" 123 ", deletedPath);
+		String deletedPath = Constants.SERVER_UPLOAD_LOCATION_FOLDER + xml.getId() + "/" + DELETED_FILENAME;
+		saveFile(" ", deletedPath);
 		deleted = true;
 	}
 }
