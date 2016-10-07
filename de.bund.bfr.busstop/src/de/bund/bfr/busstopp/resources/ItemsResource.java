@@ -236,7 +236,7 @@ public class ItemsResource {
 			try {
 				if (contentDispositionHeader != null) {
 					long id = System.currentTimeMillis();
-					String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + "out_" + id + "/report.bfr";
+					String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + "out_" + id + File.separator + "report.bfr";
 					ItemLoader.saveReport(fileInputStream, filename);
 
 					boolean isValid = new XmlValidator().validateViaRequest(filename, "analyseergebnis");

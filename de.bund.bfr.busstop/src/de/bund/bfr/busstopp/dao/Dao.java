@@ -13,6 +13,8 @@ public enum Dao {
 
 	private Map<Long, ItemLoader> contentProvider = new LinkedHashMap<>();
 	private Map<Long, ItemLoader> contentDelProvider = new LinkedHashMap<>();
+	
+	public static String outFolder = null;
 
 	private Dao() {
 		fillCP();
@@ -39,6 +41,9 @@ public enum Dao {
 							ItemLoader item = new ItemLoader(l, path);
 							if (!item.isDeleted()) contentProvider.put(l, item);	
 							else contentDelProvider.put(l, item);
+						}
+						else {
+							if (outFolder == null) outFolder = path.getAbsolutePath();
 						}
 					}
 				}

@@ -117,10 +117,12 @@ public class ItemResource {
 	@Path("file")
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
 	public Response getFile() {
-		if (!securityContext.getUserPrincipal().getName().equals("prod_lanuv2bfr")) {
+		if (Dao.outFolder != null && !securityContext.getUserPrincipal().getName().equals("prod_lanuv2bfr")) {
+			/*
 			ItemLoader c = Dao.instance.getModel().get(id);
 			if (c == null) return Response.noContent().build();
-			String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + c.getXml().getId() + "/" + c.getXml().getOut().getReport();
+			*/
+			String filename = Dao.outFolder + File.separator + "report.bfr";//Constants.SERVER_UPLOAD_LOCATION_FOLDER + c.getXml().getId() + "/" + c.getXml().getOut().getReport();
 			ResponseBuilder response = getDownloadResponse(filename);
 		    return response.build();
 		}
