@@ -82,7 +82,8 @@ public class Tester {
     //System.out.println(service.path("rest").path("items").request().accept(MediaType.APPLICATION_XML).delete(String.class));
     //System.out.println(service.path("rest").path("items").path("bin").request().accept(MediaType.APPLICATION_XML).delete(String.class));
     //Delete ItemLoader with id 1    
-    //Response response = service.path("rest").path("items").path("1474926314907").request().delete(); System.out.println("Form response " + response.getStatus() + "\n" + response.readEntity(String.class));
+    //Response response = service.path("rest").path("items").path("1475223833772").path("bin").request().delete(); System.out.println("Form response " + response.getStatus() + "\n" + response.readEntity(String.class));
+    //response = service.path("rest").path("items").path("1475223631107").path("bin").request().delete(); System.out.println("Form response " + response.getStatus() + "\n" + response.readEntity(String.class));
 
     //System.out.println(service.path("rest").path("items").path("rdt_json").request().accept(MediaType.APPLICATION_JSON).get(String.class));
     //InputStream stream = service.path("rest").path("items").path("files").request().accept(MediaType.APPLICATION_OCTET_STREAM).get(InputStream.class);
@@ -101,8 +102,8 @@ public class Tester {
   }
 
   private static URI getBaseURI() {
-	    return UriBuilder.fromUri("http://localhost:8080/de.bund.bfr.busstopp").build();
-	    //return UriBuilder.fromUri("https://foodrisklabs.bfr.bund.de/de.bund.bfr.busstopp/").build();
+	    //return UriBuilder.fromUri("http://localhost:8080/de.bund.bfr.busstopp").build();
+	    return UriBuilder.fromUri("https://foodrisklabs.bfr.bund.de/de.bund.bfr.busstopp/").build();
 	    //return UriBuilder.fromUri("https://localhost:8443/de.bund.bfr.busstopp/").build();
   }
   private static Client getCertClient(String usr, String pwd) throws KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException {
