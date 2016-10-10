@@ -128,7 +128,8 @@ public class ItemsResource {
 		ResponseX response = new ResponseX();
 		Status status = Response.Status.OK;
 		response.setAction("UPLOAD");
-		if (!securityContext.getUserPrincipal().getName().equals("prod_bfr2lanuv")) {
+		String un = securityContext.getUserPrincipal().getName();
+		if (!un.equals("prod_bfr2lanuv")) {
 			try {
 				if (contentDispositionHeader != null) {
 					String filename = contentDispositionHeader.getFileName();
@@ -139,7 +140,9 @@ public class ItemsResource {
 					Dao.instance.getModel().put(newId, item);
 
 					String[] tags = new String[]{"kontrollpunktmeldung"};
-					if (securityContext.isUserInRole("bfr")) tags = new String[]{"kontrollpunktmeldung","analyseergebnis"};
+					if (securityContext.isUserInRole("bfr") || un.equals("cgi_qs_bfr2cgi") || un.equals("cgi_abnahme_bfr2cgi")) {
+						tags = new String[]{"kontrollpunktmeldung","analyseergebnis"};
+					}
 					boolean isValid = new XmlValidator().validateViaRequest(filePath, tags);
 					//isValid = true;
 					response.setSuccess(isValid);
