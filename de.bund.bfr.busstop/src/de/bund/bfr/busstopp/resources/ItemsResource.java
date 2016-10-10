@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -139,7 +138,9 @@ public class ItemsResource {
 					String filePath = item.save(fileInputStream);
 					Dao.instance.getModel().put(newId, item);
 
-					boolean isValid = new XmlValidator().validateViaRequest(filePath, "kontrollpunktmeldung");
+					String[] tags = new String[]{"kontrollpunktmeldung"};
+					if (securityContext.isUserInRole("bfr")) tags = new String[]{"kontrollpunktmeldung","analyseergebnis"};
+					boolean isValid = new XmlValidator().validateViaRequest(filePath, tags);
 					//isValid = true;
 					response.setSuccess(isValid);
 					response.setId(newId);
@@ -187,7 +188,7 @@ public class ItemsResource {
 				List<Item> li = getOutputs(true);
 				for (Item i : li) {
 					Long id = i.getId();
-					String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + id + "/" + i.getIn().getFilename();
+					String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + id + "/" + i.getFilename();
 					za.add(new File(filename), id);
 				}
 				za.close();
@@ -208,7 +209,7 @@ public class ItemsResource {
 			return Response.noContent().build();
 		}
 	}
-
+/*
 	@GET
 	@Path("rdt_json")
 	@Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
@@ -222,57 +223,7 @@ public class ItemsResource {
 	    }
 	    return response.header("Access-Control-Allow-Origin", "*").header("Access-Control-Allow-Methods", "GET, OPTIONS").header("Access-Control-Max-Age", "1000").build();
 	}
-	@POST
-	@Path("/uploadreport")
-	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	@Produces({ MediaType.APPLICATION_XML})
-	public Response resultFile(@FormDataParam("file") InputStream fileInputStream,
-			@FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
-
-		ResponseX response = new ResponseX();
-		Status status = Response.Status.OK;
-		response.setAction("UPLOADREPORT");
-		if (securityContext.getUserPrincipal().getName().equals("bfr_admin")) {
-			try {
-				if (contentDispositionHeader != null) {
-					long id = System.currentTimeMillis();
-					String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + "out_" + id + File.separator + "report.bfr";
-					ItemLoader.saveReport(fileInputStream, filename);
-
-					boolean isValid = new XmlValidator().validateViaRequest(filename, "analyseergebnis");
-					response.setSuccess(isValid);
-					response.setId(id);
-														
-					if (!isValid) {
-						status = Response.Status.PRECONDITION_FAILED;
-						response.setError("'" + filename + "' couldn't be validated!");
-					}
-					else {
-						Dao.outFolder = Constants.SERVER_UPLOAD_LOCATION_FOLDER + "out_" + id;
-					}
-
-					new SendEmail().doSend("'" + filename + "' mit id '" + id + "' wurde validiert: " + isValid, filename);
-				}
-				else {
-					response.setSuccess(false);
-					status = Response.Status.BAD_REQUEST;
-				response.setError("Parameters not correct! Did you use 'file'?");
-				}
-			} catch (IOException | SOAPException e) {
-				e.printStackTrace();
-				response.setSuccess(false);
-				status = Response.Status.INTERNAL_SERVER_ERROR;
-				response.setError(e.getMessage());
-			}
-		}
-		else {
-			response.setSuccess(false);
-			status = Response.Status.FORBIDDEN;
-			response.setError("No permission to access this feature!");
-		}
-		return Response.status(status).entity(response).type(MediaType.APPLICATION_XML).build();
-	}
-
+*/
 	@DELETE
 	@Path("bin")
 	@Produces({ MediaType.APPLICATION_XML})

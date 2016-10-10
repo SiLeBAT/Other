@@ -34,7 +34,7 @@ public class XmlValidator {
 		// XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/bbk/bbk1.xml"));
 		// System.err.println(new
 		// XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/out.xml"));
-		System.err.println(new XmlValidator().validateViaRequest("/Users/arminweiser/Downloads/null6.txt", "kontrollpunktmeldung"));
+		System.err.println(new XmlValidator().validateViaRequest("/Users/arminweiser/Downloads/null6.txt", new String[] {"kontrollpunktmeldung"}));
 		// System.err.println(new
 		// XmlValidator().validateViaRequest("C:/Users/weiser/Downloads/kontrollpunktmeldung.txt"));
 	}
@@ -64,7 +64,7 @@ public class XmlValidator {
 	/**
 	   * Creates a request from an XML template
 	   */
-	  public boolean validateViaRequest(String filename, String tag) throws SOAPException, IOException {
+	  public boolean validateViaRequest(String filename, String[] tags) throws SOAPException, IOException {
 		boolean result = true;
 		boolean found = false;
 	    InputStream template = new FileInputStream(new File(filename));
@@ -88,7 +88,14 @@ public class XmlValidator {
         	  if (result) {
                   Node nln = nl.item(i);
                   String nn = nln.getNodeName();
-                  if (nn.endsWith(":" + tag)) { //  || nn.endsWith("analyseergebnis")
+                  boolean tagAllowed = false;
+                  for (String tag : tags) {
+                	  if (nn.endsWith(":" + tag)) {
+                		  tagAllowed = true;
+                		  break;
+                	  }
+                  }
+                  if (tagAllowed) { //  || nn.endsWith("analyseergebnis")
                       DOMSource ds = new DOMSource(nln);
                       //System.out.println(nln.getNodeName());
                       result = validate(ds); 

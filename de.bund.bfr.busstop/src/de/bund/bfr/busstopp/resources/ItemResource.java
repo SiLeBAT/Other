@@ -2,12 +2,9 @@ package de.bund.bfr.busstopp.resources;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 
-import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
@@ -17,18 +14,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
-import javax.xml.soap.SOAPException;
-
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import de.bund.bfr.busstopp.Constants;
 import de.bund.bfr.busstopp.dao.Dao;
 import de.bund.bfr.busstopp.dao.ItemLoader;
 import de.bund.bfr.busstopp.model.Item;
 import de.bund.bfr.busstopp.model.ResponseX;
-import de.bund.bfr.busstopp.util.SendEmail;
-import de.bund.bfr.busstopp.util.XmlValidator;
 
 import javax.ws.rs.core.UriInfo;
 
@@ -117,44 +108,12 @@ public class ItemResource {
 	@Path("file")
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
 	public Response getFile() {
-		if (Dao.outFolder != null && !securityContext.getUserPrincipal().getName().equals("prod_lanuv2bfr")) {
-			/*
-			ItemLoader c = Dao.instance.getModel().get(id);
-			if (c == null) return Response.noContent().build();
-			*/
-			String filename = Dao.outFolder + File.separator + "report.bfr";//Constants.SERVER_UPLOAD_LOCATION_FOLDER + c.getXml().getId() + "/" + c.getXml().getOut().getReport();
-			ResponseBuilder response = getDownloadResponse(filename);
-		    return response.build();
-		}
-		else {
-			return Response.noContent().build();
-		}
-	}
-	@GET
-	@Path("workflow")
-	@Produces(MediaType.APPLICATION_OCTET_STREAM)
-	public Response getWorkflow() {
-		if (securityContext.isUserInRole("bfr2x")) {
-			ItemLoader c = Dao.instance.getModel().get(id);
-			if (c == null) return Response.noContent().build();
-			String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + c.getXml().getId() + "/" + c.getXml().getOut().getWorkflow();
-			ResponseBuilder response = getDownloadResponse(filename);
-			return response.build();
-		}
-		else {
-			return Response.noContent().build();
-		}
-	}
-	@GET
-	@Path("report")
-	@Produces(MediaType.APPLICATION_OCTET_STREAM)
-	public Response getReport() {
-		if (securityContext.isUserInRole("bfr2x")) {
-			ItemLoader c = Dao.instance.getModel().get(id);
-			if (c == null) return Response.noContent().build();
-			String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + c.getXml().getId() + "/" + c.getXml().getOut().getReport();
-			ResponseBuilder response = getDownloadResponse(filename);
-		    return response.build();
+		if (!securityContext.getUserPrincipal().getName().equals("prod_lanuv2bfr")) {
+ 			ItemLoader c = Dao.instance.getModel().get(id);
+ 			if (c == null) return Response.noContent().build();
+			String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + c.getXml().getId() + "/" + c.getXml().getFilename();
+ 			ResponseBuilder response = getDownloadResponse(filename);
+ 		    return response.build();
 		}
 		else {
 			return Response.noContent().build();
@@ -167,7 +126,7 @@ public class ItemResource {
 		if (securityContext.isUserInRole("bfr2x")) {
 			ItemLoader c = Dao.instance.getModel().get(id);
 			if (c != null) {
-			    return c.getXml().getOut().getComment();
+			    return c.getXml().getComment();
 			}
 			else {
 				return "";

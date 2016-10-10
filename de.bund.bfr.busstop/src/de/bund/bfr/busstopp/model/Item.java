@@ -5,8 +5,24 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class Item {
 	private Long id;
-	private Inbound in = new Inbound();
-	private Outbound out = new Outbound();
+	private String filename = "";
+	private String comment = "";
+
+	public String getFilename() {
+		return filename;
+	}
+
+	public void setFilename(String filename) {
+		this.filename = filename;
+	}
+
+	public String getComment() {
+		return comment;
+	}
+
+	public void setComment(String comment) {
+		this.comment = comment;
+	}
 
 	public Long getId() {
 		return id;
@@ -14,21 +30,5 @@ public class Item {
 
 	public void setId(Long id) {
 		this.id = id;
-	}
-
-	public Inbound getIn() {
-		return in;
-	}
-
-	public void setIn(Inbound in) {
-		this.in = in;
-	}
-
-	public Outbound getOut() {
-		return out;
-	}
-
-	public void setOut(Outbound out) {
-		this.out = out;
 	}
 }

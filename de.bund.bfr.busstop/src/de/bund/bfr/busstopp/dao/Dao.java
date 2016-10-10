@@ -14,8 +14,6 @@ public enum Dao {
 	private Map<Long, ItemLoader> contentProvider = new LinkedHashMap<>();
 	private Map<Long, ItemLoader> contentDelProvider = new LinkedHashMap<>();
 	
-	public static String outFolder = null;
-
 	private Dao() {
 		fillCP();
 	}
@@ -36,14 +34,14 @@ public enum Dao {
 					//System.out.println(path);
 					if (path.isDirectory()) {
 						String pn = path.getName();
-						if (!pn.startsWith("out_")) {
+						if (pn.startsWith("out_")) {
+							deleteDir(path);
+						}
+						else {
 							long l = Long.parseLong(pn);
 							ItemLoader item = new ItemLoader(l, path);
 							if (!item.isDeleted()) contentProvider.put(l, item);	
 							else contentDelProvider.put(l, item);
-						}
-						else {
-							if (outFolder == null) outFolder = path.getAbsolutePath();
 						}
 					}
 				}
@@ -91,13 +89,11 @@ public enum Dao {
 					//System.out.println(path);
 					if (path.isDirectory()) {
 						String pn = path.getName();
-						if (!pn.startsWith("out_")) {
-							long l = Long.parseLong(pn);
-							ItemLoader item = new ItemLoader(l, path);
-							if (item.isDeleted()) { //  || item.getXml().getIn().getFilename().indexOf(":") >= 0
-								contentDelProvider.remove(l);
-								if (deleteDir(path)) result++;
-							}
+						long l = Long.parseLong(pn);
+						ItemLoader item = new ItemLoader(l, path);
+						if (item.isDeleted()) { //  || item.getXml().getIn().getFilename().indexOf(":") >= 0
+							contentDelProvider.remove(l);
+							if (deleteDir(path)) result++;
 						}
 					}
 				}
@@ -121,15 +117,13 @@ public enum Dao {
 //					System.out.println(path);
 					if (path.isDirectory()) {
 						String pn = path.getName();
-						if (!pn.startsWith("out_")) {
-							long l = Long.parseLong(pn);
-							ItemLoader item = new ItemLoader(l, path);
-							if (!item.isDeleted()) {
-								item.delete();
-								contentProvider.remove(l);
-								contentDelProvider.put(l, item);
-								result++;
-							}
+						long l = Long.parseLong(pn);
+						ItemLoader item = new ItemLoader(l, path);
+						if (!item.isDeleted()) {
+							item.delete();
+							contentProvider.remove(l);
+							contentDelProvider.put(l, item);
+							result++;
 						}
 					}
 				}
