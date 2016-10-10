@@ -140,8 +140,14 @@ public class ItemsResource {
 					Dao.instance.getModel().put(newId, item);
 
 					String[] tags = new String[]{"kontrollpunktmeldung"};
-					if (securityContext.isUserInRole("bfr") || un.equals("cgi_qs_bfr2cgi") || un.equals("cgi_abnahme_bfr2cgi")) {
+					if (securityContext.isUserInRole("bfr")) {
 						tags = new String[]{"kontrollpunktmeldung","analyseergebnis"};
+					}
+					else if (securityContext.isUserInRole("bfr2x")) {
+						tags = new String[]{"analyseergebnis"};
+					}
+					else if (securityContext.isUserInRole("x2bfr")) {
+						tags = new String[]{"kontrollpunktmeldung"};
 					}
 					boolean isValid = new XmlValidator().validateViaRequest(filePath, tags);
 					//isValid = true;
