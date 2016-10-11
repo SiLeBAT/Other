@@ -22,8 +22,8 @@ public class ItemLoader {
 
 	public ItemLoader(Long id, String filename, String comment) {
 		xml.setId(id);
-		xml.setFilename(filename);
-		xml.setComment(comment);
+		xml.getIn().setFilename(filename);
+		xml.getIn().setComment(comment);
 	}
 	public ItemLoader(Long id, File folder) {
 		try {
@@ -34,7 +34,7 @@ public class ItemLoader {
 				String pn = path.getName();
 				if (pn.equals(COMMENT_FILENAME) || pn.equals(COMMENT_FILENAME.substring(1))) {
 					try {
-						xml.setComment(loadFile(path));
+						xml.getIn().setComment(loadFile(path));
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -43,7 +43,7 @@ public class ItemLoader {
 					deleted = true;
 				}
 				else {
-					xml.setFilename(pn);
+					xml.getIn().setFilename(pn);
 					//break;				
 				}
 			}
@@ -80,11 +80,11 @@ public class ItemLoader {
 		return everything;
 	}
 	public String save(InputStream fileInputStream) throws IOException {
-		String filePath = Constants.SERVER_UPLOAD_LOCATION_FOLDER + xml.getId() + "/" + xml.getFilename();
+		String filePath = Constants.SERVER_UPLOAD_LOCATION_FOLDER + xml.getId() + "/" + xml.getIn().getFilename();
 		String commentPath = Constants.SERVER_UPLOAD_LOCATION_FOLDER + xml.getId() + "/" + COMMENT_FILENAME;
 		// save the file to the server
 		saveFile(fileInputStream, filePath);
-		saveFile(xml.getComment(), commentPath);
+		saveFile(xml.getIn().getComment(), commentPath);
 		return filePath;
 	}
 

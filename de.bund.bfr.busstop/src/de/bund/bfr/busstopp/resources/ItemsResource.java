@@ -197,7 +197,7 @@ public class ItemsResource {
 				List<Item> li = getOutputs(true);
 				for (Item i : li) {
 					Long id = i.getId();
-					String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + id + "/" + i.getFilename();
+					String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + id + "/" + i.getIn().getFilename();
 					za.add(new File(filename), id);
 				}
 				za.close();

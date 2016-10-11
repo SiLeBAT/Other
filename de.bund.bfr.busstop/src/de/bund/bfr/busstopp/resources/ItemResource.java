@@ -111,7 +111,7 @@ public class ItemResource {
 		if (!securityContext.getUserPrincipal().getName().equals("prod_lanuv2bfr")) {
  			ItemLoader c = Dao.instance.getModel().get(id);
  			if (c == null) return Response.noContent().build();
-			String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + c.getXml().getId() + "/" + c.getXml().getFilename();
+			String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + c.getXml().getId() + "/" + c.getXml().getIn().getFilename();
  			ResponseBuilder response = getDownloadResponse(filename);
  		    return response.build();
 		}
@@ -126,7 +126,7 @@ public class ItemResource {
 		if (securityContext.isUserInRole("bfr2x")) {
 			ItemLoader c = Dao.instance.getModel().get(id);
 			if (c != null) {
-			    return c.getXml().getComment();
+			    return c.getXml().getIn().getComment();
 			}
 			else {
 				return "";
