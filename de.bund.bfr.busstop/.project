@@ -3,7 +3,6 @@
 	<name>de.bund.bfr.busstopp</name>
 	<comment></comment>
 	<projects>
-		<project>de.nrw.verbraucherschutz.idv.daten</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
