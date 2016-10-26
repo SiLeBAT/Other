@@ -9,6 +9,5 @@
 			<attribute name="owner.project.facets" value="java"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="src" path="/de.nrw.verbraucherschutz.idv.daten"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>

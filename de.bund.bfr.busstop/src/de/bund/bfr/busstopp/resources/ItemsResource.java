@@ -1,9 +1,11 @@
 package de.bund.bfr.busstopp.resources;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
@@ -17,7 +19,20 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
+import javax.xml.XMLConstants;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.soap.MessageFactory;
+import javax.xml.soap.MimeHeaders;
+import javax.xml.soap.SOAPBody;
+import javax.xml.soap.SOAPEnvelope;
 import javax.xml.soap.SOAPException;
+import javax.xml.soap.SOAPMessage;
+import javax.xml.soap.SOAPPart;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.validation.SchemaFactory;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.SecurityContext;
@@ -25,6 +40,9 @@ import javax.ws.rs.core.Response;
 
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import de.bund.bfr.busstopp.Constants;
 import de.bund.bfr.busstopp.dao.Dao;
@@ -34,6 +52,8 @@ import de.bund.bfr.busstopp.model.ResponseX;
 import de.bund.bfr.busstopp.util.SendEmail;
 import de.bund.bfr.busstopp.util.XmlValidator;
 import de.bund.bfr.busstopp.util.ZipArchive;
+import de.nrw.verbraucherschutz.idv.daten.Kontrollpunktmeldung;
+import de.nrw.verbraucherschutz.idv.daten.Meldung;
 
 // Will map the resource to the URL items
 @Path("/items")
@@ -164,7 +184,7 @@ public class ItemsResource {
 						Dao.instance.getModel().remove(newId);
 					}
 
-					new SendEmail().doSend("'" + filename + "' mit id '" + newId + "' wurde validiert: " + isValid, filePath);
+					new SendEmail().doSend("'" + un + "' hat die Datei '" + filename + "' mit id '" + newId + "' hochgeladen: Valide -> " + isValid, filePath);
 				}
 				else {
 					response.setSuccess(false);
@@ -217,6 +237,79 @@ public class ItemsResource {
 		else {
 			return Response.noContent().build();
 		}
+	}
+	@GET
+	@Path("faelle")
+	@Produces(MediaType.TEXT_PLAIN)
+	public String getFaelle() {
+		if (securityContext.isUserInRole("bfr")) {
+			try {
+				HashSet<String> faelle = new HashSet<>();
+				List<Item> li = getOutputs(true);
+				for (Item i : li) {
+					Long id = i.getId();
+					String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + id + "/" + i.getIn().getFilename();
+					String fn = getFallnummer(filename);
+					if (fn != null) faelle.add(fn);
+				}
+				String out = "";
+				for (String fn : faelle) {
+					out += fn + "\n";
+				}
+				return out;
+			}
+			catch (Exception e) {
+				e.printStackTrace();
+				return "";
+			}
+		}
+		return "";
+	}
+	@SuppressWarnings("unchecked")
+	private String getFallnummer(String filename) throws SOAPException, IOException {
+		String fallnummer = null;
+		Unmarshaller reader;
+		try {
+			reader = JAXBContext.newInstance(Kontrollpunktmeldung.class.getPackage().getName()).createUnmarshaller();
+
+			reader.setSchema(SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
+					.newSchema(Kontrollpunktmeldung.class.getResource(
+							"/de/nrw/verbraucherschutz/idv/dienste/de.nrw.verbraucherschutz.idv.dienste.2016.2.warenrueckverfolgung.transport.schema.xsd")));
+
+			File f = new File(filename);
+						InputStream template = new FileInputStream(f);
+						MessageFactory mf = MessageFactory.newInstance(); // SOAPConstants.SOAP_1_1_PROTOCOL
+						SOAPMessage message = mf.createMessage(new MimeHeaders(), template);
+						SOAPPart sp = message.getSOAPPart();
+						SOAPEnvelope se = null;
+						try {
+							se = sp.getEnvelope();
+						}
+						catch (Exception e) {}
+						if (se != null) {
+							SOAPBody body = se.getBody();
+							NodeList nl = body.getChildNodes();
+							for (int i = 0; i < nl.getLength(); i++) {
+								Node nln = nl.item(i);
+								String nn = nln.getNodeName();
+								if (nn.endsWith(":kontrollpunktmeldung")) {
+									DOMSource ds = new DOMSource(nln);
+									try {
+										Kontrollpunktmeldung kpm = ((JAXBElement<Kontrollpunktmeldung>) reader.unmarshal(ds)).getValue();
+										Meldung meldung = kpm.getMeldung();
+										fallnummer = meldung.getFallNummer();
+										break;
+									}
+									catch (Exception e) {}
+								}
+							}
+						}
+		} catch (JAXBException e) {
+			e.printStackTrace();
+		} catch (SAXException e) {
+			e.printStackTrace();
+		}
+		return fallnummer;
 	}
 /*
 	@GET

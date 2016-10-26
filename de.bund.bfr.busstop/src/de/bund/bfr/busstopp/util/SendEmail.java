@@ -9,6 +9,8 @@ import javax.activation.FileDataSource;
 import javax.mail.*;
 import javax.mail.internet.*;
 
+import de.bund.bfr.busstopp.Constants;
+
 public class SendEmail {
 
    public void doSend(String messageText, String filePath) {    
@@ -41,7 +43,7 @@ public class SendEmail {
          message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
 
          // Set Subject: header field
-         message.setSubject("Busstop validation of new xml upload");
+         message.setSubject("Busstop validation of new xml upload - " + (Constants.IS_TEST ? "Testsystem" : "Produktivsystem"));
 
          // Create the message part 
          BodyPart messageBodyPart = new MimeBodyPart();

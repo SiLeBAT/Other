@@ -2,6 +2,9 @@
     <wb-module deploy-name="de.bund.bfr.busstopp">
         <wb-resource deploy-path="/" source-path="/WebContent" tag="defaultRootSource"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src"/>
+        <dependent-module archiveName="de.nrw.verbraucherschutz.idv.daten.war" deploy-path="/WEB-INF/lib" handle="module:/resource/de.nrw.verbraucherschutz.idv.daten/de.nrw.verbraucherschutz.idv.daten">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
         <property name="java-output-path" value="/de.bund.bfr.busstopp/build/classes"/>
         <property name="context-root" value="de.bund.bfr.busstopp"/>
     </wb-module>

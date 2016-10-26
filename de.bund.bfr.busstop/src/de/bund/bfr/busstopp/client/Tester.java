@@ -79,6 +79,9 @@ public class Tester {
     // Get XML for application
     System.out.println(service.path("rest").path("items").request().accept(MediaType.APPLICATION_XML).get(String.class));
 
+    // Get Fälle for application
+    System.out.println(service.path("rest").path("items").path("faelle").request().accept(MediaType.TEXT_PLAIN).get(String.class));
+
     //System.out.println(service.path("rest").path("items").request().accept(MediaType.APPLICATION_XML).delete(String.class));
     //System.out.println(service.path("rest").path("items").path("bin").request().accept(MediaType.APPLICATION_XML).delete(String.class));
     //Delete ItemLoader with id 1    
@@ -102,8 +105,8 @@ public class Tester {
   }
 
   private static URI getBaseURI() {
-	    //return UriBuilder.fromUri("http://localhost:8080/de.bund.bfr.busstopp").build();
-	    return UriBuilder.fromUri("https://foodrisklabs.bfr.bund.de/de.bund.bfr.busstopp/").build();
+	    return UriBuilder.fromUri("http://localhost:8080/de.bund.bfr.busstopp").build();
+	    //return UriBuilder.fromUri("https://foodrisklabs.bfr.bund.de/de.bund.bfr.busstopp/").build();
 	    //return UriBuilder.fromUri("https://localhost:8443/de.bund.bfr.busstopp/").build();
   }
   private static Client getCertClient(String usr, String pwd) throws KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException {
