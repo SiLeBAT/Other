@@ -3,6 +3,7 @@ package de.bund.bfr.busstopp.client;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
 import java.security.KeyManagementException;
@@ -89,7 +90,7 @@ public class Tester {
     //response = service.path("rest").path("items").path("1475223631107").path("bin").request().delete(); System.out.println("Form response " + response.getStatus() + "\n" + response.readEntity(String.class));
 
     //System.out.println(service.path("rest").path("items").path("rdt_json").request().accept(MediaType.APPLICATION_JSON).get(String.class));
-    //InputStream stream = service.path("rest").path("items").path("files").request().accept(MediaType.APPLICATION_OCTET_STREAM).get(InputStream.class);
+    //InputStream stream = service.path("rest").path("items").path("kpms").path("2016-38").request().accept(MediaType.APPLICATION_OCTET_STREAM).get(InputStream.class); System.out.println(stream.available());
     //InputStream stream = service.path("rest").path("items").path("1475072126404").path("file").request().accept(MediaType.APPLICATION_OCTET_STREAM).get(InputStream.class);
     
     //Upload a ItemLoader

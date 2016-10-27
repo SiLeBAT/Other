@@ -207,9 +207,9 @@ public class ItemsResource {
 	}
 
 	@GET
-	@Path("files")
+	@Path("kpms/{fallnummer}")
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
-	public Response getFiles() {
+	public Response getFiles(@PathParam("fallnummer") String fallNummer) {
 		if (securityContext.isUserInRole("bfr")) {
 			try {
 				File zipfile = File.createTempFile("busstop_xmls", ".zip");
@@ -218,7 +218,13 @@ public class ItemsResource {
 				for (Item i : li) {
 					Long id = i.getId();
 					String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + id + "/" + i.getIn().getFilename();
-					za.add(new File(filename), id);
+					//System.out.println(filename);
+					if (fallNummer == null || fallNummer.trim().isEmpty()) za.add(new File(filename), id);
+					else {
+						String fn = getFallnummer(filename, "kontrollpunktmeldung");
+						if (fallNummer.equals(fn)) za.add(new File(filename), id);
+					}
+					
 				}
 				za.close();
 			    ResponseBuilder response = Response.noContent();
@@ -249,7 +255,7 @@ public class ItemsResource {
 				for (Item i : li) {
 					Long id = i.getId();
 					String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + id + "/" + i.getIn().getFilename();
-					String fn = getFallnummer(filename);
+					String fn = getFallnummer(filename, "kontrollpunktmeldung");
 					if (fn != null) faelle.add(fn);
 				}
 				String out = "";
@@ -266,7 +272,7 @@ public class ItemsResource {
 		return "";
 	}
 	@SuppressWarnings("unchecked")
-	private String getFallnummer(String filename) throws SOAPException, IOException {
+	private String getFallnummer(String filename, String tag) throws SOAPException, IOException {
 		String fallnummer = null;
 		Unmarshaller reader;
 		try {
@@ -292,7 +298,7 @@ public class ItemsResource {
 							for (int i = 0; i < nl.getLength(); i++) {
 								Node nln = nl.item(i);
 								String nn = nln.getNodeName();
-								if (nn.endsWith(":kontrollpunktmeldung")) {
+								if (nn.endsWith(":" + tag)) {
 									DOMSource ds = new DOMSource(nln);
 									try {
 										Kontrollpunktmeldung kpm = ((JAXBElement<Kontrollpunktmeldung>) reader.unmarshal(ds)).getValue();
@@ -300,13 +306,15 @@ public class ItemsResource {
 										fallnummer = meldung.getFallNummer();
 										break;
 									}
-									catch (Exception e) {}
+									catch (Exception e) {System.err.println(filename);}
 								}
 							}
 						}
 		} catch (JAXBException e) {
+			System.err.println(filename);
 			e.printStackTrace();
 		} catch (SAXException e) {
+			System.err.println(filename);
 			e.printStackTrace();
 		}
 		return fallnummer;
