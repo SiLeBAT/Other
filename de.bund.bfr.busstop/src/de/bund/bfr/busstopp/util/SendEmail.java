@@ -1,6 +1,8 @@
 package de.bund.bfr.busstopp.util;
 
 import java.io.File;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.*;
 
 import javax.activation.DataHandler;
@@ -43,7 +45,7 @@ public class SendEmail {
          message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
 
          // Set Subject: header field
-         message.setSubject("Busstop validation of new xml upload - " + (Constants.IS_TEST ? "Testsystem" : "Produktivsystem"));
+         message.setSubject("Busstop validation of new xml upload - " + getFQDN());//(Constants.IS_TEST ? "Testsystem" : "Produktivsystem"));
 
          // Create the message part 
          BodyPart messageBodyPart = new MimeBodyPart();
@@ -76,5 +78,13 @@ public class SendEmail {
       }catch (MessagingException mex) {
          mex.printStackTrace();
       }
+   }
+   private String getFQDN() {
+	   String result = null;
+	   try {
+		result = InetAddress.getLocalHost().toString();
+	} catch (UnknownHostException e) {
+	}
+	   return result;
    }
 }
