@@ -106,8 +106,9 @@ public class Tester {
   }
 
   private static URI getBaseURI() {
-	    return UriBuilder.fromUri("http://localhost:8080/de.bund.bfr.busstopp").build();
+	    //return UriBuilder.fromUri("http://localhost:8080/de.bund.bfr.busstopp").build();
 	    //return UriBuilder.fromUri("https://foodrisklabs.bfr.bund.de/de.bund.bfr.busstopp/").build();
+	    return UriBuilder.fromUri("https://foodrisklabs.bfr.berlin/de.bund.bfr.busstopp/").build();
 	    //return UriBuilder.fromUri("https://localhost:8443/de.bund.bfr.busstopp/").build();
   }
   private static Client getCertClient(String usr, String pwd) throws KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException {
