@@ -1,8 +1,6 @@
 package de.bund.bfr.busstopp.util;
 
 import java.io.File;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.*;
 
 import javax.activation.DataHandler;
@@ -11,16 +9,14 @@ import javax.activation.FileDataSource;
 import javax.mail.*;
 import javax.mail.internet.*;
 
-import de.bund.bfr.busstopp.Constants;
-
 public class SendEmail {
 
-   public void doSend(String messageText, String filePath) {    
+   public void doSend(String fqdn, String messageText, String filePath) {    
       // Recipient's email ID needs to be mentioned.
       String to = "armin.weiser@bfr.bund.de";
-
+      
       // Sender's email ID needs to be mentioned
-      String from = "admin@busstop.foodrisklabs.bfr.bund.de";
+      String from = "busstop@" + (fqdn != null ? fqdn : "foodrisklabs.bfr.berlin"); // "busstop@foodrisklabs.bfr.bund.de";
 
       // Assuming you are sending email from localhost
       String host = "localhost";
@@ -45,7 +41,7 @@ public class SendEmail {
          message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
 
          // Set Subject: header field
-         message.setSubject("Busstop validation of new xml upload - " + getFQDN());//(Constants.IS_TEST ? "Testsystem" : "Produktivsystem"));
+         message.setSubject("Busstop validation of new xml upload - " + fqdn);//(Constants.IS_TEST ? "Testsystem" : "Produktivsystem"));
 
          // Create the message part 
          BodyPart messageBodyPart = new MimeBodyPart();
@@ -78,13 +74,5 @@ public class SendEmail {
       }catch (MessagingException mex) {
          mex.printStackTrace();
       }
-   }
-   private String getFQDN() {
-	   String result = null;
-	   try {
-		result = InetAddress.getLocalHost().toString();
-	} catch (UnknownHostException e) {
-	}
-	   return result;
    }
 }

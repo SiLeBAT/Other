@@ -183,8 +183,10 @@ public class ItemsResource {
 						}
 						Dao.instance.getModel().remove(newId);
 					}
-
-					new SendEmail().doSend("'" + un + "' hat die Datei '" + filename + "' mit id '" + newId + "' hochgeladen: Valide -> " + isValid, filePath);
+					
+					String fqdn = null;
+				    if (uriInfo != null && uriInfo.getBaseUri() != null) fqdn = uriInfo.getBaseUri().getHost();
+					new SendEmail().doSend(fqdn, "'" + un + "' hat die Datei '" + filename + "' mit id '" + newId + "' hochgeladen: Valide -> " + isValid, filePath);
 				}
 				else {
 					response.setSuccess(false);
