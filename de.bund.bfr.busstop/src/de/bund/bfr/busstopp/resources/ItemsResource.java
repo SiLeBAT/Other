@@ -68,6 +68,14 @@ public class ItemsResource {
     @Context
     SecurityContext securityContext;
     
+	// Return all items to the user in the browser
+	@GET
+	@Path("all")
+	@Produces(MediaType.TEXT_XML)
+	public List<Item> getAllItems4Browser() {
+		return getOutputs(securityContext.isUserInRole("bfr"));
+	}
+
 	// Return the list of items to the user in the browser
 	@GET
 	@Produces(MediaType.TEXT_XML)
