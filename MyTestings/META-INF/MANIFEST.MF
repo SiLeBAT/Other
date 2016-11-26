@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: MyClustering-Node extension for KNIME Workbench
 Bundle-SymbolicName: de.bund.bfr.knime.aaw; singleton:=true
-Bundle-Version: 1.0.0
+Bundle-Version: 1.0.1.qualifier
 Bundle-ClassPath: myclustering.jar,
  libs/poi-3.11-20141221.jar,
  libs/poi-scratchpad-3.11-20141221.jar,

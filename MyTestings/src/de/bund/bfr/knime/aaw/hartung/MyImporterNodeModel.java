@@ -99,7 +99,7 @@ public class MyImporterNodeModel extends NodeModel {
         		}
         		HSSFCell cell = row.getCell(0); // Spalte A
         		String str = getStrVal(cell);
-        		if (str == null || (!str.trim().startsWith("A. ") && !str.trim().startsWith("B. "))) continue;
+        		if (str == null || (!str.trim().startsWith("A. ") && !str.trim().startsWith("B. ") && !str.trim().startsWith("C. "))) continue;
         		int inedx = str.indexOf(". ") + 2;
         		int index2 = str.indexOf(" ", inedx);
         		System.err.println(str + "\t" + inedx + "\t" + index2);
@@ -128,7 +128,11 @@ public class MyImporterNodeModel extends NodeModel {
 		                    	//Bundesland
 		                    	cell = row.getCell(14); // Spalte O
 		                    	str = getStrVal(cell);
-		                    	if (str != null && str.trim().length() > 2 && str.startsWith("**")) bl = str.substring(2).trim();
+		                    	if (str != null) {
+		                    		if (str.trim().length() > 2 && str.startsWith("**")) bl = str.substring(2).trim();
+		                    		else if (str.trim().length() > 1 && str.startsWith("*")) bl = str.substring(1).trim();
+		                    		else if (str.trim().length() > 0) bl = str.trim();
+		                    	}
 
 		                    	// Ansprechpartner, Labname, AnsprechpartnerMail, Akkreditiert, Staat, Saison, Agents
 		                    	String staat = null;
@@ -266,7 +270,8 @@ public class MyImporterNodeModel extends NodeModel {
 			                    	// Nein, ok, dann weiter
 			                    	rowProps = getA2G(row, rowProps, defSourceC);
 			                		if (rowProps == null || rowProps.getAmount() == 0) continue;
-			                    	if (rowProps.getSourceA() != null && (rowProps.getSourceA().startsWith("A. ") && rowProps.getSourceA().startsWith("B. "))) {
+			                		String sa = rowProps.getSourceA();
+			                    	if (sa != null && (sa.startsWith("A. ") || sa.startsWith("B. ") || sa.startsWith("C. "))) {
 				                		inedx = str.indexOf(". ") + 2;
 				                		index2 = str.indexOf(" ", inedx);
 				                		System.err.println(str + "\t" + inedx + "\t" + index2);
