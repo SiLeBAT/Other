@@ -104,6 +104,10 @@ public enum Dao {
 		}		
 		return result;
 	}
+	public void delete(Long id, ItemLoader item) {
+		contentProvider.remove(id);
+		contentDelProvider.put(id, item);
+	}
 	public int deleteAll() {
 		int result = 0;
 		try {
@@ -121,8 +125,7 @@ public enum Dao {
 						ItemLoader item = new ItemLoader(l, path);
 						if (!item.isDeleted()) {
 							item.delete();
-							contentProvider.remove(l);
-							contentDelProvider.put(l, item);
+							delete(l, item);
 							result++;
 						}
 					}

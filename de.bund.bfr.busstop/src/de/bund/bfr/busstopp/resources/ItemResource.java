@@ -78,7 +78,7 @@ public class ItemResource {
 					status = Response.Status.INTERNAL_SERVER_ERROR;
 					response.setError(e.getMessage());
 				}
-				c = Dao.instance.getModel().remove(id);
+				Dao.instance.delete(id, c);
 				response.setSuccess(true);
 			}
 			else  {
