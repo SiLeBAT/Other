@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFFooter;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -83,7 +84,8 @@ public class MyLIMSZooImporterNodeModel extends NodeModel {
 		
 		if (sheet != null) {
 			
-			//this.pushFlowVariableString("Version", "V13");
+			HSSFFooter footer = sheet.getFooter();
+			this.pushFlowVariableString("Version", footer.getLeft());
 			
 			int i=38;
 	       	for (i=0;i<sheet.getPhysicalNumberOfRows();i++) {
