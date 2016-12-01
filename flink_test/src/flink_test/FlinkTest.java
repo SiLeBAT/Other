@@ -20,6 +20,7 @@
 package flink_test;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -44,15 +45,22 @@ public class FlinkTest {
 	private static final List<String> edges;
 
 	static {
-		new BufferedReader(new InputStreamReader(FlinkTest.class.getResourceAsStream("/flink_test/graph.csv"),
-				StandardCharsets.UTF_8)).lines().forEach(line -> {
-					String[] edgeDef = line.split(",");										
+		BufferedReader reader = new BufferedReader(new InputStreamReader(
+				FlinkTest.class.getResourceAsStream("/flink_test/graph.csv"), StandardCharsets.UTF_8));
+		String line = null;
 
-					incidentNodes.put(line, edgeDef[0]);
-					incidentNodes.put(line, edgeDef[1]);
-					outgoingEdges.put(edgeDef[0], line);
-					outgoingEdges.put(edgeDef[1], line);
-				});
+		try {
+			while ((line = reader.readLine()) != null) {
+				String[] edgeDef = line.split(",");
+
+				incidentNodes.put(line, edgeDef[0]);
+				incidentNodes.put(line, edgeDef[1]);
+				outgoingEdges.put(edgeDef[0], line);
+				outgoingEdges.put(edgeDef[1], line);
+			}
+		} catch (IOException e) {
+		}
+
 		nodes = new ArrayList<>(outgoingEdges.keySet());
 		edges = new ArrayList<>(incidentNodes.keySet());
 	}
