@@ -6,15 +6,22 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.hssf.usermodel.HSSFFooter;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+import org.apache.poi.ss.format.CellDateFormatter;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CreationHelper;
+import org.apache.poi.ss.usermodel.DateUtil;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
@@ -150,6 +157,9 @@ public class MyLIMSZooImporterNodeModel extends NodeModel {
 			} else if (cell.getCellType() == HSSFCell.CELL_TYPE_STRING) {
 				result = cell.getStringCellValue();
 				if (result.equals(".")) result = null;
+			} else if (DateUtil.isCellDateFormatted(cell)) {
+				String pattern = "dd.mm.yyyy";
+				result = new CellDateFormatter(pattern).format(cell.getDateCellValue()); 
 			} else if (cell.getCellType() == HSSFCell.CELL_TYPE_NUMERIC || cell.getCellType() == HSSFCell.CELL_TYPE_FORMULA) {
 				try {
 					double dbl = cell.getNumericCellValue();
@@ -173,6 +183,10 @@ public class MyLIMSZooImporterNodeModel extends NodeModel {
 		} catch (Exception e) {
 		}
 		return result;
+	}
+	private String getDate(Date date, String pattern) {
+		SimpleDateFormat format = new SimpleDateFormat(pattern);
+	    return format.format(date);
 	}
 
     /**
