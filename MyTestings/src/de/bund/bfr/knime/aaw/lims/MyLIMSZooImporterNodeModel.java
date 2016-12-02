@@ -1,27 +1,27 @@
 package de.bund.bfr.knime.aaw.lims;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import org.apache.poi.hssf.usermodel.HSSFCell;
-import org.apache.poi.hssf.usermodel.HSSFDateUtil;
-import org.apache.poi.hssf.usermodel.HSSFFooter;
-import org.apache.poi.hssf.usermodel.HSSFRow;
-import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.poifs.filesystem.DocumentFactoryHelper;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.poi.ss.format.CellDateFormatter;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.CreationHelper;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.Footer;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
@@ -61,6 +61,13 @@ public class MyLIMSZooImporterNodeModel extends NodeModel {
         super(0, 1);
     }
 
+    //simple way to check for both types of excel files
+    public boolean isXls(InputStream i) throws IOException{
+        return POIFSFileSystem.hasPOIFSHeader(i);
+    }
+    public boolean isXlsx(InputStream i) throws IOException{
+        return DocumentFactoryHelper.hasOOXMLHeader(i);
+    }
     /**
      * {@inheritDoc}
      */
@@ -77,10 +84,17 @@ public class MyLIMSZooImporterNodeModel extends NodeModel {
 			is = new FileInputStream(filename);
 		}
 
-		POIFSFileSystem fs = new POIFSFileSystem(is);
-		HSSFWorkbook wb = new HSSFWorkbook(fs);
-		HSSFSheet sheet;
-		HSSFRow row;
+		Workbook wb = null;
+		BufferedInputStream bis = new BufferedInputStream(is);
+		if (isXls(bis)) {
+			wb = new HSSFWorkbook(bis);
+		}
+		else if (isXlsx(bis)) {
+			wb = new XSSFWorkbook(bis);
+		}
+		
+		Sheet sheet;
+		Row row;
 
 		List<DataColumnSpec> columns = new ArrayList<>();
 		boolean specNotDefined = true;
@@ -91,14 +105,14 @@ public class MyLIMSZooImporterNodeModel extends NodeModel {
 		
 		if (sheet != null) {
 			
-			HSSFFooter footer = sheet.getFooter();
+			Footer footer = sheet.getFooter();
 			this.pushFlowVariableString("Version", footer.getLeft());
 			
 			int i=38;
 	       	for (i=0;i<sheet.getPhysicalNumberOfRows();i++) {
         		row = sheet.getRow(i);
         		if (row != null) {
-        			HSSFCell cell = row.getCell(0); // Spalte A
+        			Cell cell = row.getCell(0); // Spalte A
         			String str = getStrVal(cell);
         			if (str != null && str.toLowerCase().indexOf("ihre") >= 0 && str.toLowerCase().indexOf("probe") >= 0 && str.toLowerCase().indexOf("nummer") >= 0) break;
         		}
@@ -111,7 +125,7 @@ public class MyLIMSZooImporterNodeModel extends NodeModel {
     				DataCell[] cells = specNotDefined?null:new DataCell[columns.size()];
     				boolean rowNull = true;
             		for (int col = 0;col<(specNotDefined?row.getPhysicalNumberOfCells():columns.size());col++) {
-                		HSSFCell cell = row.getCell(col);
+                		Cell cell = row.getCell(col);
                 		String str = getStrVal(cell);
                 		if (specNotDefined) {
                 			if (str == null) str = "Col_" + (col + 1);
@@ -149,7 +163,7 @@ public class MyLIMSZooImporterNodeModel extends NodeModel {
 		buf.close();
 		return new BufferedDataTable[]{buf.getTable()};
     }
-	private String getStrVal(HSSFCell cell) {
+	private String getStrVal(Cell cell) {
 		int maxChars = 100000;
 		String result = null;
 		try {
@@ -183,10 +197,6 @@ public class MyLIMSZooImporterNodeModel extends NodeModel {
 		} catch (Exception e) {
 		}
 		return result;
-	}
-	private String getDate(Date date, String pattern) {
-		SimpleDateFormat format = new SimpleDateFormat(pattern);
-	    return format.format(date);
 	}
 
     /**

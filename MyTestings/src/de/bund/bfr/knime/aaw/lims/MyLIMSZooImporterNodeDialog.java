@@ -26,7 +26,7 @@ public class MyLIMSZooImporterNodeDialog extends DefaultNodeSettingsPane {
      * New pane for configuring the MyImporter node.
      */
     protected MyLIMSZooImporterNodeDialog() {
-    	xlsDialog = new DialogComponentFileChooser(xlsFile, MyLIMSZooImporterNodeModel.XLS_FILE, JFileChooser.OPEN_DIALOG, ".xls", ".XLS");
+    	xlsDialog = new DialogComponentFileChooser(xlsFile, MyLIMSZooImporterNodeModel.XLS_FILE, JFileChooser.OPEN_DIALOG, ".xls", ".xlsx");
     	
     	xlsDialog.setBorderTitle("XLS File");
     	
