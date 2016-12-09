@@ -19,91 +19,106 @@
  *******************************************************************************/
 package flink_test;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.flink.api.common.functions.GroupReduceFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.ExecutionEnvironment;
-import org.apache.flink.shaded.com.google.common.collect.HashMultimap;
-import org.apache.flink.shaded.com.google.common.collect.SetMultimap;
+import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.util.Collector;
 
 public class FlinkTest {
 
-	private static final SetMultimap<String, String> incidentNodes = HashMultimap.create();
-	private static final SetMultimap<String, String> outgoingEdges = HashMultimap.create();
-	private static final List<String> nodes;
-	private static final List<String> edges;
-
-	static {
-		BufferedReader reader = new BufferedReader(new InputStreamReader(
-				FlinkTest.class.getResourceAsStream("/flink_test/graph.csv"), StandardCharsets.UTF_8));
-		String line = null;
-
-		try {
-			while ((line = reader.readLine()) != null) {
-				String[] edgeDef = line.split(",");
-
-				incidentNodes.put(line, edgeDef[0]);
-				incidentNodes.put(line, edgeDef[1]);
-				outgoingEdges.put(edgeDef[0], line);
-				outgoingEdges.put(edgeDef[1], line);
-			}
-		} catch (IOException e) {
-		}
-
-		nodes = new ArrayList<>(outgoingEdges.keySet());
-		edges = new ArrayList<>(incidentNodes.keySet());
-	}
-
 	@SuppressWarnings("serial")
 	public static void main(String[] args) throws Exception {
+		if (args.length != 3) {
+			System.err.println("Usage: WordCount <graph path> <result path> <number of nodes>");
+			return;
+		}
+
+		final String graphPath = args[0];
+		final String resultPath = args[1];
+		final int numberOfNodes = Integer.parseInt(args[2]);
+
 		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-		List<Double> result = env.generateSequence(0, nodes.size() - 1).map(new MapFunction<Long, Double>() {
 
-			@Override
-			public Double map(Long index) throws Exception {
-				String nodeId = nodes.get(index.intValue());
-				Deque<String> nodeQueue = new LinkedList<>();
-				Map<String, Integer> visitedNodes = new HashMap<>(nodes.size(), 1.0f);
-				Set<String> visitedEdges = new HashSet<>(edges.size(), 1.0f);
-				int distanceSum = 0;
+		env.readCsvFile(graphPath).types(Long.class, Long.class).reduceGroup(
+				new GroupReduceFunction<Tuple2<Long, Long>, Tuple2<Map<String, Set<Long>>, Map<Long, Set<String>>>>() {
 
-				visitedNodes.put(nodeId, 0);
-				nodeQueue.addLast(nodeId);
+					@Override
+					public void reduce(Iterable<Tuple2<Long, Long>> lines,
+							Collector<Tuple2<Map<String, Set<Long>>, Map<Long, Set<String>>>> collector)
+							throws Exception {
+						Map<String, Set<Long>> incidentNodes = new HashMap<>();
+						Map<Long, Set<String>> outgoingEdges = new HashMap<>();
 
-				while (!nodeQueue.isEmpty()) {
-					String currentNodeId = nodeQueue.removeFirst();
-					int targetNodeDistance = visitedNodes.get(currentNodeId) + 1;
+						for (Tuple2<Long, Long> line : lines) {
+							if (!incidentNodes.containsKey(line.toString())) {
+								incidentNodes.put(line.toString(), new HashSet<Long>());
+							}
 
-					for (String edgeId : outgoingEdges.get(currentNodeId)) {
-						if (visitedEdges.add(edgeId)) {
-							for (String targetNodeId : incidentNodes.get(edgeId)) {
-								if (!currentNodeId.equals(targetNodeId) && !visitedNodes.containsKey(targetNodeId)) {
-									visitedNodes.put(targetNodeId, targetNodeDistance);
-									nodeQueue.addLast(targetNodeId);
-									distanceSum += targetNodeDistance;
+							if (!outgoingEdges.containsKey(line.f0)) {
+								outgoingEdges.put(line.f0, new HashSet<String>());
+							}
+
+							if (!outgoingEdges.containsKey(line.f1)) {
+								outgoingEdges.put(line.f1, new HashSet<String>());
+							}
+
+							incidentNodes.get(line.toString()).add(line.f0);
+							incidentNodes.get(line.toString()).add(line.f1);
+							outgoingEdges.get(line.f0).add(line.toString());
+							outgoingEdges.get(line.f1).add(line.toString());
+						}
+
+						collector.collect(new Tuple2<>(incidentNodes, outgoingEdges));
+					}
+				}).cross(env.generateSequence(1, numberOfNodes))
+				.map(new MapFunction<Tuple2<Tuple2<Map<String, Set<Long>>, Map<Long, Set<String>>>, Long>, Tuple2<Long, Double>>() {
+
+					@Override
+					public Tuple2<Long, Double> map(
+							Tuple2<Tuple2<Map<String, Set<Long>>, Map<Long, Set<String>>>, Long> graphWithNodeId)
+							throws Exception {
+						Map<String, Set<Long>> incidentNodes = graphWithNodeId.f0.f0;
+						Map<Long, Set<String>> outgoingEdges = graphWithNodeId.f0.f1;
+						long nodeId = graphWithNodeId.f1;
+						int numberOfEdges = incidentNodes.keySet().size();
+						Deque<Long> nodeQueue = new LinkedList<>();
+						Map<Long, Integer> visitedNodes = new HashMap<>(numberOfNodes, 1.0f);
+						Set<String> visitedEdges = new HashSet<>(numberOfEdges, 1.0f);
+						int distanceSum = 0;
+
+						visitedNodes.put(nodeId, 0);
+						nodeQueue.addLast(nodeId);
+
+						while (!nodeQueue.isEmpty()) {
+							long currentNodeId = nodeQueue.removeFirst();
+							int targetNodeDistance = visitedNodes.get(currentNodeId) + 1;
+
+							for (String edgeId : outgoingEdges.get(currentNodeId)) {
+								if (visitedEdges.add(edgeId)) {
+									for (long targetNodeId : incidentNodes.get(edgeId)) {
+										if (currentNodeId != targetNodeId && !visitedNodes.containsKey(targetNodeId)) {
+											visitedNodes.put(targetNodeId, targetNodeDistance);
+											nodeQueue.addLast(targetNodeId);
+											distanceSum += targetNodeDistance;
+										}
+									}
 								}
 							}
 						}
+
+						return new Tuple2<>(nodeId,
+								1.0 / (distanceSum + (numberOfNodes - visitedNodes.size()) * numberOfNodes));
 					}
-				}
+				}).writeAsCsv(resultPath);
 
-				return 1.0 / (distanceSum + (nodes.size() - visitedNodes.size()) * nodes.size());
-			}
-		}).collect();
-
-		for (int i = 0; i < nodes.size(); i++) {
-			System.out.println(nodes.get(i) + "\t" + result.get(i));
-		}
+		env.execute("Closeness Centrality Example");
 	}
 }
