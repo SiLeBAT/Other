@@ -7,7 +7,16 @@ public class Outbound {
 	private String workflow = "";
 	private String report = "";
 	private String comment = "";
+	private String environment = "";
 	private Images images = new Images();
+
+	public String getEnvironment() {
+		return environment;
+	}
+
+	public void setEnvironment(String environment) {
+		this.environment = environment;
+	}
 
 	public Images getImages() {
 		return images;

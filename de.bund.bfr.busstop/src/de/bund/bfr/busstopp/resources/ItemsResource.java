@@ -4,9 +4,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -15,6 +17,8 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
@@ -38,6 +42,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.Response;
 
+import org.apache.catalina.realm.GenericPrincipal;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.w3c.dom.Node;
@@ -46,6 +51,7 @@ import org.xml.sax.SAXException;
 
 import de.bund.bfr.busstopp.Constants;
 import de.bund.bfr.busstopp.dao.Dao;
+import de.bund.bfr.busstopp.dao.Environment;
 import de.bund.bfr.busstopp.dao.ItemLoader;
 import de.bund.bfr.busstopp.model.Item;
 import de.bund.bfr.busstopp.model.ResponseX;
@@ -67,6 +73,8 @@ public class ItemsResource {
 	Request request;
     @Context
     SecurityContext securityContext;
+    @Context
+    private ResourceInfo resourceInfo;
     
 	// Return all items to the user in the browser
 	@GET
@@ -89,15 +97,50 @@ public class ItemsResource {
 	public List<Item> getItems() {
 		return getOutputs(false);
 	}
-	private List<Item> getOutputs(boolean inclDeleted) {
+	private List<Item> getOutputs(boolean inclDeletedAndAllEnvironments) {
+		return getOutputs(inclDeletedAndAllEnvironments, null);
+	}
+	private List<Item> getOutputs(boolean inclDeletedAndAllEnvironments, String environment) {
 		List<Item> items = new ArrayList<Item>();
-		for (ItemLoader u : Dao.instance.getModel().values()) {
-			items.add(u.getXml());
+		if (!inclDeletedAndAllEnvironments) { // normal users
+			Map<Long, ItemLoader> map = Dao.instance.getModel(getRole());
+			if (map != null) {
+				for (ItemLoader u : map.values()) {
+					items.add(u.getXml());				
+				}
+			}
 		}
-		if (inclDeleted) {
-			for (ItemLoader u : Dao.instance.getModelDel().values()) {
-				items.add(u.getXml());
-			}			
+		else { // admin users from bfr
+			if (environment == null || environment.trim().isEmpty()) { // get all items
+				for (String e : Dao.instance.getEnvironments().keySet()) {
+					Map<Long, ItemLoader> map = Dao.instance.getModel(e);
+					if (map != null) {
+						for (ItemLoader u : map.values()) {
+							items.add(u.getXml());				
+						}
+					}
+					map = Dao.instance.getModelDel(e);
+					if (map != null) {
+						for (ItemLoader u : map.values()) {
+							items.add(u.getXml());				
+						}
+					}
+				}
+			}
+			else { // get items from a certain environment for analysis
+				Map<Long, ItemLoader> map = Dao.instance.getModel(environment);
+				if (map != null) {
+					for (ItemLoader u : map.values()) {
+						items.add(u.getXml());				
+					}
+				}
+				map = Dao.instance.getModelDel(environment);
+				if (map != null) {
+					for (ItemLoader u : map.values()) {
+						items.add(u.getXml());				
+					}
+				}
+			}
 		}
 		return items;
 	}
@@ -105,20 +148,15 @@ public class ItemsResource {
 	// deletes all Items
 	@DELETE
 	@Produces({ MediaType.APPLICATION_XML})
-	public Response deleteAll() {
+	public Response deleteAll(@QueryParam("environment") String environment) {
 		ResponseX response = new ResponseX();
 		Status status = Response.Status.OK;
 		response.setAction("DELETEALL");
-		if (true || securityContext.isUserInRole("bfr")) {
-			int numDeleted = Dao.instance.deleteAll();
-			response.setCount(numDeleted);
-			response.setSuccess(true);
-		}
-		else {
-			response.setSuccess(false);	
-			status = Response.Status.FORBIDDEN;
-			response.setError("No permission to access this feature!");
-		}
+		String e = getRole();
+		if (securityContext.isUserInRole("bfr")) e = environment;
+		int numDeleted = Dao.instance.deleteAll(e);
+		response.setCount(numDeleted);
+		response.setSuccess(true);
 		return Response.status(status).entity(response).type(MediaType.APPLICATION_XML).build();
 	}
 
@@ -127,7 +165,9 @@ public class ItemsResource {
 	@Path("count")
 	@Produces(MediaType.TEXT_PLAIN)
 	public String getCount() {
-		int count = Dao.instance.getModel().size();
+		String environment = getRole();
+		Map<Long, ItemLoader> map = Dao.instance.getModel(environment);
+		int count = map == null ? 0 : map.size();
 		return String.valueOf(count);
 	}
 
@@ -136,15 +176,27 @@ public class ItemsResource {
 	// Allows to type http://localhost:8080/de.bund.bfr.busstopp/rest/app/1
 	@Path("{id}")
 	public ItemResource getItem(@PathParam("id") Long id) {
-		return new ItemResource(uriInfo, request, securityContext, id);
+		return new ItemResource(uriInfo, request, securityContext, getRole(), id);
 	}
 
 	// jersey.config.server.wadl.disableWadl=true
 
+	private String getRole() {
+		String result = null;
+		final Principal userPrincipal = securityContext.getUserPrincipal();
+	    GenericPrincipal genericPrincipal = (GenericPrincipal) userPrincipal;
+	    final String[] roles = genericPrincipal.getRoles();
+	    for (String role : roles) {
+	    	if (!role.equals("bfr2x") && !role.equals("x2bfr") && !role.equals("manager")) {
+	    		result = role;
+	    	}
+	    }
+	    return result;
+	}
 	/**
 	 * ItemLoader a File
 	 */
-
+	
 	@POST
 	@Path("/upload")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -162,10 +214,18 @@ public class ItemsResource {
 				if (contentDispositionHeader != null) {
 					String filename = contentDispositionHeader.getFileName();
 
+					String environment = getRole();
 					long newId = System.currentTimeMillis();
-					ItemLoader item = new ItemLoader(newId, filename, comment);
+					ItemLoader item = new ItemLoader(newId, filename, comment, environment);
 					String filePath = item.save(fileInputStream);
-					Dao.instance.getModel().put(newId, item);
+					Map<Long, ItemLoader> map = Dao.instance.getModel(environment);
+					if (map == null) {
+						Dao.instance.getEnvironments().put(environment, new Environment(environment));
+						map = Dao.instance.getModel(environment);
+					}
+					if (map != null) {
+						map.put(newId, item);						
+					}
 
 					String[] tags = new String[]{"kontrollpunktmeldung"};
 					if (securityContext.isUserInRole("bfr")) {
@@ -189,12 +249,12 @@ public class ItemsResource {
 							item.delete();
 						} catch (IOException e) {
 						}
-						Dao.instance.getModel().remove(newId);
+						if (map != null) map.remove(newId);
 					}
 					
 					String fqdn = null;
 				    if (uriInfo != null && uriInfo.getBaseUri() != null) fqdn = uriInfo.getBaseUri().getHost();
-					new SendEmail().doSend(fqdn, "'" + un + "' hat die Datei '" + filename + "' mit id '" + newId + "' hochgeladen: Valide -> " + isValid, filePath);
+					new SendEmail().doSend(fqdn, "'" + un + "' aus dem Environment '" + environment + "' hat die Datei '" + filename + "' mit id '" + newId + "' hochgeladen: Valide -> " + isValid, filePath);
 				}
 				else {
 					response.setSuccess(false);
@@ -217,9 +277,9 @@ public class ItemsResource {
 	}
 
 	@GET
-	@Path("kpms/{fallnummer}")
+	@Path("kpms")
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
-	public Response getFiles(@PathParam("fallnummer") String fallNummer) {
+	public Response getFiles(@QueryParam("environment") String environment, @QueryParam("fallnummer") String fallNummer) {
 		if (securityContext.isUserInRole("bfr")) {
 			try {
 				File zipfile = File.createTempFile("busstop_xmls", ".zip");
@@ -254,14 +314,15 @@ public class ItemsResource {
 			return Response.noContent().build();
 		}
 	}
+	
 	@GET
 	@Path("faelle")
 	@Produces(MediaType.TEXT_PLAIN)
-	public String getFaelle() {
+	public String getFaelle(@QueryParam("environment") String environment) {
 		if (securityContext.isUserInRole("bfr")) {
 			try {
 				HashSet<String> faelle = new HashSet<>();
-				List<Item> li = getOutputs(true);
+				List<Item> li = getOutputs(true, environment);
 				for (Item i : li) {
 					Long id = i.getId();
 					String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + id + "/" + i.getIn().getFilename();
@@ -347,12 +408,12 @@ public class ItemsResource {
 	@DELETE
 	@Path("bin")
 	@Produces({ MediaType.APPLICATION_XML})
-	public Response clearBin() {
+	public Response clearBin(@QueryParam("environment") String environment) {
 		ResponseX response = new ResponseX();
 		Status status = Response.Status.OK;
 		response.setAction("CLEARBIN");
 		if (securityContext.isUserInRole("bfr")) {
-			int numDeleted = Dao.instance.clearBin();
+			int numDeleted = Dao.instance.clearBin(environment);
 			response.setCount(numDeleted);
 			response.setSuccess(true);
 		}
