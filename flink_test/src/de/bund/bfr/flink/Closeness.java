@@ -17,7 +17,7 @@
  * Contributors:
  *     Department Biological Safety - BfR
  *******************************************************************************/
-package flink_test;
+package de.bund.bfr.flink;
 
 import java.util.Deque;
 import java.util.HashMap;
@@ -32,12 +32,12 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.util.Collector;
 
-public class FlinkTest {
+public class Closeness {
 
 	@SuppressWarnings("serial")
 	public static void main(String[] args) throws Exception {
 		if (args.length != 3) {
-			System.err.println("Usage: flink_test <nodes file> <edges file> <result path>");
+			System.err.println("Usage: Closeness <nodes file> <edges file> <result path>");
 			return;
 		}
 
