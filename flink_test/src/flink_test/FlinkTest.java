@@ -37,17 +37,17 @@ public class FlinkTest {
 	@SuppressWarnings("serial")
 	public static void main(String[] args) throws Exception {
 		if (args.length != 3) {
-			System.err.println("Usage: WordCount <graph path> <result path> <number of nodes>");
+			System.err.println("Usage: flink_test <nodes file> <edges file> <result path>");
 			return;
 		}
 
-		final String graphPath = args[0];
-		final String resultPath = args[1];
-		final int numberOfNodes = Integer.parseInt(args[2]);
+		final String nodesFile = args[0];
+		final String edgesFile = args[1];
+		final String resultPath = args[2];
 
 		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
-		env.readCsvFile(graphPath).types(Long.class, Long.class).reduceGroup(
+		env.readCsvFile(edgesFile).types(Long.class, Long.class).reduceGroup(
 				new GroupReduceFunction<Tuple2<Long, Long>, Tuple2<Map<String, Set<Long>>, Map<Long, Set<String>>>>() {
 
 					@Override
@@ -78,7 +78,7 @@ public class FlinkTest {
 
 						collector.collect(new Tuple2<>(incidentNodes, outgoingEdges));
 					}
-				}).cross(env.generateSequence(1, numberOfNodes))
+				}).cross(env.readFileOfPrimitives(nodesFile, Long.class))
 				.map(new MapFunction<Tuple2<Tuple2<Map<String, Set<Long>>, Map<Long, Set<String>>>, Long>, Tuple2<Long, Double>>() {
 
 					@Override
@@ -88,7 +88,8 @@ public class FlinkTest {
 						Map<String, Set<Long>> incidentNodes = graphWithNodeId.f0.f0;
 						Map<Long, Set<String>> outgoingEdges = graphWithNodeId.f0.f1;
 						long nodeId = graphWithNodeId.f1;
-						int numberOfEdges = incidentNodes.keySet().size();
+						int numberOfNodes = outgoingEdges.size();
+						int numberOfEdges = incidentNodes.size();
 						Deque<Long> nodeQueue = new LinkedList<>();
 						Map<Long, Integer> visitedNodes = new HashMap<>(numberOfNodes, 1.0f);
 						Set<String> visitedEdges = new HashSet<>(numberOfEdges, 1.0f);
