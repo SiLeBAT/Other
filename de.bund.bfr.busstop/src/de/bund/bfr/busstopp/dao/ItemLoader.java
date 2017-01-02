@@ -14,16 +14,18 @@ import de.bund.bfr.busstopp.Constants;
 import de.bund.bfr.busstopp.model.Item;
 
 public class ItemLoader {
+	private static final String ENVIRONMENT_FILENAME = ".environment.txt";
 	private static final String COMMENT_FILENAME = ".comment.txt";
 	private static final String DELETED_FILENAME = ".deleted.txt";
 
 	private Item xml = new Item();
 	private boolean deleted = false;
 
-	public ItemLoader(Long id, String filename, String comment) {
+	public ItemLoader(Long id, String filename, String comment, String environment) {
 		xml.setId(id);
 		xml.getIn().setFilename(filename);
 		xml.getIn().setComment(comment);
+		xml.getIn().setEnvironment(environment);
 	}
 	public ItemLoader(Long id, File folder) {
 		try {
@@ -35,6 +37,13 @@ public class ItemLoader {
 				if (pn.equals(COMMENT_FILENAME) || pn.equals(COMMENT_FILENAME.substring(1))) {
 					try {
 						xml.getIn().setComment(loadFile(path));
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				else if (pn.equals(ENVIRONMENT_FILENAME) || pn.equals(ENVIRONMENT_FILENAME.substring(1))) {
+					try {
+						xml.getIn().setEnvironment(loadFile(path));
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -82,9 +91,11 @@ public class ItemLoader {
 	public String save(InputStream fileInputStream) throws IOException {
 		String filePath = Constants.SERVER_UPLOAD_LOCATION_FOLDER + xml.getId() + "/" + xml.getIn().getFilename();
 		String commentPath = Constants.SERVER_UPLOAD_LOCATION_FOLDER + xml.getId() + "/" + COMMENT_FILENAME;
+		String environmentPath = Constants.SERVER_UPLOAD_LOCATION_FOLDER + xml.getId() + "/" + ENVIRONMENT_FILENAME;
 		// save the file to the server
 		saveFile(fileInputStream, filePath);
 		saveFile(xml.getIn().getComment(), commentPath);
+		saveFile(xml.getIn().getEnvironment(), environmentPath);
 		return filePath;
 	}
 

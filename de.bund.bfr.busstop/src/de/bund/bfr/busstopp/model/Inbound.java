@@ -6,6 +6,15 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class Inbound {
 	private String filename = "";
 	private String comment = "";
+	private String environment = "";
+
+	public String getEnvironment() {
+		return environment.trim();
+	}
+
+	public void setEnvironment(String environment) {
+		this.environment = environment;
+	}
 
 	public String getFilename() {
 		return filename;
