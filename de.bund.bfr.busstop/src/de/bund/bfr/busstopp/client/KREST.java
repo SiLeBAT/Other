@@ -24,6 +24,9 @@ import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 
 public class KREST {
 
+	//private static final String restResource = "https://knime.bfrlab.de/com.knime.enterprise.server/rest/v4/";
+	private static final String restResource = "http://vm-knime:8095/vm-knime/rest/v4/";
+	
     public static void main(String[] args) throws IOException {
     	doFileHead();
     	doUpDown();
@@ -50,7 +53,6 @@ public class KREST {
         String username = "";
         String password = "";
  
-        String restResource = "https://knime.bfrlab.de/com.knime.enterprise.server/rest/v4/";
         Client client = ClientBuilder.newClient();
         client.register(HttpAuthenticationFeature.basic(username, password));
     	client.register(MultiPartFeature.class);
