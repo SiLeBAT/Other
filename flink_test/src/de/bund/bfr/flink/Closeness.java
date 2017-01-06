@@ -37,8 +37,6 @@ import org.apache.flink.util.Collector;
 
 public class Closeness {
 
-	static int count = 0;
-
 	@SuppressWarnings("serial")
 	public static void main(String[] args) throws Exception {
 		if (args.length != 3) {

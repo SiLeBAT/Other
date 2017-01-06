@@ -50,7 +50,7 @@ public class Closeness_Guava {
 
 		final String nodesFile = args[0];
 		final String edgesFile = args[1];
-		final String resultPath = args[2];		
+		final String resultPath = args[2];
 		final int parallelism = env.getParallelism();
 
 		DataSet<Tuple2<SetMultimap<String, Long>, SetMultimap<Long, String>>> graph = env.readCsvFile(edgesFile)
