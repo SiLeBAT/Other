@@ -24,20 +24,20 @@ import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 
 public class KREST {
 
-	//private static final String restResource = "https://knime.bfrlab.de/com.knime.enterprise.server/rest/v4/";
-	private static final String restResource = "http://vm-knime:8095/vm-knime/rest/v4/";
+	private static final String restResource = "https://knime.bfrlab.de/com.knime.enterprise.server/rest/v4/";
+	//private static final String restResource = "http://vm-knime:8095/vm-knime/rest/v4/";
 	
     public static void main(String[] args) throws IOException {
     	doFileHead();
-    	doUpDown();
+    	//doUpDown();
     }
     private static void doFileHead() throws IOException {
     	Map<String, Object> inputs = new HashMap<>();
 	    File f = new File("/Users/arminweiser/Desktop/robots.txt");
-	    inputs.put("file-upload-1", f);
-	    inputs.put("line-count-3", "{\"integer\":1}");
+	    //inputs.put("file-upload-1", f);
+	    //inputs.put("line-count-3", "{\"integer\":1}");
 	    Map<String, Boolean> outputs = new HashMap<>();
-	    outputs.put("file-download-7", false);
+	    //outputs.put("file-download-7", false);
     	new KREST().doWorkflow("testing/Alex_testing/AFcurrentTests/File-HEAD-Example", inputs, outputs);
     }
     private static void doUpDown() throws IOException {
