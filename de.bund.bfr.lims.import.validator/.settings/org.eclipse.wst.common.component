@@ -2,6 +2,9 @@
     <wb-module deploy-name="de.bund.bfr.lims.importer.validator">
         <wb-resource deploy-path="/" source-path="/WebContent" tag="defaultRootSource"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src"/>
+        <dependent-module archiveName="de.bund.bfr.knime.rest.client.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/de.bund.bfr.knime.rest.client/de.bund.bfr.knime.rest.client">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
         <property name="java-output-path" value="/de.bund.bfr.lims.importer.validator/build/classes"/>
         <property name="context-root" value="de.bund.bfr.lims.importer.validator"/>
     </wb-module>

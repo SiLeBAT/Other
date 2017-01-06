@@ -3,8 +3,10 @@ package de.bund.bfr.lims.importer.validator.servlet;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -14,6 +16,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.fileupload.disk.DiskFileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+
+import de.bund.bfr.knime.rest.client.KREST;
 
 /**
  * Servlet implementation class EinsendeValidator
@@ -109,6 +113,11 @@ public class EinsendeValidator extends HttpServlet {
 
                 	System.out.println(uploadPath + "\t" + storeFile);
         	  		if (storeFile != null && storeFile.exists()) {
+        	  	    	Map<String, Object> inputs = new HashMap<>();
+        	  		    inputs.put("file-upload-211:210", storeFile);
+        	  		    Map<String, Boolean> outputs = new HashMap<>(); // doStream bedeutet bei true: file download, bei false: sichtbarkeit im browser
+        	  		    outputs.put("XLS-918:917", false);
+        	  	    	message = new KREST().doWorkflow("ALEX/Proben-Einsendung_Web2b", inputs, outputs);        	  			
         	  		}
          
 	                //deregisterDrivers();
@@ -128,7 +137,7 @@ public class EinsendeValidator extends HttpServlet {
 	        		post += "doc.close();";
 	        		post += "</script>";
 	        		
-                	request.setAttribute("message", pre0 + pre + message.replace("\"", "\\\"") + post); // "Upload has been done successfully!"	                
+                	request.setAttribute("message", pre0 + pre + "<p>" + message.replace("\n", "<BR>").replace("\"", "\\\"") + "</p>" + post); // "Upload has been done successfully!"	                
                 }
             }
         } catch (Exception ex) {

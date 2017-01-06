@@ -1,4 +1,4 @@
-package de.bund.bfr.busstopp.client;
+package de.bund.bfr.knime.rest.client;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -28,28 +28,38 @@ public class KREST {
 	private static final String restResource = "http://vm-knime:8095/vm-knime/rest/v4/";
 	
     public static void main(String[] args) throws IOException {
-    	doFileHead();
+    	//doFileHead();
     	//doUpDown();
+    	doOwn();
+    }
+    private static void doOwn() throws IOException {
+    	Map<String, Object> inputs = new HashMap<>();
+	    File f = new File("C:/Users/weiser/Desktop/Test.xlsx");
+	    inputs.put("file-upload-211:210", f);
+	    Map<String, Boolean> outputs = new HashMap<>(); // doStream bedeutet bei true: file download, bei false: sichtbarkeit im browser
+	    outputs.put("XLS-918:917", false);
+    	new KREST().doWorkflow("ALEX/Proben-Einsendung_Web2b", inputs, outputs);
     }
     private static void doFileHead() throws IOException {
     	Map<String, Object> inputs = new HashMap<>();
-	    File f = new File("/Users/arminweiser/Desktop/robots.txt");
-	    //inputs.put("file-upload-1", f);
-	    //inputs.put("line-count-3", "{\"integer\":1}");
-	    Map<String, Boolean> outputs = new HashMap<>();
-	    //outputs.put("file-download-7", false);
-    	new KREST().doWorkflow("ALEX/Proben-Einsendung_Web", inputs, outputs);
+	    File f = new File("C:/Users/weiser/Desktop/Beispiel.txt");
+	    inputs.put("file-upload-1", f);
+	    inputs.put("line-count-3", "{\"integer\":1}");
+	    Map<String, Boolean> outputs = new HashMap<>(); // doStream bedeutet bei true: file download, bei false: sichtbarkeit im browser
+	    outputs.put("file-download-7", false);
+    	new KREST().doWorkflow("ALEX/File-HEAD-Example", inputs, outputs);
     }
     private static void doUpDown() throws IOException {
     	Map<String, Object> inputs = new HashMap<>();
-	    File f = new File("/Users/arminweiser/Downloads/bsp.xls");
-	    inputs.put("UploadedFile-5", f);
+	    File f = new File("C:/Users/weiser/Desktop/Test.xlsx");
+	    inputs.put("UploadedFile-937:5", f);
 	    Map<String, Boolean> outputs = new HashMap<>();
 	    outputs.put("XLS-894", true);
-    	new KREST().doWorkflow("testing/Alex_testing/AFcurrentTests/Upload_Download_aaw", inputs, outputs);
+    	new KREST().doWorkflow("ALEX/Upload_Download_aaw", inputs, outputs);
     }
     
-    public void doWorkflow(String wfPath, Map<String, Object> inputs, Map<String, Boolean> outputs) throws IOException {
+    public String doWorkflow(String wfPath, Map<String, Object> inputs, Map<String, Boolean> outputs) throws IOException {
+    	String result = "";
         String username = "";
         String password = "";
  
@@ -62,11 +72,12 @@ public class KREST {
     	if (!showSyntaxOnly) {
         	boolean success = executeJob(client, restResource, jobid, inputs);
         	if (success) {
-        		String result = getResult(client, restResource, jobid, outputs);
+        		result = getResult(client, restResource, jobid, outputs);
         		System.err.println(result);
         	}
-        	System.out.println(discardJob(client, restResource, jobid));
+        	System.out.println("discardJob: " + discardJob(client, restResource, jobid));
     	}
+    	return result;
     }
 
     private String discardJob(Client client, String restResource, String jobid) {
@@ -94,7 +105,7 @@ public class KREST {
                 ;
         	Response res = builder.get();
             
-            result += "'" + param + "':\n";
+            //result += "'" + param + "':\n";
             if (doStream) {
             	InputStream stream = res.readEntity(InputStream.class);
             	result += "...stream mit " + stream.available() + " bytes";
@@ -157,7 +168,7 @@ public class KREST {
         
         //System.err.println(res.getStatus());
         if (res.getStatus() == 201) { // succesfully created
-            if (showSyntax) System.err.println(res.readEntity(String.class));
+        	if (showSyntax) System.err.println(res.readEntity(String.class));
     	    res.close();
 
     	    String location = res.getHeaders().get("Location").get(0).toString();

@@ -3,6 +3,7 @@
 	<name>de.bund.bfr.lims.importer.validator</name>
 	<comment></comment>
 	<projects>
+		<project>de.bund.bfr.knime.rest.client</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

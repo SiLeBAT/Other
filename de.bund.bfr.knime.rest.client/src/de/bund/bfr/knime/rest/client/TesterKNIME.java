@@ -1,4 +1,4 @@
-package de.bund.bfr.busstopp.client;
+package de.bund.bfr.knime.rest.client;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
