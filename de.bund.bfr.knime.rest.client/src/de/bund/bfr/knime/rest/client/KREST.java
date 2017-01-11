@@ -83,12 +83,10 @@ public class KREST {
 			throws IOException, URISyntaxException, ParserConfigurationException, SAXException {
 		String username = "";
 		String password = "";
-		URL defaultImage = KREST.class.getResource("/de/bund/bfr/knime/rest/client/userdata.xml");
-		File file = new File(defaultImage.toURI());
-		System.out.println(file.exists());
+		InputStream in = KREST.class.getClassLoader().getResourceAsStream("/de/bund/bfr/knime/rest/client/userdata.xml");
 		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-		Document document = documentBuilder.parse(file);
+		Document document = documentBuilder.parse(in);
 		username = document.getElementsByTagName("user").item(0).getTextContent();
 		password = document.getElementsByTagName("password").item(0).getTextContent();
 

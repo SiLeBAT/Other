@@ -53,97 +53,86 @@ public class EinsendeValidator extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		String message = "";
 
-		// checks if the request actually contains upload file
+        // checks if the request actually contains upload file
         if (!ServletFileUpload.isMultipartContent(request)) {
-            PrintWriter writer = response.getWriter();
-            writer.println("Request does not contain upload data");
-            writer.flush();
-            return;
+        	message = "Request does not contain upload data";
         }
-        
-        // configures upload settings
-        DiskFileItemFactory factory = new DiskFileItemFactory();
-        factory.setSizeThreshold(THRESHOLD_SIZE);
-        factory.setRepository(new File(System.getProperty("java.io.tmpdir")));
-         
-        ServletFileUpload upload = new ServletFileUpload(factory);
-        upload.setFileSizeMax(MAX_FILE_SIZE);
-        upload.setSizeMax(MAX_REQUEST_SIZE);
-
-        
-        // constructs the directory path to store upload file
-        String uploadPath = getServletContext().getRealPath("") + File.separator + UPLOAD_DIRECTORY + File.separator + System.currentTimeMillis();
-       // creates the directory if it does not exist
-        File uploadDir = new File(uploadPath);
-        if (!uploadDir.exists()) {
-            uploadDir.mkdirs();
-        }
-       
-        try {
-            // parses the request's content to extract file data
-            List<?> formItems = upload.parseRequest(request);
-            Iterator<?> iter = formItems.iterator();
+        else {
+            // configures upload settings
+            DiskFileItemFactory factory = new DiskFileItemFactory();
+            factory.setSizeThreshold(THRESHOLD_SIZE);
+            factory.setRepository(new File(System.getProperty("java.io.tmpdir")));
              
-            // iterates over form's fields
-            while (iter.hasNext()) {
-            	DiskFileItem item = (DiskFileItem) iter.next();
-                // processes only fields that are not form fields
-                if (!item.isFormField()) {
-                    String fileName = new File(item.getName()).getName();
-                    if (fileName.trim().length() == 0) {
-                        request.setAttribute("message", "No file to validate!");
-                        break;
-                    }
-                    String filePath = uploadPath + File.separator + fileName;
-                    File storeFile = new File(filePath);
-                     
-                    String ext = getFileExtension(fileName);
-                    if (!ext.equals("xls") && !ext.equals("xlsx")) {
-                        request.setAttribute("message", "The submitted file '" + fileName + "' has no correct file extension.");
-                        break;
-                    }
+            ServletFileUpload upload = new ServletFileUpload(factory);
+            upload.setFileSizeMax(MAX_FILE_SIZE);
+            upload.setSizeMax(MAX_REQUEST_SIZE);
 
-                    // saves the file on disk
-                    item.write(storeFile);
-
-                    if (storeFile == null || !storeFile.exists() || !storeFile.isFile()) {
-                        request.setAttribute("message", "There is an unknown problem with the submitted file '" + fileName + "'<BR>Please write an email to foodrisklabs@bfr.bund.de with your submitted file.");
-                        break;
-                    }
-
-                	System.out.println(uploadPath + "\t" + storeFile);
-        	  		if (storeFile != null && storeFile.exists()) {
-        	  	    	Map<String, Object> inputs = new HashMap<>();
-        	  		    inputs.put("file-upload-211:210", storeFile);
-        	  		    Map<String, Boolean> outputs = new HashMap<>(); // doStream bedeutet bei true: file download, bei false: sichtbarkeit im browser
-        	  		    outputs.put("XLS-918:917", false);
-        	  	    	message = new KREST().doWorkflow("ALEX/Proben-Einsendung_Web2b", inputs, outputs);        	  			
-        	  		}
-         
-	                //deregisterDrivers();
-	                deleteUploadDir(uploadDir);
-
-	                String pre0 = "<iframe id=\"FileFrame\" src=\"about:blank\"></iframe>";
-
-	                String pre = "<script type=\"text/javascript\">";
-
-	                pre += "var doc = document.getElementById('FileFrame').contentWindow.document;";
-	                pre += "doc.open();";
-	                pre += "doc.write(\"<html><head><title></title>";
-	                pre += "<link href='messages.css' type='text/css' rel='stylesheet'>";
-	                pre += "</head><body>";
-	                
-	        		String post = "</body></html>\");";
-	        		post += "doc.close();";
-	        		post += "</script>";
-	        		
-                	request.setAttribute("message", pre0 + pre + "<p>" + message.replace("\n", "<BR>").replace("\"", "\\\"") + "</p>" + post); // "Upload has been done successfully!"	                
-                }
+            
+            // constructs the directory path to store upload file
+            String uploadPath = getServletContext().getRealPath("") + File.separator + UPLOAD_DIRECTORY + File.separator + System.currentTimeMillis();
+           // creates the directory if it does not exist
+            File uploadDir = new File(uploadPath);
+            if (!uploadDir.exists()) {
+                uploadDir.mkdirs();
             }
-        } catch (Exception ex) {
-            request.setAttribute("message", "There was an error: " + ex.getMessage());
+           
+            try {
+                // parses the request's content to extract file data
+                List<?> formItems = upload.parseRequest(request);
+                Iterator<?> iter = formItems.iterator();
+                 
+                // iterates over form's fields
+                while (iter.hasNext()) {
+                	DiskFileItem item = (DiskFileItem) iter.next();
+                    // processes only fields that are not form fields
+                    if (!item.isFormField()) {
+                        String fileName = new File(item.getName()).getName();
+                        if (fileName.trim().length() == 0) {
+                        	message = "No file to validate!";
+                            break;
+                        }
+                        String filePath = uploadPath + File.separator + fileName;
+                        File storeFile = new File(filePath);
+                         
+                        String ext = getFileExtension(fileName);
+                        if (!ext.equals("xls") && !ext.equals("xlsx")) {
+                        	message = "The submitted file '" + fileName + "' has no correct file extension.";
+                            break;
+                        }
+
+                        // saves the file on disk
+                        item.write(storeFile);
+
+                        if (storeFile == null || !storeFile.exists() || !storeFile.isFile()) {
+                        	message = "There is an unknown problem with the submitted file '" + fileName + "'<BR>Please write an email to foodrisklabs@bfr.bund.de with your submitted file.";
+                            break;
+                        }
+
+                    	System.out.println(uploadPath + "\t" + storeFile);
+            	  		if (storeFile != null && storeFile.exists()) {
+            	  	    	Map<String, Object> inputs = new HashMap<>();
+            	  		    inputs.put("file-upload-211:210", storeFile);
+            	  		    Map<String, Boolean> outputs = new HashMap<>(); // doStream bedeutet bei true: file download, bei false: sichtbarkeit im browser
+            	  		    outputs.put("XLS-918:917", false);
+            	  	    	message = new KREST().doWorkflow("ALEX/Proben-Einsendung_Web2c2", inputs, outputs);        	  			
+            	  		}
+             
+    	                //deregisterDrivers();
+    	                deleteUploadDir(uploadDir);
+                    }
+                }
+            } catch (Exception ex) {
+            	message = "There was an error: " + ex.getMessage();
+             }
         }
-        getServletContext().getRequestDispatcher("/message.jsp").forward(request, response);
+        
+        response.setContentType("text/plain");
+        PrintWriter out = response.getWriter();
+        //if (message == null || message.trim().isEmpty()) message = "success!";
+        message = message.trim().replace("\n", "<BR>");
+        System.out.println(message.length());
+        out.println(message);
+        out.flush();
 	}
 	private void deleteUploadDir(File uploadDir){
 	    try {
