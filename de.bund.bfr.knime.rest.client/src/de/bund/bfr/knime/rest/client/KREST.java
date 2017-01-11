@@ -134,9 +134,9 @@ public class KREST {
 				InputStream stream = res.readEntity(InputStream.class);
 				result += "...stream mit " + stream.available() + " bytes";
 				// is2File(stream, "/Users/arminweiser/Downloads/bsp_out.xls");
-			} else
-				result += res.readEntity(String.class);
-			result += "\n\n";
+			} else {
+				result += "\n" + res.readEntity(String.class);
+			}
 
 			res.close();
 		}

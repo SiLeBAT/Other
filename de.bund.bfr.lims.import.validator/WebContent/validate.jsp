@@ -16,11 +16,11 @@
 	          init: function() {
 	            this.on("success", function(file, responseText) {
 	            	console.log(responseText.length);
-                    if (responseText.length > 2) {
+                    if (responseText.length > 0) {
                         addText(file.previewTemplate, responseText);
                         //file.previewTemplate.appendChild(document.createTextNode(responseText));
                         file.previewElement.classList.add("dz-error");
-                        file.previewElement.querySelector("[data-dz-errormessage]").textContent = "error";//responseText;
+                        //file.previewElement.querySelector("[data-dz-errormessage]").textContent = "error";//responseText;
                     }  
 	            	/*
                     file.previewTemplate.appendChild(document.createTextNode(responseText));    
@@ -40,6 +40,27 @@
                     }
                     */
 	            });
+	            this.on("addedfile", function(file) {
+	                // Create the remove button
+	                var removeButton = Dropzone.createElement("<button>Remove</button>");
+	                // Capture the Dropzone instance as closure.
+	                var _this = this;
+	                // Listen to the click event
+	                removeButton.addEventListener("click", function(e) {
+	                  // Make sure the button click doesn't submit the form:
+	                  e.preventDefault();
+	                  e.stopPropagation();
+	                  // Remove the file preview.
+	                  _this.removeFile(file);
+	                  // If you want to the delete the file on the server as well,
+	                  // you can do the AJAX request here.
+	                });
+	                // Add the button to the file preview element.
+                    file.previewElement.appendChild(document.createElement('BR'));
+                    file.previewElement.appendChild(document.createElement('BR'));
+                    file.previewElement.appendChild(removeButton);
+                    file.previewElement.appendChild(document.createElement('BR'));
+	              });
 	            //this.on("complete", function(file) {
 	            //    this.removeFile(file);
 	            //});
@@ -47,17 +68,26 @@
 	        };
 	        
 	        function addText(node,text){     
-	            var t=text.split(/\s*<br ?\/?>\s*/i),
+	        	//console.log(text);
+	            var t=text.split("\n"),
 	                i;
-	            if(t[0].length>0){         
-	              node.appendChild(document.createTextNode(t[0]));
+                table = document.createElement('table');
+                table.setAttribute("border", "1");
+                table.setAttribute("cellpadding", "5");
+                var tindex = 0;
+
+	            if (t[0].length > 0) {
+	            	r = table.insertRow(tindex); c = r.insertCell(0); c.innerHTML = t[0].substring(1,t[0].length-1); tindex++;
+	              //node.appendChild(document.createTextNode(t[0].substring(1,t[0].length-1)));
 	            }
-	            for(i=1;i<t.length;i++){
-	               node.appendChild(document.createElement('BR'));
-	               if(t[i].length>0){
-	                 node.appendChild(document.createTextNode(t[i]));
+	            for (i=1;i<t.length;i++){
+	               //node.appendChild(document.createElement('BR'));
+	               if (t[i].length > 0){
+	                   r = table.insertRow(tindex); c = r.insertCell(0); c.innerHTML = t[i].substring(1,t[i].length-1); tindex++;
+	                 //node.appendChild(document.createTextNode(t[i].substring(1,t[i].length-1)));
 	               }
 	            } 
+	            node.appendChild(table);
 	        } 	        
         </script>
     

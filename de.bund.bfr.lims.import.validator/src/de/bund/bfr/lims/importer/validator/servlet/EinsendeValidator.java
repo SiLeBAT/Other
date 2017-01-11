@@ -114,7 +114,7 @@ public class EinsendeValidator extends HttpServlet {
             	  		    inputs.put("file-upload-211:210", storeFile);
             	  		    Map<String, Boolean> outputs = new HashMap<>(); // doStream bedeutet bei true: file download, bei false: sichtbarkeit im browser
             	  		    outputs.put("XLS-918:917", false);
-            	  	    	message = new KREST().doWorkflow("ALEX/Proben-Einsendung_Web2c2", inputs, outputs);        	  			
+            	  	    	message = new KREST().doWorkflow("ALEX/Proben-Einsendung_Web2c3", inputs, outputs);        	  			
             	  		}
              
     	                //deregisterDrivers();
@@ -129,7 +129,7 @@ public class EinsendeValidator extends HttpServlet {
         response.setContentType("text/plain");
         PrintWriter out = response.getWriter();
         //if (message == null || message.trim().isEmpty()) message = "success!";
-        message = message.trim().replace("\n", "<BR>");
+        //message = message.trim().replace("\n", "<BR>");
         System.out.println(message.length());
         out.println(message);
         out.flush();
