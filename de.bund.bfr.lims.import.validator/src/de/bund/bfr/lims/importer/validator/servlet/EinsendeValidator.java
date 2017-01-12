@@ -3,6 +3,9 @@ package de.bund.bfr.lims.importer.validator.servlet;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -109,6 +112,7 @@ public class EinsendeValidator extends HttpServlet {
                         }
 
                     	System.out.println(uploadPath + "\t" + storeFile);
+                    	/*
             	  		if (storeFile != null && storeFile.exists()) {
             	  	    	Map<String, Object> inputs = new HashMap<>();
             	  		    inputs.put("file-upload-211:210", storeFile);
@@ -116,7 +120,7 @@ public class EinsendeValidator extends HttpServlet {
             	  		    outputs.put("XLS-918:917", false);
             	  	    	message = new KREST().doWorkflow("ALEX/Proben-Einsendung_Web2c3", inputs, outputs);        	  			
             	  		}
-             
+             */
     	                //deregisterDrivers();
     	                deleteUploadDir(uploadDir);
                     }
@@ -128,12 +132,19 @@ public class EinsendeValidator extends HttpServlet {
         
         response.setContentType("text/plain");
         PrintWriter out = response.getWriter();
+        //message = readFile("/Users/arminweiser/Desktop/Desktop.csv", Charset.defaultCharset());//"dtraralla dfgd f fglkdfgl  rkgjfdkjgdlfgj dfgjfdgj dlfkkg fkgj dlkfgjd f!";
         //if (message == null || message.trim().isEmpty()) message = "success!";
         //message = message.trim().replace("\n", "<BR>");
         System.out.println(message.length());
         out.println(message);
         out.flush();
 	}
+	private String readFile(String path, Charset encoding) 
+			  throws IOException 
+			{
+			  byte[] encoded = Files.readAllBytes(Paths.get(path));
+			  return new String(encoded, encoding);
+			}
 	private void deleteUploadDir(File uploadDir){
 	    try {
 	        for (File f : uploadDir.listFiles()) {

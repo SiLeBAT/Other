@@ -5,7 +5,7 @@
         <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
         <title>Einsendebogen Portal</title>
         <script src="js/dropzone.js"></script>
-        <link rel="stylesheet" href="https://rawgit.com/enyo/dropzone/master/dist/dropzone.css">
+        <link rel="stylesheet" href="css/mydropzone.css">
     </head>
     <body>
     
@@ -13,14 +13,23 @@
 	        // myDropzone is the configuration for the element that has an id attribute
 	        // with the value my-dropzone (or myDropzone)
 	        Dropzone.options.myDropzone = {
+	        	createImageThumbnails: false,
+	        	acceptedFiles: ".xls,.xlsx",
+       			uploadMultiple: true,
 	          init: function() {
+	              this.on("thumbnail", function(file, dataUrl) {
+	            	  //file.previewElement.classList.get('dz-image').last().find('img').attr({width: '100%', height: '100%'});
+	              }),
 	            this.on("success", function(file, responseText) {
+	            	//file.previewElement.classList.get('dz-image').css({"width":"100%", "height":"auto"});
 	            	console.log(responseText.length);
                     if (responseText.length > 0) {
-                        addText(file.previewTemplate, responseText);
+                        //addText(file.previewTemplate, responseText);
                         //file.previewTemplate.appendChild(document.createTextNode(responseText));
                         file.previewElement.classList.add("dz-error");
-                        //file.previewElement.querySelector("[data-dz-errormessage]").textContent = "error";//responseText;
+                        //file.previewElement.querySelector("[data-dz-errormessage]").textContent = responseText;
+                        //file.previewElement.querySelector("[data-dz-errormessage]").innerHTML = responseText;
+                        file.previewElement.querySelector("[data-dz-errormessage]").innerHTML = getHTMLText(responseText);
                     }  
 	            	/*
                     file.previewTemplate.appendChild(document.createTextNode(responseText));    
@@ -40,6 +49,7 @@
                     }
                     */
 	            });
+	              /*
 	            this.on("addedfile", function(file) {
 	                // Create the remove button
 	                var removeButton = Dropzone.createElement("<button>Remove</button>");
@@ -61,6 +71,7 @@
                     file.previewElement.appendChild(removeButton);
                     file.previewElement.appendChild(document.createElement('BR'));
 	              });
+	              */
 	            //this.on("complete", function(file) {
 	            //    this.removeFile(file);
 	            //});
@@ -88,6 +99,26 @@
 	               }
 	            } 
 	            node.appendChild(table);
+	        } 	        
+	        function getHTMLText(text){     
+	        	//console.log(text);
+	            var t=text.split("\n"),
+	                i;
+                table = "<table cellpadding='5' border='1' width='100%'>";
+                var tindex = 0;
+
+	            if (t[0].length > 0) {
+	            	table = table + "<tr><td>" + t[0].substring(1,t[0].length-1) + "</td></tr>"; tindex++;
+	            }
+	            for (i=1;i<t.length;i++){
+	               //node.appendChild(document.createElement('BR'));
+	               if (t[i].length > 0){
+		            	table = table + "<tr><td>" + t[tindex].substring(1,t[tindex].length-1) + "</td></tr>"; tindex++;
+	               }
+	            } 
+	            table = table + "</table>";
+	            //console.log(table);
+	            return table;
 	        } 	        
         </script>
     
