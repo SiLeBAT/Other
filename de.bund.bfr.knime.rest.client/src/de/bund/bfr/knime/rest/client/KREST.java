@@ -79,7 +79,7 @@ public class KREST {
 		new KREST().doWorkflow("ALEX/Upload_Download_aaw", inputs, outputs);
 	}
 
-	public String doWorkflow(String wfPath, Map<String, Object> inputs, Map<String, Boolean> outputs)
+	public Map<String, String> doWorkflow(String wfPath, Map<String, Object> inputs, Map<String, Boolean> outputs)
 			throws IOException, URISyntaxException, ParserConfigurationException, SAXException {
 		String username = "";
 		String password = "";
@@ -90,7 +90,7 @@ public class KREST {
 		username = document.getElementsByTagName("user").item(0).getTextContent();
 		password = document.getElementsByTagName("password").item(0).getTextContent();
 
-		String result = "";
+		Map<String, String> result = null;
 		Client client = ClientBuilder.newClient();
 		client.register(HttpAuthenticationFeature.basic(username, password));
 		client.register(MultiPartFeature.class);
@@ -120,9 +120,9 @@ public class KREST {
 		return result;
 	}
 
-	private String getResult(Client client, String restResource, String jobid, Map<String, Boolean> outputs)
+	private Map<String, String> getResult(Client client, String restResource, String jobid, Map<String, Boolean> outputs)
 			throws IOException {
-		String result = "";
+		Map<String, String> result = new HashMap<>();
 		for (String param : outputs.keySet()) {
 			boolean doStream = outputs.get(param);
 			Builder builder = client.target(restResource).path("jobs").path(jobid).path("output-resources").path(param) // "file-download-7"
@@ -132,10 +132,10 @@ public class KREST {
 			// result += "'" + param + "':\n";
 			if (doStream) {
 				InputStream stream = res.readEntity(InputStream.class);
-				result += "...stream mit " + stream.available() + " bytes";
+				result.put(param, "...stream mit " + stream.available() + " bytes");
 				// is2File(stream, "/Users/arminweiser/Downloads/bsp_out.xls");
 			} else {
-				result += "\n" + res.readEntity(String.class);
+				result.put(param, "\n" + res.readEntity(String.class));
 			}
 
 			res.close();

@@ -6,6 +6,33 @@
         <title>Einsendebogen Portal</title>
         <script src="js/dropzone.js"></script>
         <link rel="stylesheet" href="css/mydropzone.css">
+        <link rel="stylesheet" href="css/editablegrid.css">
+
+        <script type="text/javascript" src="js/editablegrid.js"></script>
+        <script type="text/javascript" src="js/editablegrid_charts.js"></script>
+        <script type="text/javascript" src="js/editablegrid_charts_ofc.js"></script>
+        <script type="text/javascript" src="js/editablegrid_editors.js"></script>
+        <script type="text/javascript" src="js/editablegrid_renderers.js"></script>
+        <script type="text/javascript" src="js/editablegrid_utils.js"></script>
+        <script type="text/javascript" src="js/editablegrid_validators.js"></script>
+
+        <style>
+            body { font-family:'lucida grande', tahoma, verdana, arial, sans-serif; font-size:11px; }
+            h1 { font-size: 15px; }
+            a { color: #548dc4; text-decoration: none; }
+            a:hover { text-decoration: underline; }
+            table.testgrid { border-collapse: collapse; border: 1px solid #CCB; width: 800px; }
+            table.testgrid td, table.testgrid th { padding: 5px; border: 1px solid #E0E0E0; }
+            table.testgrid th { background: #E5E5E5; text-align: left; }
+            input.invalid { background: red; color: #FDFDFD; }
+        </style>
+        <script>
+            window.onload = function() {
+                editableGrid = new EditableGrid("DemoGridJSON"); 
+                editableGrid.tableLoaded = function() { this.renderGrid("tablecontent", "testgrid"); };
+                //editableGrid.loadJSON("grid.json");
+            } 
+        </script>
     </head>
     <body>
     
@@ -23,13 +50,17 @@
 	            this.on("success", function(file, responseText) {
 	            	//file.previewElement.classList.get('dz-image').css({"width":"100%", "height":"auto"});
 	            	console.log(responseText.length);
-                    if (responseText.length > 0) {
-                        //addText(file.previewTemplate, responseText);
+                    if (responseText.length > 3) {
+                    	console.log(responseText);
+                    	editableGrid.loadJSON(responseText);
+                    	/*
+                        addText(file.previewTemplate, responseText);
                         //file.previewTemplate.appendChild(document.createTextNode(responseText));
                         file.previewElement.classList.add("dz-error");
                         //file.previewElement.querySelector("[data-dz-errormessage]").textContent = responseText;
                         //file.previewElement.querySelector("[data-dz-errormessage]").innerHTML = responseText;
-                        file.previewElement.querySelector("[data-dz-errormessage]").innerHTML = getHTMLText(responseText);
+                        file.previewElement.querySelector("[data-dz-errormessage]").innerHTML = "";//getHTMLText(responseText);
+                        */
                     }  
 	            	/*
                     file.previewTemplate.appendChild(document.createTextNode(responseText));    
@@ -82,6 +113,8 @@
 	        	//console.log(text);
 	            var t=text.split("\n"),
 	                i;
+	            node.appendChild(document.createElement('BR'));
+	            node.appendChild(document.createElement('BR'));
                 table = document.createElement('table');
                 table.setAttribute("border", "1");
                 table.setAttribute("cellpadding", "5");
@@ -134,5 +167,7 @@
                 </form>
             </div>
         </section>
+        
+        <div id="tablecontent"></div>
     </body>
 </html>

@@ -112,15 +112,17 @@ public class EinsendeValidator extends HttpServlet {
                         }
 
                     	System.out.println(uploadPath + "\t" + storeFile);
-                    	/*
+                    	
             	  		if (storeFile != null && storeFile.exists()) {
             	  	    	Map<String, Object> inputs = new HashMap<>();
             	  		    inputs.put("file-upload-211:210", storeFile);
             	  		    Map<String, Boolean> outputs = new HashMap<>(); // doStream bedeutet bei true: file download, bei false: sichtbarkeit im browser
-            	  		    outputs.put("XLS-918:917", false);
-            	  	    	message = new KREST().doWorkflow("ALEX/Proben-Einsendung_Web2c3", inputs, outputs);        	  			
+            	  		    outputs.put("XLS-945:941", false);
+            	  		    outputs.put("json-output-945:947", false);
+            	  		    Map<String, String> r = new KREST().doWorkflow("ALEX/Proben-Einsendung_Web3_aaw", inputs, outputs);
+            	  	    	message = r.get("json-output-945:947");      	  			
             	  		}
-             */
+             
     	                //deregisterDrivers();
     	                deleteUploadDir(uploadDir);
                     }
