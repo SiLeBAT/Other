@@ -29,8 +29,8 @@
         <script>
             window.onload = function() {
                 editableGrid = new EditableGrid("DemoGridJSON"); 
-                editableGrid.tableLoaded = function() { this.renderGrid("tablecontent", "testgrid"); };
-                //editableGrid.loadJSON("grid.json");
+                editableGrid.tableLoaded = function() {console.log("Grid loaded from JSON: " + this.getRowCount() + " row(s)"); this.renderGrid("tablecontent", "testgrid"); };
+                editableGrid.loadJSON("grid.json");
             } 
         </script>
     </head>
@@ -47,36 +47,40 @@
 	              this.on("thumbnail", function(file, dataUrl) {
 	            	  //file.previewElement.classList.get('dz-image').last().find('img').attr({width: '100%', height: '100%'});
 	              }),
-	            this.on("success", function(file, responseText) {
+	            this.on("success", function(file, jsonText) {
 	            	//file.previewElement.classList.get('dz-image').css({"width":"100%", "height":"auto"});
-	            	console.log(responseText.length);
-                    if (responseText.length > 3) {
-                    	console.log(responseText);
-                    	editableGrid.loadJSON(responseText);
+	            	console.log(jsonText.length);
+                    if (jsonText.length > 3) {
+                    	//console.log(jsonText);
+                    	editableGrid.loadJSONFromString(jsonText);
+                    	console.log("Grid loaded from JSON: " + editableGrid.getRowCount() + " row(s)"); editableGrid.renderGrid("tablecontent", "testgrid"); 
+                    	
+                    	var json_out = getJSONFromTable(editableGrid);
+                    	console.log(json_out);
                     	/*
-                        addText(file.previewTemplate, responseText);
-                        //file.previewTemplate.appendChild(document.createTextNode(responseText));
+                        addText(file.previewTemplate, jsonText);
+                        //file.previewTemplate.appendChild(document.createTextNode(jsonText));
                         file.previewElement.classList.add("dz-error");
-                        //file.previewElement.querySelector("[data-dz-errormessage]").textContent = responseText;
-                        //file.previewElement.querySelector("[data-dz-errormessage]").innerHTML = responseText;
-                        file.previewElement.querySelector("[data-dz-errormessage]").innerHTML = "";//getHTMLText(responseText);
+                        //file.previewElement.querySelector("[data-dz-errormessage]").textContent = jsonText;
+                        //file.previewElement.querySelector("[data-dz-errormessage]").innerHTML = jsonText;
+                        file.previewElement.querySelector("[data-dz-errormessage]").innerHTML = "";//getHTMLText(jsonText);
                         */
                     }  
 	            	/*
-                    file.previewTemplate.appendChild(document.createTextNode(responseText));    
-                    var str = responseText.valueOf();
+                    file.previewTemplate.appendChild(document.createTextNode(jsonText));    
+                    var str = jsonText.valueOf();
                     file.previewTemplate.appendChild(document.createTextNode("<br>"+str));   
                     if (0 == str.length) file.previewTemplate.appendChild(document.createTextNode("ss"));   
                     */
                     /*
-	            	var str = responseText.valueOf();
-                    if (!responseText || 0 === str.length) {
-                        file.previewTemplate.appendChild(document.createTextNode(responseText));                        
+	            	var str = jsonText.valueOf();
+                    if (!jsonText || 0 === str.length) {
+                        file.previewTemplate.appendChild(document.createTextNode(jsonText));                        
                     }
                     else {
-                        file.previewTemplate.appendChild(document.createTextNode(responseText));                        
+                        file.previewTemplate.appendChild(document.createTextNode(jsonText));                        
                         file.previewElement.classList.add("dz-error");
-                        file.previewElement.querySelector("[data-dz-errormessage]").textContent = responseText;
+                        file.previewElement.querySelector("[data-dz-errormessage]").textContent = jsonText;
                     }
                     */
 	            });
@@ -152,7 +156,50 @@
 	            table = table + "</table>";
 	            //console.log(table);
 	            return table;
-	        } 	        
+	        } 	    
+	        
+	        function getJSONFromTable(editableGrid) {
+	        	var transformedData = {};
+	        	transformedData.metadata = [];
+	        	transformedData.data = [];
+
+	        	// base on the first row we can see how many columns there are  so just user it
+	        	var firstRow = editableGrid.data[0];
+	        	var firstRowValues = firstRow.values;
+
+	        	// sample values is an object so we have to user
+	        	for (var key in firstRowValues) {
+	        	    var value = firstRowValues[key];
+	        	    if (key === "damname") {
+	        	        transformedData.metadata.push({ "name": "damname", "label": "DAM NAME", "datatype": "string", "bar": true, "editable": false, "values": null, "decimal_point": '.', "thousands_separator": ',', "enablesort": false });
+	        	    }
+	        	    else {
+	        	        var dateParts = key.split('-');
+	        	        var date = new Date(dateParts[2], dateParts[1] - 1, dateParts[0], dateParts[3], dateParts[4], 0, 0);
+	        	        var datetimeString = getDateTimeString(date);
+
+	        	        transformedData.metadata.push({ "name": key, "label": datetimeString, "datatype": "double(,2, dot, comma, 0, n/a)", "bar": false, "editable": true, "values": null, "enablesort": false });
+	        	    }
+	        	}
+
+	        	for (var rowIndex = 0; rowIndex < editableGrid.data.length; rowIndex++) {
+	        	    var values = editableGrid.data[rowIndex].values;
+	        	    var updatedValues = JSON.parse(JSON.stringify(values));
+
+	        	    // Read values from the columns object.
+	        	    var index = 0;
+	        	    for (var prop in updatedValues) {
+	        	        if (index > 0) {
+	        	            updatedValues[prop] = editableGrid.data[rowIndex].columns[index];
+	        	        }
+
+	        	        index++;
+	        	    }
+
+	        	    transformedData.data.push({ "id": editableGrid.data[rowIndex].id, "values": updatedValues });
+	        	}	   
+	        	return transformedData;
+	        }
         </script>
     
     

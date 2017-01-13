@@ -26,6 +26,10 @@ import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
@@ -36,13 +40,13 @@ public class KREST {
 	private static final String restResource = "http://vm-knime:8095/vm-knime/rest/v4/";
 
 	public static void main(String[] args)
-			throws IOException, URISyntaxException, ParserConfigurationException, SAXException {
+			throws IOException, URISyntaxException, ParserConfigurationException, SAXException, ParseException {
 		// doFileHead();
 		// doUpDown();
 		doOwn();
 	}
 
-	private static void doOwn() throws IOException, URISyntaxException, ParserConfigurationException, SAXException {
+	private static void doOwn() throws IOException, URISyntaxException, ParserConfigurationException, SAXException, ParseException {
 		Map<String, Object> inputs = new HashMap<>();
 		File f = new File("C:/Users/weiser/Desktop/Test.xlsx");
 		inputs.put("file-upload-211:210", f);
@@ -56,7 +60,7 @@ public class KREST {
 	}
 
 	private static void doFileHead()
-			throws IOException, URISyntaxException, ParserConfigurationException, SAXException {
+			throws IOException, URISyntaxException, ParserConfigurationException, SAXException, ParseException {
 		Map<String, Object> inputs = new HashMap<>();
 		File f = new File("C:/Users/weiser/Desktop/Beispiel.txt");
 		inputs.put("file-upload-1", f);
@@ -70,7 +74,7 @@ public class KREST {
 		new KREST().doWorkflow("ALEX/File-HEAD-Example", inputs, outputs);
 	}
 
-	private static void doUpDown() throws IOException, URISyntaxException, ParserConfigurationException, SAXException {
+	private static void doUpDown() throws IOException, URISyntaxException, ParserConfigurationException, SAXException, ParseException {
 		Map<String, Object> inputs = new HashMap<>();
 		File f = new File("C:/Users/weiser/Desktop/Test.xlsx");
 		inputs.put("UploadedFile-937:5", f);
@@ -80,7 +84,7 @@ public class KREST {
 	}
 
 	public Map<String, String> doWorkflow(String wfPath, Map<String, Object> inputs, Map<String, Boolean> outputs)
-			throws IOException, URISyntaxException, ParserConfigurationException, SAXException {
+			throws IOException, URISyntaxException, ParserConfigurationException, SAXException, ParseException {
 		String username = "";
 		String password = "";
 		InputStream in = KREST.class.getClassLoader().getResourceAsStream("/de/bund/bfr/knime/rest/client/userdata.xml");
@@ -95,6 +99,8 @@ public class KREST {
 		client.register(HttpAuthenticationFeature.basic(username, password));
 		client.register(MultiPartFeature.class);
 
+		result = getJobPoolResult(client, restResource, wfPath, inputs, outputs);
+		/*
 		boolean showSyntaxOnly = inputs.size() == 0 && outputs.size() == 0;
 		String jobid = getJobID(client, restResource, "repository/" + wfPath + ":jobs", showSyntaxOnly);
 		if (!showSyntaxOnly) {
@@ -105,6 +111,69 @@ public class KREST {
 			}
 			System.out.println("discardJob: " + discardJob(client, restResource, jobid));
 		}
+		*/
+		return result;
+	}
+
+	private Map<String, String> getJobPoolResult(Client client, String restResource, String wfPath, Map<String, Object> inputs, Map<String, Boolean> outputs)
+			throws IOException, ParseException {
+		Map<String, String> result = new HashMap<>();
+		
+		FormDataMultiPart formDataMultiPart = new FormDataMultiPart();
+		MultiPart multipartEntity = formDataMultiPart;
+		for (String param : inputs.keySet()) {
+			Object o = inputs.get(param);
+			if (o instanceof File) {
+				File f = (File) o;
+				FileDataBodyPart filePart = new FileDataBodyPart("file", f);
+				filePart.setContentDisposition(FormDataContentDisposition.name(param).fileName(f.getName()).build()); // "file-upload-1"
+				multipartEntity = formDataMultiPart.bodyPart(filePart);
+			} else {
+				multipartEntity = formDataMultiPart.field(param, inputs.get(param), MediaType.APPLICATION_JSON_TYPE); // "line-count-3"
+																														// "{\"integer\":2}"
+			}
+		}
+
+		Builder builder = client.target(restResource).path("repository").path(wfPath + ":job-pool")
+				.request().accept(MediaType.APPLICATION_JSON);
+		Response res = builder.post(Entity.entity(multipartEntity, MediaType.MULTIPART_FORM_DATA));
+
+		String json = res.readEntity(String.class);
+
+		JSONParser parser = new JSONParser();
+		Object obj = parser.parse(json);
+		JSONObject jsonObject = (JSONObject) obj;
+		JSONObject ov = (JSONObject) jsonObject.get("outputValues");
+		for (String param : outputs.keySet()) {
+			JSONArray pv = (JSONArray) ov.get(param);
+			if (pv != null) result.put(param, pv.toJSONString());
+		}
+		
+		res.close();
+		formDataMultiPart.close();
+		multipartEntity.close();
+
+/*		
+		for (String param : outputs.keySet()) {
+			boolean doStream = outputs.get(param);
+			// .path("repository").path("testing").path("Alex_testing").path("AFcurrentTests").path("File-HEAD-Example:jobs")
+
+			Builder builder = client.target(restResource).path(wfPath + ":job-pool")
+					.request().accept(doStream ? MediaType.APPLICATION_OCTET_STREAM : MediaType.APPLICATION_JSON);
+			Response res = builder.get();
+
+			// result += "'" + param + "':\n";
+			if (doStream) {
+				InputStream stream = res.readEntity(InputStream.class);
+				result.put(param, "...stream mit " + stream.available() + " bytes");
+				// is2File(stream, "/Users/arminweiser/Downloads/bsp_out.xls");
+			} else {
+				result.put(param, "\n" + res.readEntity(String.class));
+			}
+
+			res.close();
+		}
+*/
 		return result;
 	}
 

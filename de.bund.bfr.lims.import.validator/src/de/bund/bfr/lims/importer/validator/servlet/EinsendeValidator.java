@@ -137,7 +137,7 @@ public class EinsendeValidator extends HttpServlet {
         //message = readFile("/Users/arminweiser/Desktop/Desktop.csv", Charset.defaultCharset());//"dtraralla dfgd f fglkdfgl  rkgjfdkjgdlfgj dfgjfdgj dlfkkg fkgj dlkfgjd f!";
         //if (message == null || message.trim().isEmpty()) message = "success!";
         //message = message.trim().replace("\n", "<BR>");
-        System.out.println(message.length());
+        //System.out.println(message.length());
         out.println(message);
         out.flush();
 	}
