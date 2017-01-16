@@ -7,6 +7,8 @@
         <script src="js/dropzone.js"></script>
         <link rel="stylesheet" href="css/mydropzone.css">
         <link rel="stylesheet" href="css/editablegrid.css">
+        <link rel="stylesheet" href="css/handsontable.css">
+        <link rel="stylesheet" href="js/pikaday/pikaday.css">
 
         <script type="text/javascript" src="js/editablegrid.js"></script>
         <script type="text/javascript" src="js/editablegrid_charts.js"></script>
@@ -15,6 +17,13 @@
         <script type="text/javascript" src="js/editablegrid_renderers.js"></script>
         <script type="text/javascript" src="js/editablegrid_utils.js"></script>
         <script type="text/javascript" src="js/editablegrid_validators.js"></script>
+
+        <script type="text/javascript" src="js/pikaday/pikaday.js"></script>
+        <script type="text/javascript" src="js/moment/moment.js"></script>
+        <script type="text/javascript" src="js/zeroclipboard/ZeroClipboard.js"></script>
+        <script type="text/javascript" src="js/numbro/numbro.js"></script>
+        <script type="text/javascript" src="js/numbro/languages.js"></script>
+        <script type="text/javascript" src="js/handsontable.js"></script>
 
         <style>
             body { font-family:'lucida grande', tahoma, verdana, arial, sans-serif; font-size:11px; }
@@ -27,16 +36,64 @@
             input.invalid { background: red; color: #FDFDFD; }
         </style>
         <script>
-            window.onload = function() {
+        var data = function () {
+	      	  return Handsontable.helper.createSpreadsheetData(100, 10);
+	      	};
+
+	      	window.onload = function() {
                 editableGrid = new EditableGrid("DemoGridJSON"); 
                 editableGrid.tableLoaded = function() {console.log("Grid loaded from JSON: " + this.getRowCount() + " row(s)"); this.renderGrid("tablecontent", "testgrid"); };
-                editableGrid.loadJSON("grid.json");
+                //editableGrid.loadJSON("grid.json");
+                editableGrid.loadJSON("Row0.json");
+ 
+    	      	//var container = document.getElementById('example');
+    	    	
+                var
+                data = [
+                  ['', 'Kia', 'Nissan', 'Toyota', 'Honda'],
+                  ['2008', 10, 11, 12, 13],
+                  ['2009', 20, 11, 14, 13],
+                  ['2009', 30, 15, 12, 13]
+                ],
+                container = document.getElementById('example')
+                ;
+  	      	var hot = new Handsontable(container, {
+                data: data,
+                startRows: 5,
+                startCols: 5,
+                colHeaders: true,
+                comments: true,
+                minSpareRows: 1,
+                beforeChange: function (changes, source) {
+                	console.log(changes.length);
+                	console.log(changes[0]);
+                	console.log(source);
+      	      		var json = JSON.stringify({data: hot.getData()});
+      	      		console.log(json);
+
+      	      		var commentsPlugin = this.getPlugin('comments');
+      	      		commentsPlugin.setCommentAtCell(1, 1, "WASS");
+                }
+  	      	  //data: data(),
+    	      	//  minSpareCols: 1,
+    	      	  //minSpareRows: 1,
+    	      	  //rowHeaders: true,
+    	      	  //colHeaders: true,
+    	      	  //contextMenu: true
+    	      	});
+  	      	
+  	      		var json = JSON.stringify({data: hot.getData()});
+  	      		console.log(json);
+  	      		  	      		
             } 
         </script>
     </head>
     <body>
     
         <script>
+        
+	
+	      	
 	        // myDropzone is the configuration for the element that has an id attribute
 	        // with the value my-dropzone (or myDropzone)
 	        Dropzone.options.myDropzone = {
@@ -50,13 +107,12 @@
 	            this.on("success", function(file, jsonText) {
 	            	//file.previewElement.classList.get('dz-image').css({"width":"100%", "height":"auto"});
 	            	console.log(jsonText.length);
+                	console.log(editableGrid.getRowValues(1));
                     if (jsonText.length > 3) {
                     	//console.log(jsonText);
                     	editableGrid.loadJSONFromString(jsonText);
                     	console.log("Grid loaded from JSON: " + editableGrid.getRowCount() + " row(s)"); editableGrid.renderGrid("tablecontent", "testgrid"); 
                     	
-                    	var json_out = getJSONFromTable(editableGrid);
-                    	console.log(json_out);
                     	/*
                         addText(file.previewTemplate, jsonText);
                         //file.previewTemplate.appendChild(document.createTextNode(jsonText));
@@ -165,21 +221,10 @@
 
 	        	// base on the first row we can see how many columns there are  so just user it
 	        	var firstRow = editableGrid.data[0];
-	        	var firstRowValues = firstRow.values;
 
 	        	// sample values is an object so we have to user
-	        	for (var key in firstRowValues) {
-	        	    var value = firstRowValues[key];
-	        	    if (key === "damname") {
-	        	        transformedData.metadata.push({ "name": "damname", "label": "DAM NAME", "datatype": "string", "bar": true, "editable": false, "values": null, "decimal_point": '.', "thousands_separator": ',', "enablesort": false });
-	        	    }
-	        	    else {
-	        	        var dateParts = key.split('-');
-	        	        var date = new Date(dateParts[2], dateParts[1] - 1, dateParts[0], dateParts[3], dateParts[4], 0, 0);
-	        	        var datetimeString = getDateTimeString(date);
-
-	        	        transformedData.metadata.push({ "name": key, "label": datetimeString, "datatype": "double(,2, dot, comma, 0, n/a)", "bar": false, "editable": true, "values": null, "enablesort": false });
-	        	    }
+	        	for (var key in firstRow) {
+         	        transformedData.metadata.push({ "name": key, "label": key, "datatype": "string", "editable": true});
 	        	}
 
 	        	for (var rowIndex = 0; rowIndex < editableGrid.data.length; rowIndex++) {
@@ -200,7 +245,8 @@
 	        	}	   
 	        	return transformedData;
 	        }
-        </script>
+	        
+		</script>
     
     
         <section>
@@ -216,5 +262,12 @@
         </section>
         
         <div id="tablecontent"></div>
+        
+		<h2>Handsontable Basic Example (100x10)</h2>
+		<p>
+		Head to <a href="https://handsontable.com" target="_blank">handsontable.com</a> to learn more about Handsontable.
+		</p>
+		
+		<div id="example"></div>
     </body>
 </html>
