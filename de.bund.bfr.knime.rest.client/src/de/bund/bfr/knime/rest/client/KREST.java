@@ -35,9 +35,8 @@ import org.xml.sax.SAXException;
 
 public class KREST {
 
-	// private static final String restResource =
-	// "https://knime.bfrlab.de/com.knime.enterprise.server/rest/v4/";
-	private static final String restResource = "http://vm-knime:8095/vm-knime/rest/v4/";
+	private static final String restResource = "https://knime.bfrlab.de/com.knime.enterprise.server/rest/v4/";
+	//private static final String restResource = "http://vm-knime:8095/vm-knime/rest/v4/";
 
 	public static void main(String[] args)
 			throws IOException, URISyntaxException, ParserConfigurationException, SAXException, ParseException {
@@ -56,7 +55,7 @@ public class KREST {
 														// sichtbarkeit im
 														// browser
 		outputs.put("XLS-918:917", false);
-		new KREST().doWorkflow("ALEX/Proben-Einsendung_Web2b", inputs, outputs);
+		new KREST().doWorkflow("ALEX/Proben-Einsendung_Web2b", inputs, outputs, false);
 	}
 
 	private static void doFileHead()
@@ -71,7 +70,7 @@ public class KREST {
 														// sichtbarkeit im
 														// browser
 		outputs.put("file-download-7", false);
-		new KREST().doWorkflow("ALEX/File-HEAD-Example", inputs, outputs);
+		new KREST().doWorkflow("ALEX/File-HEAD-Example", inputs, outputs, false);
 	}
 
 	private static void doUpDown() throws IOException, URISyntaxException, ParserConfigurationException, SAXException, ParseException {
@@ -80,10 +79,10 @@ public class KREST {
 		inputs.put("UploadedFile-937:5", f);
 		Map<String, Boolean> outputs = new HashMap<>();
 		outputs.put("XLS-894", true);
-		new KREST().doWorkflow("ALEX/Upload_Download_aaw", inputs, outputs);
+		new KREST().doWorkflow("ALEX/Upload_Download_aaw", inputs, outputs, false);
 	}
 
-	public Map<String, String> doWorkflow(String wfPath, Map<String, Object> inputs, Map<String, Boolean> outputs)
+	public Map<String, String> doWorkflow(String wfPath, Map<String, Object> inputs, Map<String, Boolean> outputs, boolean getJSON)
 			throws IOException, URISyntaxException, ParserConfigurationException, SAXException, ParseException {
 		String username = "";
 		String password = "";
@@ -99,19 +98,20 @@ public class KREST {
 		client.register(HttpAuthenticationFeature.basic(username, password));
 		client.register(MultiPartFeature.class);
 
-		result = getJobPoolResult(client, restResource, wfPath, inputs, outputs);
-		/*
-		boolean showSyntaxOnly = inputs.size() == 0 && outputs.size() == 0;
-		String jobid = getJobID(client, restResource, "repository/" + wfPath + ":jobs", showSyntaxOnly);
-		if (!showSyntaxOnly) {
-			boolean success = executeJob(client, restResource, jobid, inputs);
-			if (success) {
-				result = getResult(client, restResource, jobid, outputs);
-				System.err.println(result);
+		if (getJSON) result = getJobPoolResult(client, restResource, wfPath, inputs, outputs);
+		else {
+			boolean showSyntaxOnly = inputs.size() == 0 && outputs.size() == 0;
+			String jobid = getJobID(client, restResource, "repository/" + wfPath + ":jobs", showSyntaxOnly);
+			if (!showSyntaxOnly) {
+				boolean success = executeJob(client, restResource, jobid, inputs);
+				if (success) {
+					result = getResult(client, restResource, jobid, outputs);
+					System.err.println(result);
+				}
+				System.out.println("discardJob: " + discardJob(client, restResource, jobid));
 			}
-			System.out.println("discardJob: " + discardJob(client, restResource, jobid));
 		}
-		*/
+		
 		return result;
 	}
 
@@ -144,36 +144,17 @@ public class KREST {
 		Object obj = parser.parse(json);
 		JSONObject jsonObject = (JSONObject) obj;
 		JSONObject ov = (JSONObject) jsonObject.get("outputValues");
-		for (String param : outputs.keySet()) {
-			JSONArray pv = (JSONArray) ov.get(param);
-			if (pv != null) result.put(param, pv.toJSONString());
+		if (ov != null) {
+			for (String param : outputs.keySet()) {
+				JSONArray pv = (JSONArray) ov.get(param);
+				if (pv != null) result.put(param, pv.toJSONString());
+			}
 		}
 		
 		res.close();
 		formDataMultiPart.close();
 		multipartEntity.close();
 
-/*		
-		for (String param : outputs.keySet()) {
-			boolean doStream = outputs.get(param);
-			// .path("repository").path("testing").path("Alex_testing").path("AFcurrentTests").path("File-HEAD-Example:jobs")
-
-			Builder builder = client.target(restResource).path(wfPath + ":job-pool")
-					.request().accept(doStream ? MediaType.APPLICATION_OCTET_STREAM : MediaType.APPLICATION_JSON);
-			Response res = builder.get();
-
-			// result += "'" + param + "':\n";
-			if (doStream) {
-				InputStream stream = res.readEntity(InputStream.class);
-				result.put(param, "...stream mit " + stream.available() + " bytes");
-				// is2File(stream, "/Users/arminweiser/Downloads/bsp_out.xls");
-			} else {
-				result.put(param, "\n" + res.readEntity(String.class));
-			}
-
-			res.close();
-		}
-*/
 		return result;
 	}
 
@@ -204,7 +185,7 @@ public class KREST {
 				result.put(param, "...stream mit " + stream.available() + " bytes");
 				// is2File(stream, "/Users/arminweiser/Downloads/bsp_out.xls");
 			} else {
-				result.put(param, "\n" + res.readEntity(String.class));
+				result.put(param, res.readEntity(String.class));
 			}
 
 			res.close();

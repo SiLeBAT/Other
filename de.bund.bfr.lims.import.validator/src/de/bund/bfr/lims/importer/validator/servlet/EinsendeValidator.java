@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -55,6 +56,7 @@ public class EinsendeValidator extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		String message = "";
+		String message2 = null;
 
         // checks if the request actually contains upload file
         if (!ServletFileUpload.isMultipartContent(request)) {
@@ -117,10 +119,12 @@ public class EinsendeValidator extends HttpServlet {
             	  	    	Map<String, Object> inputs = new HashMap<>();
             	  		    inputs.put("file-upload-211:210", storeFile);
             	  		    Map<String, Boolean> outputs = new HashMap<>(); // doStream bedeutet bei true: file download, bei false: sichtbarkeit im browser
-            	  		    outputs.put("XLS-945:941", false);
-            	  		    outputs.put("json-output-945:947", false);
-            	  		    Map<String, String> r = new KREST().doWorkflow("ALEX/Proben-Einsendung_Web3_aaw", inputs, outputs);
-            	  	    	message = r.get("json-output-945:947");      	  			
+            	  		    outputs.put("XLS-918:917", false);
+            	  		    outputs.put("XLS-918:926", false);
+            	  		    //outputs.put("json-output-945:947", false);
+            	  		    Map<String, String> r = new KREST().doWorkflow("testing/Alex_testing/Proben-Einsendung_Web4_aaw", inputs, outputs, false);
+            	  	    	message = r.get("XLS-918:917");	
+            	  	    	message2 = r.get("XLS-918:926");	
             	  		}
              
     	                //deregisterDrivers();
@@ -138,6 +142,62 @@ public class EinsendeValidator extends HttpServlet {
         //if (message == null || message.trim().isEmpty()) message = "success!";
         //message = message.trim().replace("\n", "<BR>");
         //System.out.println(message.length());
+        //String[] spl = message.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
+        Scanner scan = new Scanner(message);
+        scan.useDelimiter("\n");
+        message = "{\n\t\"data\": [\n";
+        while(scan.hasNext()){
+        	String str = scan.next();
+        	int count = (str.length() - str.replace("\"", "").length()) % 2;
+        	if (count == 1) str += scan.next();
+        	message += "\t[" + str + "],\n";
+            //System.out.println(scan.next());
+        }
+        scan.close();
+        /*
+        message = "{\n\t\"data\": [\n";
+        for (String str : spl) {
+        	message += "\t[" + str + "],\n";
+        }
+        */
+        message = message.substring(0, message.length() - 2) + "\n";
+        message += "\t]";
+        if (message2 == null) message += "\n}";
+        else {
+        	message += ",\n";
+            message += "\t\"orig\": [\n";
+            //spl = message2.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
+            scan = new Scanner(message2);
+            scan.useDelimiter("\n");
+            while(scan.hasNext()){
+            	String str = scan.next();
+            	int count = (str.length() - str.replace("\"", "").length()) % 2;
+            	if (count == 1) str += scan.next();
+            	message += "\t[" + str + "],\n";
+            }
+            scan.close();
+            /*
+           for (String str : spl) {
+        	   //if (str.endsWith(",")) str += "\"\"";
+        	   //while (str.indexOf(",,") >= 0) str = str.replace(",,", ",\"\",");
+        	   message += "\t[" + str + "],\n";
+            }
+            */
+            message = message.substring(0, message.length() - 2) + "\n";
+            message += "\t]\n}";
+        }
+        /*
+        {
+        	  "data": [
+        	    ["", "Kia", "Nissan", "Toyota", "Honda", "Mazda", "Ford"],
+        	    ["2012", 10, 11, 12, 13, 15, 16],
+        	    ["2013", 10, 11, 12, 13, 15, 16],
+        	    ["2014", 10, 11, 12, 13, 15, 16],
+        	    ["2015", 10, 11, 12, 13, 15, 16],
+        	    ["2016", 10, 11, 12, 13, 15, 16]
+        	  ]
+        	}
+        	*/
         out.println(message);
         out.flush();
 	}

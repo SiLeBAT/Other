@@ -6,17 +6,8 @@
         <title>Einsendebogen Portal</title>
         <script src="js/dropzone.js"></script>
         <link rel="stylesheet" href="css/mydropzone.css">
-        <link rel="stylesheet" href="css/editablegrid.css">
         <link rel="stylesheet" href="css/handsontable.css">
         <link rel="stylesheet" href="js/pikaday/pikaday.css">
-
-        <script type="text/javascript" src="js/editablegrid.js"></script>
-        <script type="text/javascript" src="js/editablegrid_charts.js"></script>
-        <script type="text/javascript" src="js/editablegrid_charts_ofc.js"></script>
-        <script type="text/javascript" src="js/editablegrid_editors.js"></script>
-        <script type="text/javascript" src="js/editablegrid_renderers.js"></script>
-        <script type="text/javascript" src="js/editablegrid_utils.js"></script>
-        <script type="text/javascript" src="js/editablegrid_validators.js"></script>
 
         <script type="text/javascript" src="js/pikaday/pikaday.js"></script>
         <script type="text/javascript" src="js/moment/moment.js"></script>
@@ -41,13 +32,7 @@
 	      	};
 
 	      	window.onload = function() {
-                editableGrid = new EditableGrid("DemoGridJSON"); 
-                editableGrid.tableLoaded = function() {console.log("Grid loaded from JSON: " + this.getRowCount() + " row(s)"); this.renderGrid("tablecontent", "testgrid"); };
-                //editableGrid.loadJSON("grid.json");
-                editableGrid.loadJSON("Row0.json");
- 
-    	      	//var container = document.getElementById('example');
-    	    	
+    	    	/*
                 var
                 data = [
                   ['', 'Kia', 'Nissan', 'Toyota', 'Honda'],
@@ -55,7 +40,7 @@
                   ['2009', 20, 11, 14, 13],
                   ['2009', 30, 15, 12, 13]
                 ],
-                container = document.getElementById('example')
+                container = document.getElementById('hot')
                 ;
   	      	var hot = new Handsontable(container, {
                 data: data,
@@ -84,7 +69,7 @@
   	      	
   	      		var json = JSON.stringify({data: hot.getData()});
   	      		console.log(json);
-  	      		  	      		
+  	      		  	      	*/	
             } 
         </script>
     </head>
@@ -107,13 +92,50 @@
 	            this.on("success", function(file, jsonText) {
 	            	//file.previewElement.classList.get('dz-image').css({"width":"100%", "height":"auto"});
 	            	console.log(jsonText.length);
-                	console.log(editableGrid.getRowValues(1));
                     if (jsonText.length > 3) {
-                    	//console.log(jsonText);
-                    	editableGrid.loadJSONFromString(jsonText);
-                    	console.log("Grid loaded from JSON: " + editableGrid.getRowCount() + " row(s)"); editableGrid.renderGrid("tablecontent", "testgrid"); 
+                    	console.log(jsonText);
+                    	var data = JSON.parse(jsonText);
+                    	//console.log(data);
+                    	//hot.loadData(data.data);
                     	
-                    	/*
+        	var errdata = data.data;
+
+        	var
+                data = data.orig,
+                container = document.getElementById('hot')
+                ;
+  	      	var hot = new Handsontable(container, {
+                data: data,
+                startRows: 5,
+                startCols: 5,
+                colHeaders: true,
+                comments: true,
+                minSpareRows: 1,
+                beforeChange: function (changes, source) {
+                	console.log(changes.length);
+                	console.log(changes[0]);
+                	console.log(source);
+      	      		var json = JSON.stringify({data: hot.getData()});
+      	      		console.log(json);
+
+      	      		var commentsPlugin = this.getPlugin('comments');
+      	      		commentsPlugin.setCommentAtCell(1, 1, "WASS");
+                },
+                cells: function (row, col, prop) {
+                    var cellProperties = {};
+
+                    cellProperties.renderer = firstRowRenderer; // uses function directly
+
+                    return cellProperties;
+                  }
+  	      	})
+  	      	
+        	var row = 0;//errdata[2][2];
+        	var col = 1;//errdata[2][3];
+	      		var commentsPlugin = hot.getPlugin('comments');
+	      		commentsPlugin.setCommentAtCell(row, col, errdata[2][5]);
+
+  	      	/*
                         addText(file.previewTemplate, jsonText);
                         //file.previewTemplate.appendChild(document.createTextNode(jsonText));
                         file.previewElement.classList.add("dz-error");
@@ -169,6 +191,15 @@
 	          }
 	        };
 	        
+	        function firstRowRenderer(instance, td, row, col, prop, value, cellProperties) {
+	            Handsontable.renderers.TextRenderer.apply(this, arguments);
+	      		if (instance.getCellMeta(row, col).comment) {
+		            td.style.fontWeight = 'bold';
+		            //td.style.color = 'red';
+		            td.style.background = 'red';
+	      		}
+	          }
+	        
 	        function addText(node,text){     
 	        	//console.log(text);
 	            var t=text.split("\n"),
@@ -214,37 +245,6 @@
 	            return table;
 	        } 	    
 	        
-	        function getJSONFromTable(editableGrid) {
-	        	var transformedData = {};
-	        	transformedData.metadata = [];
-	        	transformedData.data = [];
-
-	        	// base on the first row we can see how many columns there are  so just user it
-	        	var firstRow = editableGrid.data[0];
-
-	        	// sample values is an object so we have to user
-	        	for (var key in firstRow) {
-         	        transformedData.metadata.push({ "name": key, "label": key, "datatype": "string", "editable": true});
-	        	}
-
-	        	for (var rowIndex = 0; rowIndex < editableGrid.data.length; rowIndex++) {
-	        	    var values = editableGrid.data[rowIndex].values;
-	        	    var updatedValues = JSON.parse(JSON.stringify(values));
-
-	        	    // Read values from the columns object.
-	        	    var index = 0;
-	        	    for (var prop in updatedValues) {
-	        	        if (index > 0) {
-	        	            updatedValues[prop] = editableGrid.data[rowIndex].columns[index];
-	        	        }
-
-	        	        index++;
-	        	    }
-
-	        	    transformedData.data.push({ "id": editableGrid.data[rowIndex].id, "values": updatedValues });
-	        	}	   
-	        	return transformedData;
-	        }
 	        
 		</script>
     
@@ -260,14 +260,7 @@
                 </form>
             </div>
         </section>
-        
-        <div id="tablecontent"></div>
-        
-		<h2>Handsontable Basic Example (100x10)</h2>
-		<p>
-		Head to <a href="https://handsontable.com" target="_blank">handsontable.com</a> to learn more about Handsontable.
-		</p>
-		
-		<div id="example"></div>
+        		
+		<div id="hot"></div>
     </body>
 </html>
