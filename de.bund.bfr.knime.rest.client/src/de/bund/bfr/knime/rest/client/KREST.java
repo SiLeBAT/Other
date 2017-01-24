@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -78,6 +79,7 @@ public class KREST {
 			}
 		}
 
+		System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
 		Builder builder = client.target(restResource).path("repository").path(wfPath + ":job-pool")
 				.request().accept(MediaType.APPLICATION_JSON);
 		Response res = builder.post(Entity.entity(multipartEntity, MediaType.MULTIPART_FORM_DATA));

@@ -177,6 +177,7 @@ public class EinsendeValidator extends HttpServlet {
         }
         
         response.setContentType("text/plain");
+        response.setCharacterEncoding("UTF-8");
         PrintWriter out = response.getWriter();
         out.println(message);
         out.flush();
