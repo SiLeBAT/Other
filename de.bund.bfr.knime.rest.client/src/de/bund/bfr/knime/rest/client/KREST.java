@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,8 +15,6 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
@@ -30,7 +27,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 public class KREST {
@@ -38,60 +34,8 @@ public class KREST {
 	private static final String restResource = "https://knime.bfrlab.de/com.knime.enterprise.server/rest/v4/";
 	//private static final String restResource = "http://vm-knime:8095/vm-knime/rest/v4/";
 
-	public static void main(String[] args)
+	public Map<String, String> doWorkflow(String wfPath, String username, String password, Map<String, Object> inputs, Map<String, Boolean> outputs, boolean getJSON)
 			throws IOException, URISyntaxException, ParserConfigurationException, SAXException, ParseException {
-		// doFileHead();
-		// doUpDown();
-		doOwn();
-	}
-
-	private static void doOwn() throws IOException, URISyntaxException, ParserConfigurationException, SAXException, ParseException {
-		Map<String, Object> inputs = new HashMap<>();
-		File f = new File("C:/Users/weiser/Desktop/Test.xlsx");
-		inputs.put("file-upload-211:210", f);
-		Map<String, Boolean> outputs = new HashMap<>(); // doStream bedeutet bei
-														// true: file download,
-														// bei false:
-														// sichtbarkeit im
-														// browser
-		outputs.put("XLS-918:917", false);
-		new KREST().doWorkflow("ALEX/Proben-Einsendung_Web2b", inputs, outputs, false);
-	}
-
-	private static void doFileHead()
-			throws IOException, URISyntaxException, ParserConfigurationException, SAXException, ParseException {
-		Map<String, Object> inputs = new HashMap<>();
-		File f = new File("C:/Users/weiser/Desktop/Beispiel.txt");
-		inputs.put("file-upload-1", f);
-		inputs.put("line-count-3", "{\"integer\":1}");
-		Map<String, Boolean> outputs = new HashMap<>(); // doStream bedeutet bei
-														// true: file download,
-														// bei false:
-														// sichtbarkeit im
-														// browser
-		outputs.put("file-download-7", false);
-		new KREST().doWorkflow("ALEX/File-HEAD-Example", inputs, outputs, false);
-	}
-
-	private static void doUpDown() throws IOException, URISyntaxException, ParserConfigurationException, SAXException, ParseException {
-		Map<String, Object> inputs = new HashMap<>();
-		File f = new File("C:/Users/weiser/Desktop/Test.xlsx");
-		inputs.put("UploadedFile-937:5", f);
-		Map<String, Boolean> outputs = new HashMap<>();
-		outputs.put("XLS-894", true);
-		new KREST().doWorkflow("ALEX/Upload_Download_aaw", inputs, outputs, false);
-	}
-
-	public Map<String, String> doWorkflow(String wfPath, Map<String, Object> inputs, Map<String, Boolean> outputs, boolean getJSON)
-			throws IOException, URISyntaxException, ParserConfigurationException, SAXException, ParseException {
-		String username = "";
-		String password = "";
-		InputStream in = KREST.class.getClassLoader().getResourceAsStream("/de/bund/bfr/knime/rest/client/userdata.xml");
-		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-		DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-		Document document = documentBuilder.parse(in);
-		username = document.getElementsByTagName("user").item(0).getTextContent();
-		password = document.getElementsByTagName("password").item(0).getTextContent();
 
 		Map<String, String> result = null;
 		Client client = ClientBuilder.newClient();
@@ -146,8 +90,14 @@ public class KREST {
 		JSONObject ov = (JSONObject) jsonObject.get("outputValues");
 		if (ov != null) {
 			for (String param : outputs.keySet()) {
-				JSONArray pv = (JSONArray) ov.get(param);
-				if (pv != null) result.put(param, pv.toJSONString());
+				Object jo = ov.get(param);
+				if (jo instanceof JSONArray) {
+					JSONArray pv = (JSONArray) ov.get(param);
+					if (pv != null) result.put(param, pv.toJSONString());
+				}
+				else if (jo instanceof JSONObject) {
+					if (jo != null) result.put(param, ((JSONObject) jo).toJSONString());
+				}
 			}
 		}
 		

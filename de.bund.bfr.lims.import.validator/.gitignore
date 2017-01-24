@@ -1,2 +1,3 @@
 /build/
 de.bund.bfr.lims.importer.validator.war
+/src/de/bund/bfr/lims/importer/validator/servlet/userdata.xml

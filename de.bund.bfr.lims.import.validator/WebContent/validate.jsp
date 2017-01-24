@@ -88,7 +88,7 @@
 	              }),
 	            this.on("success", function(file, jsonText) {
 	            	//file.previewElement.classList.get('dz-image').css({"width":"100%", "height":"auto"});
-	            	console.log(jsonText.length);
+	            	console.log(jsonText);
                     if (jsonText.length > 3) {
                     	//console.log(jsonText);
                     	var json = JSON.parse(jsonText);
