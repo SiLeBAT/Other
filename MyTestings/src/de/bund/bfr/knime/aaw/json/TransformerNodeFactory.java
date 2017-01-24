@@ -4,6 +4,8 @@ import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeFactory;
 import org.knime.core.node.NodeView;
 
+import de.bund.bfr.knime.aaw.lims.MyJavaMatcherNodeDialog;
+
 /**
  * <code>NodeFactory</code> for the "Transformer" Node.
  * 
@@ -43,7 +45,7 @@ public class TransformerNodeFactory
      */
     @Override
     public boolean hasDialog() {
-        return false;
+        return true;
     }
 
     /**
@@ -51,7 +53,7 @@ public class TransformerNodeFactory
      */
     @Override
     public NodeDialogPane createNodeDialogPane() {
-        return null;
+        return new TransformerNodeDialog();
     }
 
 }

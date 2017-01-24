@@ -1,7 +1,10 @@
 package de.bund.bfr.lims.importer.validator.servlet;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -55,6 +58,18 @@ public class EinsendeValidator extends HttpServlet {
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		if (true) {
+	        response.setContentType("text/plain");
+	        PrintWriter out = response.getWriter();
+	        BufferedReader fr = new BufferedReader(new InputStreamReader(new FileInputStream(new File("/Users/arminweiser/Desktop/jss/JSON.json"))));
+	        String line = "";
+	        while((line = fr.readLine()) != null) {
+	            out.println(line);
+	        }
+	        fr.close();
+	        out.flush();
+	        return;
+		}
 		String message = "";
 		String message2 = null;
 

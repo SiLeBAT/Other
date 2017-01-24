@@ -9,8 +9,15 @@ import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.DataType;
+import org.knime.core.data.DoubleValue;
+import org.knime.core.data.IntValue;
 import org.knime.core.data.RowKey;
+import org.knime.core.data.date.DateAndTimeCell;
+import org.knime.core.data.date.DateAndTimeValue;
 import org.knime.core.data.def.DefaultRow;
+import org.knime.core.data.def.DoubleCell;
+import org.knime.core.data.def.IntCell;
 import org.knime.core.data.def.StringCell;
 import org.knime.core.node.BufferedDataContainer;
 import org.knime.core.node.BufferedDataTable;
@@ -21,6 +28,7 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * This is the model implementation of Transformer.
@@ -30,7 +38,11 @@ import org.knime.core.node.NodeSettingsWO;
  */
 public class TransformerNodeModel extends NodeModel {
     
-    /**
+	static final String JSON_PREFIX = "jsonprefix";
+	
+	private final SettingsModelString m_jsonPrefix = new SettingsModelString(JSON_PREFIX, "");
+
+	/**
      * Constructor for the node model.
      */
     protected TransformerNodeModel() {
@@ -44,25 +56,60 @@ public class TransformerNodeModel extends NodeModel {
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
 
-    	String result = "{\"metadata\":[\n";
+    	String columns = "\"columns\":[\n";
+    	String colHeaders = "\"colHeaders\":[\n";
     	DataTableSpec dts = inData[0].getSpec();
-    	for (int i=0;i<dts.getNumColumns();i++) {
-    		result += "	{\"name\":\"" + JSONObject.escape(dts.getColumnNames()[i]) + "\",\"label\":\"" + JSONObject.escape(dts.getColumnNames()[i]) + "\",\"datatype\":\"string\",\"editable\":true}" + (i < dts.getNumColumns() - 1 ? "," : "") + "\n";
+    	/*
+    	 * data: 'var',
+            type: 'date',
+            dateFormat: 'MM/DD/YYYY'
+    	 */
+    	for (int i=0;i<dts.getNumColumns();i++) { // format: '0.00%',  dateFormat: 'DD.MM.YYYY'
+    		DataColumnSpec spec = dts.getColumnSpec(i);
+    		DataType dt = spec.getType();
+    		String type = "\"type\": \"text\"";
+    		if (dt.isCompatible(DoubleValue.class) || dt.isCompatible(IntValue.class)) {
+    			type = "\"type\": \"numeric\"";
+    		}
+    		else if (dt.isCompatible(DateAndTimeValue.class)) {
+    			type = "\"type\": \"date\",  \"dateFormat\": \"DD.MM.YYYY\"";
+    		}
+    		columns += "	{\"data\":\"" + i + "\"," + type + "}" + (i < dts.getNumColumns() - 1 ? "," : "") + "\n";
+    		colHeaders += "\"" + JSONObject.escape(spec.getName()) + "\"" + (i < dts.getNumColumns() - 1 ? "," : "") + "\n";
     	}
-    	result += "],\n\n\"data\":[\n";
-    	
-    	int rowlfd = 0;
-		for (DataRow row : inData[0]) {
-			result += "{\"id\":" + rowlfd + ", \"values\":{";
-			for (int i=0;i<dts.getNumColumns();i++) {
-				result += "\"" + JSONObject.escape(dts.getColumnNames()[i]) + "\":\"" + (row.getCell(i).isMissing() ? "" : JSONObject.escape(((StringCell) row.getCell(i)).getStringValue())) + "\"" + (i < dts.getNumColumns() - 1 ? "," : "");
-			}
-			result += "}},\n";
-			rowlfd++;
-			//result += "{"id":1, "values":{"country":"uk","age":33,"name":"Duke","firstname":"Patience","height":1.842,"email":"patience.duke@gmail.com","lastvisit":"11\/12\/2002"}},";			
-		}
-		result = result.substring(0, result.length() - 2) + "\n]}";
+    	columns += "]";
+    	colHeaders += "]";
 
+    	String data = "\"data\":[\n";
+		for (DataRow row : inData[0]) {
+			data += "{";
+			for (int i=0;i<dts.getNumColumns();i++) {
+				data += "\"" + i + "\"" + ":";
+	    		DataColumnSpec spec = dts.getColumnSpec(i);
+	    		DataType dt = spec.getType();
+	    		if (row.getCell(i).isMissing()) data += "null";
+	    		else {
+		    		if (dt.isCompatible(IntValue.class)) {
+						data += ((IntCell) row.getCell(i)).getIntValue();
+		    		}
+		    		else if (dt.isCompatible(DoubleValue.class)) {
+						data += ((DoubleCell) row.getCell(i)).getDoubleValue();
+		    		}
+		    		else if (dt.isCompatible(DateAndTimeValue.class)) {
+						data += JSONObject.escape(((DateAndTimeCell) row.getCell(i)).getStringValue());
+		    		}
+		    		else {
+						data += "\"" + JSONObject.escape(((StringCell) row.getCell(i)).getStringValue()) + "\"";
+		    		}
+	    		}
+	    		data += (i < dts.getNumColumns() - 1 ? "," : "");
+			}
+			data += "},\n";
+		}
+		data = data.substring(0, data.length() - 2) + "\n]";
+
+		String result = "{\n\"" + m_jsonPrefix.getStringValue() + "\":{\n" + columns + ",\n\n" + colHeaders + ",\n\n" + data + "\n}\n}";
+				
 		BufferedDataContainer buf = exec.createDataContainer(getSpec());
 
 		DataCell[] cells = new DataCell[1];
@@ -100,6 +147,7 @@ public class TransformerNodeModel extends NodeModel {
      */
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
+    	m_jsonPrefix.saveSettingsTo(settings);
     }
 
     /**
@@ -108,6 +156,7 @@ public class TransformerNodeModel extends NodeModel {
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
+    	m_jsonPrefix.loadSettingsFrom(settings);
     }
 
     /**
@@ -116,6 +165,7 @@ public class TransformerNodeModel extends NodeModel {
     @Override
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
+    	m_jsonPrefix.validateSettings(settings);
     }
     
     /**

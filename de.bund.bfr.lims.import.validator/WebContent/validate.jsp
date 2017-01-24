@@ -27,9 +27,6 @@
             input.invalid { background: red; color: #FDFDFD; }
         </style>
         <script>
-        var data = function () {
-	      	  return Handsontable.helper.createSpreadsheetData(100, 10);
-	      	};
 
 	      	window.onload = function() {
     	    	/*
@@ -93,47 +90,79 @@
 	            	//file.previewElement.classList.get('dz-image').css({"width":"100%", "height":"auto"});
 	            	console.log(jsonText.length);
                     if (jsonText.length > 3) {
-                    	console.log(jsonText);
-                    	var data = JSON.parse(jsonText);
-                    	//console.log(data);
+                    	//console.log(jsonText);
+                    	var json = JSON.parse(jsonText);
+                    	var origdata = json.origdata;
+                    	var errors = json.errors;
+                    	//console.log(errors);
                     	//hot.loadData(data.data);
                     	
-        	var errdata = data.data;
+        	//var errdata = data.data;
 
-        	var
-                data = data.orig,
-                container = document.getElementById('hot')
-                ;
+        	var colH = origdata.colHeaders;
+            var data = origdata.data;
+            var cols = origdata.columns;
+            var container = document.getElementById('hot');
   	      	var hot = new Handsontable(container, {
                 data: data,
-                startRows: 5,
-                startCols: 5,
-                colHeaders: true,
+                columns: cols,
+                colHeaders : colH,
+                stretchH: 'all',
+                autoWrapRow: true,
                 comments: true,
-                minSpareRows: 1,
-                beforeChange: function (changes, source) {
-                	console.log(changes.length);
-                	console.log(changes[0]);
-                	console.log(source);
-      	      		var json = JSON.stringify({data: hot.getData()});
-      	      		console.log(json);
-
-      	      		var commentsPlugin = this.getPlugin('comments');
-      	      		commentsPlugin.setCommentAtCell(1, 1, "WASS");
-                },
+                debug: true,
+                //minSpareRows: 1,
                 cells: function (row, col, prop) {
                     var cellProperties = {};
 
-                    cellProperties.renderer = firstRowRenderer; // uses function directly
+                    cellProperties.renderer = cellRenderer; 
 
                     return cellProperties;
-                  }
+                },
+                afterChange: function (change, source) {
+                    if (source === 'loadData') { // "alter", "edit", "populateFromArray", "loadData", "autofill", "paste".
+                        return; //don't save this change
+                    }
+
+                    if (change != null) {
+                        //console.log(change);
+                    	for (var i=0; i<change.length; i++) {
+                    		var c = change[0];
+                            var rowNumber = c[0];
+                            var columnname = c[1]; // prop
+                            var oldValue = c[2];
+                            var newValue = c[3];
+                            console.log(JSON.stringify({data: hot.getSourceData()[rowNumber]}));
+                    	}                        
+                        //console.log(source);
+                    }
+                }
   	      	})
   	      	
-        	var row = 0;//errdata[2][2];
-        	var col = 1;//errdata[2][3];
-	      		var commentsPlugin = hot.getPlugin('comments');
-	      		commentsPlugin.setCommentAtCell(row, col, errdata[2][5]);
+		    var commentsPlugin = hot.getPlugin('comments');
+  	      	var errs = errors.data;
+  	      	for (var i = 0; i < errs.length; i++) {
+  	      		var status = errs[i][0];
+  	      		//console.log(errs[i]);
+  	        	var row = errs[i][1] - 1;
+  	        	var cols = errs[i][2];
+  	        	if (row != null && cols != null) {
+  	  	        	var errnum = errs[i][3];
+  	  	        	var comment = errs[i][4];
+  	  	        	var colarr = cols.split(";");
+  	  	        	for (var j = 0; j < colarr.length; j++) {
+  	  	        		var col = colarr[j] - 1;
+  	  	        		//console.log(row + " - " + col);
+  	  	  	        	if (commentsPlugin.getCommentAtCell(row, col) == null) commentsPlugin.setCommentAtCell(row, col, comment);
+  	  	  	        	else commentsPlugin.setCommentAtCell(row, col, commentsPlugin.getCommentAtCell(row, col) + "<br>" + comment);
+  	  	  	      		if (!hot.getCellMeta(row, col).status || status > hot.getCellMeta(row, col).status) {
+  	  	  	  	      		hot.setCellMeta(row, col, "status", ""+status);
+  	  	  	      		}
+  	  	        	}
+  	        	}
+  	      	}
+  	      	
+
 
   	      	/*
                         addText(file.previewTemplate, jsonText);
@@ -191,12 +220,16 @@
 	          }
 	        };
 	        
-	        function firstRowRenderer(instance, td, row, col, prop, value, cellProperties) {
+	        function cellRenderer(instance, td, row, col, prop, value, cellProperties) {
 	            Handsontable.renderers.TextRenderer.apply(this, arguments);
-	      		if (instance.getCellMeta(row, col).comment) {
+	            var meta = instance.getCellMeta(row, col);
+	      		if (instance.getCellMeta(row, col).status) {
+	      			//console.log(instance.getCellMeta(row, col).status);
+	      		//if (meta.prop("status").equals("1")) {
 		            td.style.fontWeight = 'bold';
 		            //td.style.color = 'red';
-		            td.style.background = 'red';
+		            if (instance.getCellMeta(row, col).status == 1) td.style.background = 'yellow';
+		            else td.style.background = 'red';
 	      		}
 	          }
 	        
