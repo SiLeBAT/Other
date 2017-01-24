@@ -58,6 +58,7 @@ public class EinsendeValidator extends HttpServlet {
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		/*
 		if (true) {
 	        response.setContentType("text/plain");
 	        PrintWriter out = response.getWriter();
@@ -70,6 +71,7 @@ public class EinsendeValidator extends HttpServlet {
 	        out.flush();
 	        return;
 		}
+		*/
 		String message = "";
 		String message2 = null;
 
@@ -97,6 +99,8 @@ public class EinsendeValidator extends HttpServlet {
             }
            
             try {
+            	String workflowpath = null;//"testing/Alex_testing/Proben-Einsendung_Web4_aaw";
+            	File storeFile = null;
                 // parses the request's content to extract file data
                 List<?> formItems = upload.parseRequest(request);
                 Iterator<?> iter = formItems.iterator();
@@ -112,7 +116,7 @@ public class EinsendeValidator extends HttpServlet {
                             break;
                         }
                         String filePath = uploadPath + File.separator + fileName;
-                        File storeFile = new File(filePath);
+                        storeFile = new File(filePath);
                          
                         String ext = getFileExtension(fileName);
                         if (!ext.equals("xls") && !ext.equals("xlsx")) {
@@ -130,22 +134,29 @@ public class EinsendeValidator extends HttpServlet {
 
                     	System.out.println(uploadPath + "\t" + storeFile);
                     	
-            	  		if (storeFile != null && storeFile.exists()) {
-            	  	    	Map<String, Object> inputs = new HashMap<>();
-            	  		    inputs.put("file-upload-211:210", storeFile);
-            	  		    Map<String, Boolean> outputs = new HashMap<>(); // doStream bedeutet bei true: file download, bei false: sichtbarkeit im browser
-            	  		    outputs.put("XLS-918:917", false);
-            	  		    outputs.put("XLS-918:926", false);
-            	  		    //outputs.put("json-output-945:947", false);
-            	  		    Map<String, String> r = new KREST().doWorkflow("testing/Alex_testing/Proben-Einsendung_Web4_aaw", inputs, outputs, false);
-            	  	    	message = r.get("XLS-918:917");	
-            	  	    	message2 = r.get("XLS-918:926");	
-            	  		}
-             
-    	                //deregisterDrivers();
-    	                deleteUploadDir(uploadDir);
+                    }
+                    else {
+                    	if (item.getFieldName().equals("workflowname")) {
+                    		workflowpath = item.getString();
+                    	}
                     }
                 }
+                
+                // go on and do!
+    	  		if (storeFile != null && storeFile.exists()) {
+    	  	    	Map<String, Object> inputs = new HashMap<>();
+    	  		    inputs.put("file-upload-211:210", storeFile);
+    	  		    Map<String, Boolean> outputs = new HashMap<>(); // doStream bedeutet bei true: file download, bei false: sichtbarkeit im browser
+    	  		    outputs.put("XLS-918:917", false);
+    	  		    outputs.put("XLS-918:926", false);
+    	  		    //outputs.put("json-output-945:947", false);
+    	  		    Map<String, String> r = new KREST().doWorkflow(workflowpath, inputs, outputs, false);
+    	  	    	message = r.get("XLS-918:917");	
+    	  	    	message2 = r.get("XLS-918:926");	
+    	  		}
+     
+                //deregisterDrivers();
+                deleteUploadDir(uploadDir);
             } catch (Exception ex) {
             	message = "There was an error: " + ex.getMessage();
              }
