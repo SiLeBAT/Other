@@ -80,7 +80,7 @@ public class TransformerNodeModel extends NodeModel {
     	columns += "]";
     	colHeaders += "]";
 
-    	String data = "\"data\":[\n";
+    	String data = "\"data\":[ \n";
 		for (DataRow row : inData[0]) {
 			data += "{";
 			for (int i=0;i<dts.getNumColumns();i++) {
