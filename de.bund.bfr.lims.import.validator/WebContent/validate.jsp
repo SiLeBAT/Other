@@ -97,73 +97,86 @@
                     	//console.log(errors);
                     	//hot.loadData(data.data);
                     	
-        	//var errdata = data.data;
-
-        	var colH = origdata.colHeaders;
-            var data = origdata.data;
-            var cols = origdata.columns;
-            var container = document.getElementById('hot');
-  	      	var hot = new Handsontable(container, {
-                data: data,
-                columns: cols,
-                colHeaders : colH,
-                stretchH: 'all',
-                autoWrapRow: true,
-                comments: true,
-                debug: true,
-                //minSpareRows: 1,
-                cells: function (row, col, prop) {
-                    var cellProperties = {};
-
-                    cellProperties.renderer = cellRenderer; 
-
-                    return cellProperties;
-                },
-                afterChange: function (change, source) {
-                    if (source === 'loadData') { // "alter", "edit", "populateFromArray", "loadData", "autofill", "paste".
-                        return; //don't save this change
-                    }
-
-                    if (change != null) {
-                        //console.log(change);
-                    	for (var i=0; i<change.length; i++) {
-                    		var c = change[0];
-                            var rowNumber = c[0];
-                            var columnname = c[1]; // prop
-                            var oldValue = c[2];
-                            var newValue = c[3];
-                            console.log(JSON.stringify({data: hot.getSourceData()[rowNumber]}));
-                    	}                        
-                        //console.log(source);
-                    }
-                }
-  	      	})
-  	      	
-		    var commentsPlugin = hot.getPlugin('comments');
+            var showTable = true;
   	      	var errs = errors.data;
+  	      	var errMsg = "";
   	      	for (var i = 0; i < errs.length; i++) {
-  	      		// Status, Zeile, Spalte(n), Fehler-Nr, Kommentar
-  	      		var status = errs[i][0];
-  	      		//console.log(errs[i]);
-  	        	var row = errs[i][1] - 1;
-  	        	var cols = errs[i][2];	
-  	        	if (row != null && cols != null) {
-  	  	        	var errnum = errs[i][3];
-  	  	        	var comment = errs[i][4];
-  	  	        	cols += "";
-  	  	        	var colarr = cols.split(";");
-  	  	        	for (var j = 0; j < colarr.length; j++) {
-  	  	        		var col = colarr[j] - 1;
-  	  	        		//console.log(row + " - " + col);
-  	  	  	        	if (commentsPlugin.getCommentAtCell(row, col) == null) commentsPlugin.setCommentAtCell(row, col, comment);
-  	  	  	        	else commentsPlugin.setCommentAtCell(row, col, commentsPlugin.getCommentAtCell(row, col) + "<br>" + comment);
-  	  	  	      		if (!hot.getCellMeta(row, col).status || status > hot.getCellMeta(row, col).status) {
-  	  	  	  	      		hot.setCellMeta(row, col, "status", ""+status);
-  	  	  	      		}
-  	  	        	}
-  	        	}
+  	        	var row = errs[i][1];
+  	      		if (row == null) {
+  	      			var comment = errs[i][4];
+  	      			errMsg += "<br>" + comment;
+  	      			showTable = false;
+  	      		}
   	      	}
-  	      	
+	  	      if (!showTable) {
+	  	    	  document.getElementById('errmsg').innerHTML = errMsg;
+	  	      }
+  	        else {
+  	        	var colH = origdata.colHeaders;
+  	            var data = origdata.data;
+  	            var cols = origdata.columns;
+  	            var container = document.getElementById('hot');
+  	  	      	var hot = new Handsontable(container, {
+  	                data: data,
+  	                columns: cols,
+  	                colHeaders : colH,
+  	                stretchH: 'all',
+  	                autoWrapRow: true,
+  	                comments: true,
+  	                debug: true,
+  	                //minSpareRows: 1,
+  	                cells: function (row, col, prop) {
+  	                    var cellProperties = {};
+
+  	                    cellProperties.renderer = cellRenderer; 
+
+  	                    return cellProperties;
+  	                },
+  	                afterChange: function (change, source) {
+  	                    if (source === 'loadData') { // "alter", "edit", "populateFromArray", "loadData", "autofill", "paste".
+  	                        return; //don't save this change
+  	                    }
+
+  	                    if (change != null) {
+  	                        //console.log(change);
+  	                    	for (var i=0; i<change.length; i++) {
+  	                    		var c = change[0];
+  	                            var rowNumber = c[0];
+  	                            var columnname = c[1]; // prop
+  	                            var oldValue = c[2];
+  	                            var newValue = c[3];
+  	                            console.log(JSON.stringify({data: hot.getSourceData()[rowNumber]}));
+  	                    	}                        
+  	                        //console.log(source);
+  	                    }
+  	                }
+  	  	      	})
+  	  	      	
+  			    var commentsPlugin = hot.getPlugin('comments');
+  	  	      	//var errs = errors.data;
+  	  	      	for (var i = 0; i < errs.length; i++) {
+  	  	      		// Status, Zeile, Spalte(n), Fehler-Nr, Kommentar
+  	  	      		var status = errs[i][0];
+  	  	      		//console.log(errs[i]);
+  	  	        	var row = errs[i][1] - 1;
+  	  	        	var cols = errs[i][2];	
+  	  	        	if (row != null && cols != null) {
+  	  	  	        	var errnum = errs[i][3];
+  	  	  	        	var comment = errs[i][4];
+  	  	  	        	cols += "";
+  	  	  	        	var colarr = cols.split(";");
+  	  	  	        	for (var j = 0; j < colarr.length; j++) {
+  	  	  	        		var col = colarr[j] - 1;
+  	  	  	        		//console.log(row + " - " + col);
+  	  	  	  	        	if (commentsPlugin.getCommentAtCell(row, col) == null) commentsPlugin.setCommentAtCell(row, col, comment);
+  	  	  	  	        	else commentsPlugin.setCommentAtCell(row, col, commentsPlugin.getCommentAtCell(row, col) + "<br>" + comment);
+  	  	  	  	      		if (!hot.getCellMeta(row, col).status || status > hot.getCellMeta(row, col).status) {
+  	  	  	  	  	      		hot.setCellMeta(row, col, "status", ""+status);
+  	  	  	  	      		}
+  	  	  	        	}
+  	  	        	}
+  	  	      	}
+  	        }
 
 
   	      	/*
@@ -297,6 +310,7 @@
             </div>
         </section>
         		
+		<div id="errmsg"></div>
 		<div id="hot"></div>
     </body>
 </html>
