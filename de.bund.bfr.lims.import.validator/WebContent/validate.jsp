@@ -142,13 +142,15 @@
 		    var commentsPlugin = hot.getPlugin('comments');
   	      	var errs = errors.data;
   	      	for (var i = 0; i < errs.length; i++) {
+  	      		// Status, Zeile, Spalte(n), Fehler-Nr, Kommentar
   	      		var status = errs[i][0];
   	      		//console.log(errs[i]);
   	        	var row = errs[i][1] - 1;
-  	        	var cols = errs[i][2];
+  	        	var cols = errs[i][2];	
   	        	if (row != null && cols != null) {
   	  	        	var errnum = errs[i][3];
   	  	        	var comment = errs[i][4];
+  	  	        	cols += "";
   	  	        	var colarr = cols.split(";");
   	  	        	for (var j = 0; j < colarr.length; j++) {
   	  	        		var col = colarr[j] - 1;
@@ -285,7 +287,7 @@
         <section>
             <div id="dropzone">
                 <form method="post" action="result" enctype="multipart/form-data" class="dropzone needsclick" id="my-dropzone">
-            	<input type="text" name="workflowname" style="width: 400px;" value="testing/Alex_testing/Proben-Einsendung_Web4_aaw_json" />
+            	<input type="text" name="workflowname" style="width: 400px;" value="testing/Alex_testing/Proben-Einsendung_Web5" />
 
 	            <div class="dz-message needsclick">
 	                Wähle deinen Einsendebogen oder ziehe ihn hierauf<br />
