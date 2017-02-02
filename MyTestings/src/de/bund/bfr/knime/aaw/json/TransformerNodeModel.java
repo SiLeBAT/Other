@@ -74,7 +74,7 @@ public class TransformerNodeModel extends NodeModel {
     		else if (dt.isCompatible(DateAndTimeValue.class)) {
     			type = "\"type\": \"date\",  \"dateFormat\": \"DD.MM.YYYY\"";
     		}
-    		columns += "	{\"data\":\"" + i + "\"," + type + "}" + (i < dts.getNumColumns() - 1 ? "," : "") + "\n";
+    		columns += "	{\"data\":\"" + JSONObject.escape(spec.getName()) + "\"," + type + "}" + (i < dts.getNumColumns() - 1 ? "," : "") + "\n";
     		colHeaders += "\"" + JSONObject.escape(spec.getName()) + "\"" + (i < dts.getNumColumns() - 1 ? "," : "") + "\n";
     	}
     	columns += "]";
@@ -84,8 +84,8 @@ public class TransformerNodeModel extends NodeModel {
 		for (DataRow row : inData[0]) {
 			data += "{";
 			for (int i=0;i<dts.getNumColumns();i++) {
-				data += "\"" + i + "\"" + ":";
 	    		DataColumnSpec spec = dts.getColumnSpec(i);
+				data += "\"" + JSONObject.escape(spec.getName()) + "\"" + ":";
 	    		DataType dt = spec.getType();
 	    		if (row.getCell(i).isMissing()) data += "null";
 	    		else {
