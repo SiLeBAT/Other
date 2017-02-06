@@ -76,7 +76,7 @@ public class MyLIMSZooImporterNodeModel extends NodeModel {
             final ExecutionContext exec) throws Exception {
     	String filename = xlsFile.getStringValue();
 		InputStream is = null;
-		if (filename.startsWith("http://") || filename.startsWith("knime://")) {
+		if (filename.startsWith("http://") || filename.startsWith("knime://") || filename.startsWith("file:/")) {
 			URL url = new URL(filename);
 			URLConnection uc = url.openConnection();
 			is = uc.getInputStream();
