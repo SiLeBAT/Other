@@ -55,9 +55,9 @@
 			  	      	var errs = errors.data;
 			  	      	var errMsg = "";
 			  	      	for (var i = 0; i < errs.length; i++) {
-			  	        	var row = errs[i][1];
+			  	        	var row = errs[i]["Zeile"];
 			  	      		if (row == null) {
-			  	      			var comment = errs[i][4];
+			  	      			var comment = errs[i]["Kommentar"];
 			  	      			errMsg += "<br>" + comment;
 			  	      			showTable = false;
 			  	      		}
@@ -110,13 +110,13 @@
 			  	  	      	//var errs = errors.data;
 			  	  	      	for (var i = 0; i < errs.length; i++) {
 			  	  	      		// Status, Zeile, Spalte(n), Fehler-Nr, Kommentar
-			  	  	      		var status = errs[i][0];
+			  	  	      		var status = errs[i]["Status"];
 			  	  	      		//console.log(errs[i]);
-			  	  	        	var row = errs[i][1] - 1;
-			  	  	        	var cols = errs[i][2];	
+			  	  	        	var row = errs[i]["Zeile"] - 1;
+			  	  	        	var cols = errs[i]["Spalte"];	
 			  	  	        	if (row != null && cols != null) {
-			  	  	  	        	var errnum = errs[i][3];
-			  	  	  	        	var comment = errs[i][4];
+			  	  	  	        	var errnum = errs[i]["Fehler-Nr"];
+			  	  	  	        	var comment = errs[i]["Kommentar"];
 			  	  	  	        	cols += "";
 			  	  	  	        	var colarr = cols.split(";");
 			  	  	  	        	for (var j = 0; j < colarr.length; j++) {
@@ -200,7 +200,7 @@
         <section>
             <div id="dropzone">
                 <form method="post" action="result" enctype="multipart/form-data" class="dropzone needsclick" id="my-dropzone">
-            	<input type="text" name="workflowname" style="width: 400px;" value="testing/Alex_testing/Proben-Einsendung_Web5" />
+            	<input type="text" name="workflowname" style="width: 400px;" value="testing/Alex_testing/Proben-Einsendung_Web6" />
 
 	            <div class="dz-message needsclick">
 	                Wähle deinen Einsendebogen oder ziehe ihn hierauf<br />
