@@ -20,6 +20,7 @@
 <node category-path="/" factory-class="de.bund.bfr.knime.aaw.lims.MyJavaMatcherNodeFactory" id="de.bund.bfr.knime.aaw.lims.MyJavaJoinerNodeFactory"/>
 <node category-path="/" factory-class="de.bund.bfr.knime.aaw.lims.MyLIMSZooImporterNodeFactory" id="de.bund.bfr.knime.aaw.lims.MyLIMSZooImporterNodeFactory"/>
 <node category-path="/" factory-class="de.bund.bfr.knime.aaw.json.TransformerNodeFactory" id="de.bund.bfr.knime.aaw.json.TransformerNodeFactory"/>
+<node category-path="/" factory-class="de.bund.bfr.knime.aaw.json.MyJSON2TableNodeFactory" id="de.bund.bfr.knime.aaw.json.MyJSON2TableNodeFactory"/>
 </extension>
    
 </plugin>

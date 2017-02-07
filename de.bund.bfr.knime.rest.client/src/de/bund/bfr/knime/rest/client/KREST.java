@@ -24,6 +24,7 @@ import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
+import org.glassfish.jersey.media.multipart.internal.MultiPartWriter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -74,8 +75,7 @@ public class KREST {
 				filePart.setContentDisposition(FormDataContentDisposition.name(param).fileName(f.getName()).build()); // "file-upload-1"
 				multipartEntity = formDataMultiPart.bodyPart(filePart);
 			} else {
-				multipartEntity = formDataMultiPart.field(param, inputs.get(param), MediaType.APPLICATION_JSON_TYPE); // "line-count-3"
-																														// "{\"integer\":2}"
+				multipartEntity = formDataMultiPart.field(param, inputs.get(param), MediaType.APPLICATION_JSON_TYPE); // "line-count-3"																														// "{\"integer\":2}"
 			}
 		}
 
