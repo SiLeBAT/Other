@@ -118,6 +118,14 @@ public class MyLIMSZooImporterNodeModel extends NodeModel {
         		}
 	       	}
 			this.pushFlowVariableInt("TableStart", i+1);
+			
+			String email = null;
+			row = sheet.getRow(20);
+			if (row != null) {
+    			Cell cell = row.getCell(2); // Spalte C
+    			if (cell != null) email = getStrVal(cell);
+			}
+			this.pushFlowVariableString("EMail", email);
 
         	for (;i<sheet.getPhysicalNumberOfRows();i++) {
         		row = sheet.getRow(i);
