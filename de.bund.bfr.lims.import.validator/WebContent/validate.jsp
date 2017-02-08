@@ -8,6 +8,8 @@
         <link rel="stylesheet" href="css/mydropzone.css">
         <link rel="stylesheet" href="css/handsontable.css">
         <link rel="stylesheet" href="js/pikaday/pikaday.css">
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <link rel="stylesheet" href="css/bootstrap-theme.min.css">
 
         <script type="text/javascript" src="js/pikaday/pikaday.js"></script>
         <script type="text/javascript" src="js/moment/moment.js"></script>
@@ -16,7 +18,10 @@
         <script type="text/javascript" src="js/numbro/languages.js"></script>
         <script type="text/javascript" src="js/handsontable.js"></script>
 
-        <style>
+        <script type="text/javascript" src="js/jquery-3.1.1.min.js"></script>
+        <script type="text/javascript" src="js/bootstrap.min.js"></script>
+
+       <style>
             body { font-family:'lucida grande', tahoma, verdana, arial, sans-serif; font-size:11px; }
             h1 { font-size: 15px; }
             a { color: #548dc4; text-decoration: none; }
@@ -45,10 +50,14 @@
                     	//console.log(file);
 	            		fillHOT(JSON.parse(jsonText));
 	            });
+	            this.on("addedfile", function(file) {
+	            	console.log("addedfile: " + (""+(new Date().getTime()/1000)).substring(6));
+	            });
 	          }
 	        };
 	        
 	        function fillHOT(json) {
+	        	console.log("fhot_start: " + (""+(new Date().getTime()/1000)).substring(6));
             	var origdata = json.origdata;
             	var errors = json.errors;
             	console.log(errors);
@@ -82,7 +91,7 @@
 	  	                autoWrapRow: true,
 	  	                comments: true,
 	  	                debug: true,
-	  	                //minSpareRows: 1,
+	  	                //minSpareRows: 1,	  	                
 	  	                cells: function (row, col, prop) {
 	  	                    var cellProperties = {};
 	
@@ -126,8 +135,7 @@
 	  	                }
 	  	  	      	})
 	      	
-	  			    var commentsPlugin = hot.getPlugin('comments');
-	  	  	      	//var errs = errors.data;
+		        	console.log("fhot_comment: " + (""+(new Date().getTime()/1000)).substring(6));
 	  	  	      	for (var i = 0; i < errs.length; i++) {
 	  	  	      		// Status, Zeile, Spalte(n), Fehler-Nr, Kommentar
 	  	  	      		var status = errs[i]["Status"];
@@ -142,26 +150,53 @@
 	  	  	  	        	for (var j = 0; j < colarr.length; j++) {
 	  	  	  	        		var col = colarr[j] - 1;
 	  	  	  	        		//console.log(row + " - " + col);
-	  	  	  	  	        	if (commentsPlugin.getCommentAtCell(row, col) == null) commentsPlugin.setCommentAtCell(row, col, comment);
-	  	  	  	  	        	else commentsPlugin.setCommentAtCell(row, col, commentsPlugin.getCommentAtCell(row, col) + "<br>" + comment);
 	  	  	  	  	      		if (!hot.getCellMeta(row, col).status || status > hot.getCellMeta(row, col).status) {
 	  	  	  	  	  	      		hot.setCellMeta(row, col, "status", ""+status);
 	  	  	  	  	      		}
+	  	  	  	  	        	var gcme = hot.getCellMeta(row,col).errorMessage;
+	  	  	  	  	    		if (gcme == null) hot.getCellMeta(row,col).errorMessage = comment;
+	  	  	  	  	    		else hot.getCellMeta(row,col).errorMessage = gcme + "<br>\n" + comment;
+
+	  			  			    var commentsPlugin = hot.getPlugin('comments');
+	  		  	  	        		
+	  		  	  	        		var gcc = commentsPlugin.getCommentAtCell(row, col);
+	  		  	  	  	        	if (gcc == null) commentsPlugin.setCommentAtCell(row, col, comment);
+	  		  	  	  	        	else commentsPlugin.setCommentAtCell(row, col, gcc + "<br>" + comment);
+	  		  	  	  	        	
 	  	  	  	        	}
 	  	  	        	}
 	  	  	      	}
+	  	  	      	hot.render();
+		        	console.log("fhot_end: " + (""+(new Date().getTime()/1000)).substring(6));
       			}
 	        }
 	        
 	        function cellRenderer(instance, td, row, col, prop, value, cellProperties) {
 	            Handsontable.renderers.TextRenderer.apply(this, arguments);
+	            
 	            var meta = instance.getCellMeta(row, col);
-	      		if (instance.getCellMeta(row, col).status) {
+
+	            if (meta.errorMessage) {
+	            	$(td).tooltip({
+	                    trigger: 'hover active',
+	                    title: meta.errorMessage,
+	                    placement: 'auto',
+	                    container: 'body',
+	                    template: '<div class="tooltip" role="tooltip"><div class="tooltip-arrow"></div><div class="tooltip-inner"></div></div>'
+	                  });
+	                }
+	            else {
+	                	$(td).tooltip('destroy');
+	                }
+	            	            
+	      		if (meta.status) {
+	      			//console.log(meta.status);
 		            td.style.fontWeight = 'bold';
 		            //td.style.color = 'red';
-		            if (instance.getCellMeta(row, col).status == 1) td.style.background = 'yellow';
+		            if (meta.status == 1) td.style.background = 'yellow';
 		            else td.style.background = 'red';
 	      		}
+	            
 	          }
 	        
 		</script>
@@ -170,7 +205,7 @@
         <section>
             <div id="dropzone">
                 <form method="post" action="result" enctype="multipart/form-data" class="dropzone needsclick" id="my-dropzone">
-            	<input type="text" name="workflowname" style="width: 400px;" value="testing/Alex_testing/Proben-Einsendung_Web6aaw" />
+            	<input type="text" name="workflowname" style="width: 400px;" value="testing/Alex_testing/Proben-Einsendung_Web7a" />
 
 	            <div class="dz-message needsclick">
 	                Wähle deinen Einsendebogen oder ziehe ihn hierauf<br />

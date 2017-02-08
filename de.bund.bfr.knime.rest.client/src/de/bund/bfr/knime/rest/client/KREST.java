@@ -80,10 +80,12 @@ public class KREST {
 		}
 
 		System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
-		Builder builder = client.target(restResource).path("repository").path(wfPath + ":job-pool")
-				.request().accept(MediaType.APPLICATION_JSON);
+		System.err.println("jpr_start: " + (""+(System.currentTimeMillis() / 1000)).substring(6));
+		Builder builder = client.target(restResource).path("repository").path(wfPath + ":job-pool").request().accept(MediaType.APPLICATION_JSON);
+		System.err.println("jpr_mid: " + (""+(System.currentTimeMillis() / 1000)).substring(6));
 		Response res = builder.post(Entity.entity(multipartEntity, MediaType.MULTIPART_FORM_DATA));
-
+		System.err.println("jpr_end: " + (""+(System.currentTimeMillis() / 1000)).substring(6));
+		
 		String json = res.readEntity(String.class);
 
 		JSONParser parser = new JSONParser();

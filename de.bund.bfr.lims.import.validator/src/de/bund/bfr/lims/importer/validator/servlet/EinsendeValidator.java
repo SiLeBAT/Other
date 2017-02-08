@@ -71,6 +71,7 @@ public class EinsendeValidator extends HttpServlet {
 			throws ServletException, IOException {
 		String message = "";
 
+		System.err.println("dp_start: " + (""+(System.currentTimeMillis() / 1000)).substring(6));
 		Map<String, Object> inputs = new HashMap<>();
 		File uploadDir = null;
 
@@ -168,7 +169,9 @@ public class EinsendeValidator extends HttpServlet {
 				}
 			}
 
+			System.err.println("sag_start: " + (""+(System.currentTimeMillis() / 1000)).substring(6));
 			message = sendAndGet(inputs);
+			System.err.println("sag_end: " + (""+(System.currentTimeMillis() / 1000)).substring(6));
 			
 		} catch (Exception ex) {
 			message = "There was an error: " + ex.getMessage();
@@ -185,6 +188,7 @@ public class EinsendeValidator extends HttpServlet {
 		PrintWriter out = response.getWriter();
 		out.println(message);
 		out.flush();
+		System.err.println("dp_end: " + (""+(System.currentTimeMillis() / 1000)).substring(6));
 	}
 
 	private String sendAndGet(Map<String, Object> inputs)
@@ -202,7 +206,9 @@ public class EinsendeValidator extends HttpServlet {
 		System.err.println(sWorkflowPath);
 		Map<String, Boolean> outputs = new HashMap<>(); // doStream bedeutet bei true: file download, bei false: sichtbarkeit im browser
 		outputs.put("json-output-918:4", false);
+		System.err.println("dw_start: " + (""+(System.currentTimeMillis() / 1000)).substring(6));
 		Map<String, String> r = new KREST().doWorkflow(sWorkflowPath, username, password, inputs, outputs, true);
+		System.err.println("dw_end: " + (""+(System.currentTimeMillis() / 1000)).substring(6));
 		return r.get("json-output-918:4");
 	}
 
