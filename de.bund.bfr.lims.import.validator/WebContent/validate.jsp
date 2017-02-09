@@ -94,10 +94,8 @@
 	  	                debug: true,
 	  	                //minSpareRows: 1,	  	                
 	  	                cells: function (row, col, prop) {
-	  	                    var cellProperties = {};
-	
-	  	                    cellProperties.renderer = cellRenderer; 
-	
+	  	                    var cellProperties = {};	
+	  	                    cellProperties.renderer = cellRenderer; 	
 	  	                    return cellProperties;
 	  	                },
 	  	                afterChange: function (change, source) {
@@ -106,20 +104,6 @@
 	  	                    }
 	
 	  	                    if (change != null) {
-	  	                        //console.log(change);
-	  	                        /*
-	  	                    	for (var i=0; i<change.length; i++) {
-	  	                    		var c = change[0];
-	  	                            var rowNumber = c[0];
-	  	                            var columnname = c[1]; // prop
-	  	                            var oldValue = c[2];
-	  	                            var newValue = c[3];
-	  	                    	}             
-	  	                        */
-	  	                        //console.log(source);
-	  	                        
-	  	                   // Sending and receiving data in JSON format using POST mothod
-	  	                    	//
 	  	                    	var data = JSON.stringify({data: hot.getSourceData()}); // [rowNumber]
 
 	  	                    	xhr = new XMLHttpRequest();
