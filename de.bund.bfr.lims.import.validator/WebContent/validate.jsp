@@ -48,6 +48,7 @@
 	            	this.on("success", function(file, jsonText) {
 	            	//file.previewElement.classList.get('dz-image').css({"width":"100%", "height":"auto"});
                     	//console.log(file);
+                    	console.log(jsonText);
 	            		fillHOT(JSON.parse(jsonText));
 	            });
 	            this.on("addedfile", function(file) {
@@ -153,16 +154,15 @@
 	  	  	  	  	      		if (!hot.getCellMeta(row, col).status || status > hot.getCellMeta(row, col).status) {
 	  	  	  	  	  	      		hot.setCellMeta(row, col, "status", ""+status);
 	  	  	  	  	      		}
-	  	  	  	  	        	var gcme = hot.getCellMeta(row,col).errorMessage;
-	  	  	  	  	    		if (gcme == null) hot.getCellMeta(row,col).errorMessage = comment;
-	  	  	  	  	    		else hot.getCellMeta(row,col).errorMessage = gcme + "<br>\n" + comment;
 
+	  	  	  	  	    		if (!hot.getCellMeta(row,col).errorMessage) hot.getCellMeta(row,col).errorMessage = "-> " + comment;
+	  	  	  	  	    		else hot.getCellMeta(row,col).errorMessage += "<br>-> " + comment;
+/*
 	  			  			    var commentsPlugin = hot.getPlugin('comments');
-	  		  	  	        		
-	  		  	  	        		var gcc = commentsPlugin.getCommentAtCell(row, col);
-	  		  	  	  	        	if (gcc == null) commentsPlugin.setCommentAtCell(row, col, comment);
-	  		  	  	  	        	else commentsPlugin.setCommentAtCell(row, col, gcc + "<br>" + comment);
-	  		  	  	  	        	
+ 		  	  	        		var gcc = commentsPlugin.getCommentAtCell(row, col);
+  		  	  	  	        	if (!gcc) commentsPlugin.setCommentAtCell(row, col, comment);
+  		  	  	  	        	else commentsPlugin.setCommentAtCell(row, col, gcc + "<br>" + comment);
+	  		  	  	  	        	*/
 	  	  	  	        	}
 	  	  	        	}
 	  	  	      	}
@@ -179,9 +179,10 @@
 	            if (meta.errorMessage) {
 	            	$(td).tooltip({
 	                    trigger: 'hover active',
-	                    title: meta.errorMessage,
+	                    title: '<p align="left">' + meta.errorMessage + '</p>',
 	                    placement: 'auto',
 	                    container: 'body',
+	                    html: true,
 	                    template: '<div class="tooltip" role="tooltip"><div class="tooltip-arrow"></div><div class="tooltip-inner"></div></div>'
 	                  });
 	                }
@@ -205,7 +206,7 @@
         <section>
             <div id="dropzone">
                 <form method="post" action="result" enctype="multipart/form-data" class="dropzone needsclick" id="my-dropzone">
-            	<input type="text" name="workflowname" style="width: 400px;" value="testing/Alex_testing/Proben-Einsendung_Web7a" />
+            	<input type="text" name="workflowname" style="width: 400px;" value="testing/Alex_testing/Proben-Einsendung_Web7aaw" />
 
 	            <div class="dz-message needsclick">
 	                Wähle deinen Einsendebogen oder ziehe ihn hierauf<br />
