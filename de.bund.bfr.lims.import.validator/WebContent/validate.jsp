@@ -186,8 +186,8 @@
 	      			//console.log(meta.status);
 		            td.style.fontWeight = 'bold';
 		            //td.style.color = 'red';
-		            if (meta.status == 1) td.style.background = 'yellow';
-		            else td.style.background = 'red';
+		            if (meta.status == 1) td.style.background = '#fffacd'; //yellow
+		            else td.style.background = '#ffc1c1'; // red
 	      		}
 	            
 	          }
