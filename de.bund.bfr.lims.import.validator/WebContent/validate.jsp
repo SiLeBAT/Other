@@ -85,6 +85,7 @@
 	  	        	var colH = origdata.colHeaders;
 	  	            var data = origdata.data;
 	  	            var cols = origdata.columns;
+                    $(td).tooltip('destroy');
 	  	  	      	hot = new Handsontable(container, {
 	  	                data: data,
 	  	                columns: cols,

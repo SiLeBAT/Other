@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
-import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,7 +23,6 @@ import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
-import org.glassfish.jersey.media.multipart.internal.MultiPartWriter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -33,7 +31,8 @@ import org.xml.sax.SAXException;
 
 public class KREST {
 
-	private static final String restResource = "https://knime.bfrlab.de/com.knime.enterprise.server/rest/v4/";
+	private static final String restResource = "http://maslxlabhpc01.bfr.bund.de/knime/rest/v4/";
+	//private static final String restResource = "https://knime.bfrlab.de/com.knime.enterprise.server/rest/v4/";
 	//private static final String restResource = "http://vm-knime:8095/vm-knime/rest/v4/";
 
 	public Map<String, String> doWorkflow(String wfPath, String username, String password, Map<String, Object> inputs, Map<String, Boolean> outputs, boolean getJSON)
