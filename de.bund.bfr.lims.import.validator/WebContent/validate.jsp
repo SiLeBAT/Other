@@ -26,15 +26,12 @@
             h1 { font-size: 15px; }
             a { color: #548dc4; text-decoration: none; }
             a:hover { text-decoration: underline; }
-            table.testgrid { border-collapse: collapse; border: 1px solid #CCB; width: 800px; }
-            table.testgrid td, table.testgrid th { padding: 5px; border: 1px solid #E0E0E0; }
-            table.testgrid th { background: #E5E5E5; text-align: left; }
-            input.invalid { background: red; color: #FDFDFD; }
+            .handsontable th {white-space: normal!important;}
         </style>
     </head>
     <body>
     
-        <script>	      	
+        <script>	         	
 	        // myDropzone is the configuration for the element that has an id attribute
 	        // with the value my-dropzone (or myDropzone)
 	        Dropzone.options.myDropzone = {
@@ -48,7 +45,7 @@
 	            	this.on("success", function(file, jsonText) {
 	            	//file.previewElement.classList.get('dz-image').css({"width":"100%", "height":"auto"});
                     	//console.log(file);
-                    	console.log(jsonText);
+                    	//console.log(jsonText);
 	            		fillHOT(JSON.parse(jsonText));
 	            });
 	            this.on("addedfile", function(file) {
@@ -61,8 +58,8 @@
 	        	console.log("fhot_start: " + (""+(new Date().getTime()/1000)).substring(6));
             	var origdata = json.origdata;
             	var errors = json.errors;
-            	console.log(errors);
-            	console.log(origdata);
+            	//console.log(errors);
+            	//console.log(origdata);
             	//hot.loadData(data.data);
             	
 	            var showTable = true;
@@ -80,18 +77,25 @@
 		  	    	  document.getElementById('errmsg').innerHTML = errMsg;
 		  	      }
 	  	        else {
+	  	        	var selected;
+	  	        	if (hot) {
+	  	        		selected = hot.getSelected();
+	  	        		hot.destroy();
+	  	        	}
 	  	        	var colH = origdata.colHeaders;
 	  	            var data = origdata.data;
 	  	            var cols = origdata.columns;
-	  	            var container = document.getElementById('hot');
-	  	  	      	var hot = new Handsontable(container, {
+	  	  	      	hot = new Handsontable(container, {
 	  	                data: data,
 	  	                columns: cols,
 	  	                colHeaders : colH,
 	  	                stretchH: 'all',
+	  	                colWidths: [40],
 	  	                autoWrapRow: true,
 	  	                comments: true,
 	  	                debug: true,
+	  	              	manualColumnResize: true,
+	  	            	manualRowResize: true,
 	  	                //minSpareRows: 1,	  	                
 	  	                cells: function (row, col, prop) {
 	  	                    var cellProperties = {};	
@@ -114,11 +118,15 @@
 	  	                    	      fillHOT(JSON.parse(xhr.responseText));
 	  	                    	    }
 	  	                    	}	  	                    	
-  	                            console.log(data);
+  	                            //console.log(data);
 	  	                    	xhr.send(data);
 	  	                    }
 	  	                }
-	  	  	      	})
+	  	  	      	});
+	  	  	      	if (selected) {
+	  	  	      		//console.log(selected);
+	  	  	      		hot.selectCell(selected[0], selected[1]);
+	  	  	      	}
 	      	
 		        	console.log("fhot_comment: " + (""+(new Date().getTime()/1000)).substring(6));
 	  	  	      	for (var i = 0; i < errs.length; i++) {
@@ -190,7 +198,7 @@
         <section>
             <div id="dropzone">
                 <form method="post" action="result" enctype="multipart/form-data" class="dropzone needsclick" id="my-dropzone">
-            	<input type="text" name="workflowname" style="width: 400px;" value="testing/Alex_testing/Proben-Einsendung_Web7aaw" />
+            	<input type="text" name="workflowname" style="width: 400px;" value="testing/Alex_testing/Proben-Einsendung_Web7baw" />
 
 	            <div class="dz-message needsclick">
 	                Wähle deinen Einsendebogen oder ziehe ihn hierauf<br />
@@ -202,5 +210,10 @@
         		
 		<div id="errmsg"></div>
 		<div id="hot"></div>
+		
+		<script>
+	        var container = document.getElementById('hot');
+	        var hot;
+		</script>
     </body>
 </html>

@@ -10535,7 +10535,7 @@ function offset(elem) {
     offsetTop += elem.offsetTop;
     lastElem = elem;
   }
-  if (lastElem && lastElem.style.position === 'fixed') {
+  if (lastElem && lastElem.style && lastElem.style.position && lastElem.style.position === 'fixed') {
     offsetLeft += window.pageXOffset || docElem.scrollLeft;
     offsetTop += window.pageYOffset || docElem.scrollTop;
   }
