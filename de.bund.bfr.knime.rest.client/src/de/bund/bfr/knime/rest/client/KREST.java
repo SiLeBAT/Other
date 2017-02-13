@@ -31,8 +31,8 @@ import org.xml.sax.SAXException;
 
 public class KREST {
 
-	private static final String restResource = "http://maslxlabhpc01.bfr.bund.de/knime/rest/v4/";
-	//private static final String restResource = "https://knime.bfrlab.de/com.knime.enterprise.server/rest/v4/";
+	//private static final String restResource = "http://maslxlabhpc01.bfr.bund.de/knime/rest/v4/";
+	private static final String restResource = "https://knime.bfrlab.de/com.knime.enterprise.server/rest/v4/";
 	//private static final String restResource = "http://vm-knime:8095/vm-knime/rest/v4/";
 
 	public Map<String, String> doWorkflow(String wfPath, String username, String password, Map<String, Object> inputs, Map<String, Boolean> outputs, boolean getJSON)
