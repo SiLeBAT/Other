@@ -10,6 +10,7 @@
         <link rel="stylesheet" href="js/pikaday/pikaday.css">
         <link rel="stylesheet" href="css/bootstrap.min.css">
         <link rel="stylesheet" href="css/bootstrap-theme.min.css">
+    	<link rel="stylesheet" type="text/css" href="css/tooltipster.bundle.min.css" />
 
         <script type="text/javascript" src="js/pikaday/pikaday.js"></script>
         <script type="text/javascript" src="js/moment/moment.js"></script>
@@ -19,7 +20,8 @@
         <script type="text/javascript" src="js/handsontable.js"></script>
 
         <script type="text/javascript" src="js/jquery-3.1.1.min.js"></script>
-        <script type="text/javascript" src="js/bootstrap.min.js"></script>
+
+	    <script type="text/javascript" src="js/tooltipster.bundle.min.js"></script>
 
        <style>
             body { font-family:'lucida grande', tahoma, verdana, arial, sans-serif; font-size:11px; }
@@ -27,11 +29,144 @@
             a { color: #548dc4; text-decoration: none; }
             a:hover { text-decoration: underline; }
             .handsontable th {white-space: normal!important;}
+
+.tooltipster-sidetip.tooltipster-error .tooltipster-box {
+	border: 1px solid black;
+	border-radius: 5px;
+	background: red;
+	box-shadow: 0px 0px 14px rgba(0,0,0,0.3);
+}
+.tooltipster-sidetip.tooltipster-error .tooltipster-content {
+	font-size: 11px;
+	font-style: italic;
+	line-height: 1em;
+	padding: 2px 5px 3px 5px;
+	color: white;
+}
+.tooltipster-sidetip.tooltipster-error .tooltipster-arrow {
+	height: 9px;
+	margin-left: -9px;
+	width: 18px;
+}
+.tooltipster-sidetip.tooltipster-error.tooltipster-left .tooltipster-arrow,
+.tooltipster-sidetip.tooltipster-error.tooltipster-right .tooltipster-arrow {
+	height: 14px;
+	margin-left: 4px;
+	margin-top: -16px;
+	width: 5px;
+}
+.tooltipster-sidetip.tooltipster-error .tooltipster-arrow-background {
+	border: 9px solid transparent;
+}
+.tooltipster-sidetip.tooltipster-error.tooltipster-bottom .tooltipster-arrow-background {
+	border-bottom-color: red;
+	top: 1px;
+}
+.tooltipster-sidetip.tooltipster-error.tooltipster-left .tooltipster-arrow-background {
+	border-left-color: red;
+	left: -1px;
+}
+.tooltipster-sidetip.tooltipster-error.tooltipster-right .tooltipster-arrow-background {
+	border-right-color: red;
+	left: 1px;
+}
+.tooltipster-sidetip.tooltipster-error.tooltipster-top .tooltipster-arrow-background {
+	border-top-color: red;
+	top: -1px;
+}
+.tooltipster-sidetip.tooltipster-error .tooltipster-arrow-border {
+	border: 9px solid transparent;
+}
+.tooltipster-sidetip.tooltipster-error.tooltipster-bottom .tooltipster-arrow-border {
+	border-bottom-color: black;
+}
+.tooltipster-sidetip.tooltipster-error.tooltipster-left .tooltipster-arrow-border {
+	border-left-color: black;
+}
+.tooltipster-sidetip.tooltipster-error.tooltipster-right .tooltipster-arrow-border {
+	border-right-color: black;
+}
+.tooltipster-sidetip.tooltipster-error.tooltipster-top .tooltipster-arrow-border {
+	border-top-color: black;
+}
+.tooltipster-sidetip.tooltipster-error.tooltipster-bottom .tooltipster-arrow-uncropped {
+	top: -9px;
+}
+.tooltipster-sidetip.tooltipster-error.tooltipster-right .tooltipster-arrow-uncropped {
+	left: -9px;
+}
+
+.tooltipster-sidetip.tooltipster-warning .tooltipster-box {
+	border: 1px solid black;
+	border-radius: 5px;
+	background: yellow;
+	box-shadow: 0px 0px 14px rgba(0,0,0,0.3);
+}
+.tooltipster-sidetip.tooltipster-warning .tooltipster-content {
+	font-size: 11px;
+	font-style: italic;
+	line-height: 1em;
+	padding: 2px 5px 3px 5px;
+	color: black;
+}
+.tooltipster-sidetip.tooltipster-warning .tooltipster-arrow {
+	height: 9px;
+	margin-left: -9px;
+	width: 18px;
+}
+.tooltipster-sidetip.tooltipster-warning.tooltipster-left .tooltipster-arrow,
+.tooltipster-sidetip.tooltipster-warning.tooltipster-right .tooltipster-arrow {
+	height: 14px;
+	margin-left: 4px;
+	margin-top: -16px;
+	width: 5px;
+}
+.tooltipster-sidetip.tooltipster-warning .tooltipster-arrow-background {
+	border: 9px solid transparent;
+}
+.tooltipster-sidetip.tooltipster-warning.tooltipster-bottom .tooltipster-arrow-background {
+	border-bottom-color: yellow;
+	top: 1px;
+}
+.tooltipster-sidetip.tooltipster-warning.tooltipster-left .tooltipster-arrow-background {
+	border-left-color: yellow;
+	left: -1px;
+}
+.tooltipster-sidetip.tooltipster-warning.tooltipster-right .tooltipster-arrow-background {
+	border-right-color: yellow;
+	left: 1px;
+}
+.tooltipster-sidetip.tooltipster-warning.tooltipster-top .tooltipster-arrow-background {
+	border-top-color: yellow;
+	top: -1px;
+}
+.tooltipster-sidetip.tooltipster-warning .tooltipster-arrow-border {
+	border: 9px solid transparent;
+}
+.tooltipster-sidetip.tooltipster-warning.tooltipster-bottom .tooltipster-arrow-border {
+	border-bottom-color: black;
+}
+.tooltipster-sidetip.tooltipster-warning.tooltipster-left .tooltipster-arrow-border {
+	border-left-color: black;
+}
+.tooltipster-sidetip.tooltipster-warning.tooltipster-right .tooltipster-arrow-border {
+	border-right-color: black;
+}
+.tooltipster-sidetip.tooltipster-warning.tooltipster-top .tooltipster-arrow-border {
+	border-top-color: black;
+}
+.tooltipster-sidetip.tooltipster-warning.tooltipster-bottom .tooltipster-arrow-uncropped {
+	top: -9px;
+}
+.tooltipster-sidetip.tooltipster-warning.tooltipster-right .tooltipster-arrow-uncropped {
+	left: -9px;
+}
         </style>
     </head>
     <body>
     
-        <script>	         	
+        <script>	
+	        
 	        // myDropzone is the configuration for the element that has an id attribute
 	        // with the value my-dropzone (or myDropzone)
 	        Dropzone.options.myDropzone = {
@@ -43,6 +178,9 @@
 	            	  //file.previewElement.classList.get('dz-image').last().find('img').attr({width: '100%', height: '100%'});
 	              }),
 	            	this.on("success", function(file, jsonText) {
+	            		   var mydiv = document.getElementById("dropzone");
+	            		   mydiv.style.visibility="";
+	            		   mydiv.style.display="none";
 	            	//file.previewElement.classList.get('dz-image').css({"width":"100%", "height":"auto"});
                     	//console.log(file);
                     	//console.log(jsonText);
@@ -85,7 +223,6 @@
 	  	        	var colH = origdata.colHeaders;
 	  	            var data = origdata.data;
 	  	            var cols = origdata.columns;
-                    $(td).tooltip('destroy');
 	  	  	      	hot = new Handsontable(container, {
 	  	                data: data,
 	  	                columns: cols,
@@ -97,6 +234,7 @@
 	  	                debug: true,
 	  	              	manualColumnResize: true,
 	  	            	manualRowResize: true,
+	  	            	renderAllRows: true,
 	  	                //minSpareRows: 1,	  	                
 	  	                cells: function (row, col, prop) {
 	  	                    var cellProperties = {};	
@@ -144,18 +282,14 @@
 	  	  	  	        	for (var j = 0; j < colarr.length; j++) {
 	  	  	  	        		var col = colarr[j] - 1;
 	  	  	  	        		//console.log(row + " - " + col);
-	  	  	  	  	      		if (!hot.getCellMeta(row, col).status || status > hot.getCellMeta(row, col).status) {
-	  	  	  	  	  	      		hot.setCellMeta(row, col, "status", ""+status);
-	  	  	  	  	      		}
-
-	  	  	  	  	    		if (!hot.getCellMeta(row,col).errorMessage) hot.getCellMeta(row,col).errorMessage = "-> " + comment;
-	  	  	  	  	    		else hot.getCellMeta(row,col).errorMessage += "<br>-> " + comment;
-/*
-	  			  			    var commentsPlugin = hot.getPlugin('comments');
- 		  	  	        		var gcc = commentsPlugin.getCommentAtCell(row, col);
-  		  	  	  	        	if (!gcc) commentsPlugin.setCommentAtCell(row, col, comment);
-  		  	  	  	        	else commentsPlugin.setCommentAtCell(row, col, gcc + "<br>" + comment);
-	  		  	  	  	        	*/
+	  	  	  	        		if (status == 1) {
+		  	  	  	  	    		if (!hot.getCellMeta(row,col).warningMessage) hot.getCellMeta(row,col).warningMessage = "" + comment;
+		  	  	  	  	    		else hot.getCellMeta(row,col).warningMessage += "<br>" + comment;
+	  	  	  	        		}
+	  	  	  	        		else if (status == 2) {
+		  	  	  	  	    		if (!hot.getCellMeta(row,col).errorMessage) hot.getCellMeta(row,col).errorMessage = "" + comment;
+		  	  	  	  	    		else hot.getCellMeta(row,col).errorMessage += "<br>" + comment;
+	  	  	  	        		}
 	  	  	  	        	}
 	  	  	        	}
 	  	  	      	}
@@ -166,10 +300,69 @@
 	        
 	        function cellRenderer(instance, td, row, col, prop, value, cellProperties) {
 	            Handsontable.renderers.TextRenderer.apply(this, arguments);
-	            
+
 	            var meta = instance.getCellMeta(row, col);
 
-	            if (meta.errorMessage) {
+	            if (meta.errorMessage || meta.warningMessage) {
+		            //console.log(row + " - " + col + " - " + td.className);
+	            	//if ($(td).tooltipster) {
+	            		//$(td).tooltipster('destroy');
+	            	//}
+		            td.style.fontWeight = 'bold';
+		            if (meta.errorMessage) {
+			            td.style.background = '#ffc1c1'; // red
+			            if (!td.tipster) {
+			            	$(td).tooltipster({
+			            		/*
+			            	    functionBefore: function(instance, helper) {
+			            	    	console.log(row + " - " + col + " - ");
+			            	    },
+			            	    */
+			            		repositionOnScroll: true,
+			                    animation: 'grow', // fade
+			                    delay: 0,
+			                    theme: ['tooltipster-error'],
+			                    touchDevices: false,
+			                    trigger: 'hover',
+			                    contentAsHTML: true,
+			                    content: row+"-"+col+"-"+meta.errorMessage,
+			                    side: 'top',
+			                    arrowColor: '#ffc1c1'
+			                });
+			            }
+		            }
+
+		            if (meta.warningMessage) {
+		            	var multi = true;
+		            	if (!meta.errorMessage) {
+				            td.style.background = '#fffacd'; //yellow	  
+				            multi = false;
+		            	}
+		            	if (!td.tipster) {
+			            	$(td).tooltipster({
+			            		repositionOnScroll: true,
+			                    animation: 'grow',
+			                    delay: 0,
+			                    theme: ['tooltipster-warning'],
+			                    touchDevices: false,
+			                    trigger: 'hover',
+			                    contentAsHTML: true,
+			            		// don't forget to provide content here as the first tooltip will have deleted the original title attribute of the element
+			            		content: row+"-"+col+"-"+meta.warningMessage,
+			            		side: 'bottom',
+			            		arrowColor: '#fffacd',
+			            		multiple: multi
+			            	});
+		            	}
+		            }
+		            td.tipster = true;
+		            //$(td).tooltipster('destroy');
+	            }
+	            else {
+	            	//$(td).tooltipster('destroy');
+	            }
+
+	            /*
 	            	$(td).tooltip({
 	                    trigger: 'hover active',
 	                    title: '<p align="left">' + meta.errorMessage + '</p>',
@@ -182,7 +375,8 @@
 	            else {
 	                	$(td).tooltip('destroy');
 	                }
-	            	            
+	            	    */   
+	            	    /*
 	      		if (meta.status) {
 	      			//console.log(meta.status);
 		            td.style.fontWeight = 'bold';
@@ -190,7 +384,7 @@
 		            if (meta.status == 1) td.style.background = '#fffacd'; //yellow
 		            else td.style.background = '#ffc1c1'; // red
 	      		}
-	            
+	            */
 	          }
 	        
 		</script>
@@ -199,7 +393,7 @@
         <section>
             <div id="dropzone">
                 <form method="post" action="result" enctype="multipart/form-data" class="dropzone needsclick" id="my-dropzone">
-            	<input type="text" name="workflowname" style="width: 400px;" value="testing/Alex_testing/Proben-Einsendung_Web7baw" />
+            	<input type="text" name="workflowname" style="width: 400px;" value="testing/Alex_testing/Proben-Einsendung_Web7c" />
 
 	            <div class="dz-message needsclick">
 	                Wähle deinen Einsendebogen oder ziehe ihn hierauf<br />
@@ -209,8 +403,10 @@
             </div>
         </section>
         		
-		<div id="errmsg"></div>
-		<div id="hot"></div>
+        <section>
+			<div id="errmsg"></div>
+			<div id="hot"></div>
+		</section>
 		
 		<script>
 	        var container = document.getElementById('hot');
