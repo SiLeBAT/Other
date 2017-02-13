@@ -10,7 +10,8 @@
         <link rel="stylesheet" href="js/pikaday/pikaday.css">
         <link rel="stylesheet" href="css/bootstrap.min.css">
         <link rel="stylesheet" href="css/bootstrap-theme.min.css">
-    	<link rel="stylesheet" type="text/css" href="css/tooltipster.bundle.min.css" />
+        <link rel="stylesheet" type="text/css" href="css/tooltipster.bundle.min.css" />
+        <link rel="stylesheet" type="text/css" href="css/my.tooltipster.css" />
 
         <script type="text/javascript" src="js/pikaday/pikaday.js"></script>
         <script type="text/javascript" src="js/moment/moment.js"></script>
@@ -28,139 +29,7 @@
             h1 { font-size: 15px; }
             a { color: #548dc4; text-decoration: none; }
             a:hover { text-decoration: underline; }
-            .handsontable th {white-space: normal!important;}
-
-.tooltipster-sidetip.tooltipster-error .tooltipster-box {
-	border: 1px solid black;
-	border-radius: 5px;
-	background: red;
-	box-shadow: 0px 0px 14px rgba(0,0,0,0.3);
-}
-.tooltipster-sidetip.tooltipster-error .tooltipster-content {
-	font-size: 11px;
-	font-style: italic;
-	line-height: 1em;
-	padding: 2px 5px 3px 5px;
-	color: white;
-}
-.tooltipster-sidetip.tooltipster-error .tooltipster-arrow {
-	height: 9px;
-	margin-left: -9px;
-	width: 18px;
-}
-.tooltipster-sidetip.tooltipster-error.tooltipster-left .tooltipster-arrow,
-.tooltipster-sidetip.tooltipster-error.tooltipster-right .tooltipster-arrow {
-	height: 14px;
-	margin-left: 4px;
-	margin-top: -16px;
-	width: 5px;
-}
-.tooltipster-sidetip.tooltipster-error .tooltipster-arrow-background {
-	border: 9px solid transparent;
-}
-.tooltipster-sidetip.tooltipster-error.tooltipster-bottom .tooltipster-arrow-background {
-	border-bottom-color: red;
-	top: 1px;
-}
-.tooltipster-sidetip.tooltipster-error.tooltipster-left .tooltipster-arrow-background {
-	border-left-color: red;
-	left: -1px;
-}
-.tooltipster-sidetip.tooltipster-error.tooltipster-right .tooltipster-arrow-background {
-	border-right-color: red;
-	left: 1px;
-}
-.tooltipster-sidetip.tooltipster-error.tooltipster-top .tooltipster-arrow-background {
-	border-top-color: red;
-	top: -1px;
-}
-.tooltipster-sidetip.tooltipster-error .tooltipster-arrow-border {
-	border: 9px solid transparent;
-}
-.tooltipster-sidetip.tooltipster-error.tooltipster-bottom .tooltipster-arrow-border {
-	border-bottom-color: black;
-}
-.tooltipster-sidetip.tooltipster-error.tooltipster-left .tooltipster-arrow-border {
-	border-left-color: black;
-}
-.tooltipster-sidetip.tooltipster-error.tooltipster-right .tooltipster-arrow-border {
-	border-right-color: black;
-}
-.tooltipster-sidetip.tooltipster-error.tooltipster-top .tooltipster-arrow-border {
-	border-top-color: black;
-}
-.tooltipster-sidetip.tooltipster-error.tooltipster-bottom .tooltipster-arrow-uncropped {
-	top: -9px;
-}
-.tooltipster-sidetip.tooltipster-error.tooltipster-right .tooltipster-arrow-uncropped {
-	left: -9px;
-}
-
-.tooltipster-sidetip.tooltipster-warning .tooltipster-box {
-	border: 1px solid black;
-	border-radius: 5px;
-	background: yellow;
-	box-shadow: 0px 0px 14px rgba(0,0,0,0.3);
-}
-.tooltipster-sidetip.tooltipster-warning .tooltipster-content {
-	font-size: 11px;
-	font-style: italic;
-	line-height: 1em;
-	padding: 2px 5px 3px 5px;
-	color: black;
-}
-.tooltipster-sidetip.tooltipster-warning .tooltipster-arrow {
-	height: 9px;
-	margin-left: -9px;
-	width: 18px;
-}
-.tooltipster-sidetip.tooltipster-warning.tooltipster-left .tooltipster-arrow,
-.tooltipster-sidetip.tooltipster-warning.tooltipster-right .tooltipster-arrow {
-	height: 14px;
-	margin-left: 4px;
-	margin-top: -16px;
-	width: 5px;
-}
-.tooltipster-sidetip.tooltipster-warning .tooltipster-arrow-background {
-	border: 9px solid transparent;
-}
-.tooltipster-sidetip.tooltipster-warning.tooltipster-bottom .tooltipster-arrow-background {
-	border-bottom-color: yellow;
-	top: 1px;
-}
-.tooltipster-sidetip.tooltipster-warning.tooltipster-left .tooltipster-arrow-background {
-	border-left-color: yellow;
-	left: -1px;
-}
-.tooltipster-sidetip.tooltipster-warning.tooltipster-right .tooltipster-arrow-background {
-	border-right-color: yellow;
-	left: 1px;
-}
-.tooltipster-sidetip.tooltipster-warning.tooltipster-top .tooltipster-arrow-background {
-	border-top-color: yellow;
-	top: -1px;
-}
-.tooltipster-sidetip.tooltipster-warning .tooltipster-arrow-border {
-	border: 9px solid transparent;
-}
-.tooltipster-sidetip.tooltipster-warning.tooltipster-bottom .tooltipster-arrow-border {
-	border-bottom-color: black;
-}
-.tooltipster-sidetip.tooltipster-warning.tooltipster-left .tooltipster-arrow-border {
-	border-left-color: black;
-}
-.tooltipster-sidetip.tooltipster-warning.tooltipster-right .tooltipster-arrow-border {
-	border-right-color: black;
-}
-.tooltipster-sidetip.tooltipster-warning.tooltipster-top .tooltipster-arrow-border {
-	border-top-color: black;
-}
-.tooltipster-sidetip.tooltipster-warning.tooltipster-bottom .tooltipster-arrow-uncropped {
-	top: -9px;
-}
-.tooltipster-sidetip.tooltipster-warning.tooltipster-right .tooltipster-arrow-uncropped {
-	left: -9px;
-}
+            .handsontable th {white-space: normal!important;}            
         </style>
     </head>
     <body>
@@ -283,12 +152,12 @@
 	  	  	  	        		var col = colarr[j] - 1;
 	  	  	  	        		//console.log(row + " - " + col);
 	  	  	  	        		if (status == 1) {
-		  	  	  	  	    		if (!hot.getCellMeta(row,col).warningMessage) hot.getCellMeta(row,col).warningMessage = "" + comment;
-		  	  	  	  	    		else hot.getCellMeta(row,col).warningMessage += "<br>" + comment;
+		  	  	  	  	    		if (!hot.getCellMeta(row,col).warningMessage) hot.getCellMeta(row,col).warningMessage = "<li>" + comment + "</li>";
+		  	  	  	  	    		else hot.getCellMeta(row,col).warningMessage += "<li>" + comment + "</li>";
 	  	  	  	        		}
 	  	  	  	        		else if (status == 2) {
-		  	  	  	  	    		if (!hot.getCellMeta(row,col).errorMessage) hot.getCellMeta(row,col).errorMessage = "" + comment;
-		  	  	  	  	    		else hot.getCellMeta(row,col).errorMessage += "<br>" + comment;
+		  	  	  	  	    		if (!hot.getCellMeta(row,col).errorMessage) hot.getCellMeta(row,col).errorMessage = "<li>" + comment + "</li>";
+		  	  	  	  	    		else hot.getCellMeta(row,col).errorMessage += "<li>" + comment + "</li>";
 	  	  	  	        		}
 	  	  	  	        	}
 	  	  	        	}
@@ -325,7 +194,7 @@
 			                    touchDevices: false,
 			                    trigger: 'hover',
 			                    contentAsHTML: true,
-			                    content: row+"-"+col+"-"+meta.errorMessage,
+			                    content: "<ul type='disc'>" + meta.errorMessage + "</ul>", // row+"-"+col+":<br>"+ 
 			                    side: 'top',
 			                    arrowColor: '#ffc1c1'
 			                });
@@ -348,7 +217,7 @@
 			                    trigger: 'hover',
 			                    contentAsHTML: true,
 			            		// don't forget to provide content here as the first tooltip will have deleted the original title attribute of the element
-			            		content: row+"-"+col+"-"+meta.warningMessage,
+                                content: "<ul type='disc'>" + meta.warningMessage + "</ul>", // row+"-"+col+":<br>"+ 
 			            		side: 'bottom',
 			            		arrowColor: '#fffacd',
 			            		multiple: multi
@@ -393,7 +262,7 @@
         <section>
             <div id="dropzone">
                 <form method="post" action="result" enctype="multipart/form-data" class="dropzone needsclick" id="my-dropzone">
-            	<input type="text" name="workflowname" style="width: 400px;" value="testing/Alex_testing/Proben-Einsendung_Web7c" />
+            	<input type="text" name="workflowname" style="width: 400px;" value="testing/Alex_testing/Proben-Einsendung_Web7d" />
 
 	            <div class="dz-message needsclick">
 	                Wähle deinen Einsendebogen oder ziehe ihn hierauf<br />
