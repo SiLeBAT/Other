@@ -120,13 +120,14 @@
 
 	  	                    	xhr = new XMLHttpRequest();
 	  	                    	xhr.open("POST", "result", true);
-	  	                    	xhr.setRequestHeader("Content-type", "application/json");//"application/x-www-form-urlencoded" multipart/form-data
+	  	                    	xhr.setRequestHeader("Content-type", "application/json; charset=utf-8");//"application/x-www-form-urlencoded" multipart/form-data
 	  	                    	xhr.onreadystatechange = function () { 
 	  	                    	    if (xhr.readyState == XMLHttpRequest.DONE && xhr.status == 200) {
+	  	                    	    	console.log(xhr.responseText);
 	  	                    	      fillHOT(JSON.parse(xhr.responseText));
 	  	                    	    }
 	  	                    	}	  	                    	
-  	                            //console.log(data);
+  	                            console.log(data);
 	  	                    	xhr.send(data);
 	  	                    }
 	  	                }

@@ -112,7 +112,7 @@ public class EinsendeValidator extends HttpServlet {
 		String jobid = null;
 		try {
 			// checks if the request actually contains upload file
-			if (request.getContentType().equals("application/json")) {
+			if (request.getContentType().startsWith("application/json")) {
 				String sObj = null;
 				StringBuffer jb = new StringBuffer();
 				String line = null;
