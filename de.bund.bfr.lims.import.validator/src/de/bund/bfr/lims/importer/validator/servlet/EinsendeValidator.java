@@ -10,11 +10,13 @@ import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -44,14 +46,45 @@ public class EinsendeValidator extends HttpServlet {
 	private static final int MAX_FILE_SIZE = 1024 * 1024 * 40; // 40MB
 	private static final int MAX_REQUEST_SIZE = 1024 * 1024 * 50; // 50MB
 
+	private String username = null;
+	private String password = null;
+	
 	private static String sWorkflowPath = "";
+	private static KREST krest = null;
+	private static Map<String, List<String>> jobidXls = new HashMap<>();
+	private static Map<String, List<String>> jobidJson = new HashMap<>();
 
 	/**
+	 * @throws ParserConfigurationException 
+	 * @throws IOException 
+	 * @throws SAXException 
+	 * @throws ParseException 
 	 * @see HttpServlet#HttpServlet()
 	 */
 	public EinsendeValidator() {
 		super();
-		// TODO Auto-generated constructor stub
+	}
+	  public void init(ServletConfig config) throws ServletException {
+		  super.init(config);
+			InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("/de/bund/bfr/lims/importer/validator/servlet/userdata.xml");
+			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder documentBuilder;
+			try {
+				documentBuilder = documentBuilderFactory.newDocumentBuilder();
+				Document document = documentBuilder.parse(in);
+				username = document.getElementsByTagName("user").item(0).getTextContent();
+				password = document.getElementsByTagName("password").item(0).getTextContent();
+				
+				if (krest == null) krest = new KREST(username, password);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+	  }
+	  public void destroy() {
+			int nc;
+			nc = cleanJobs(jobidXls);
+			nc += cleanJobs(jobidJson);
+			System.out.println("discardJob: " + nc + " removed!");		
 	}
 
 	/**
@@ -71,10 +104,12 @@ public class EinsendeValidator extends HttpServlet {
 			throws ServletException, IOException {
 		String message = "";
 
-		System.err.println("dp_start: " + (""+(System.currentTimeMillis() / 1000)).substring(6));
 		Map<String, Object> inputs = new HashMap<>();
 		File uploadDir = null;
+		boolean isJson = false;
 
+		if (krest == null) krest = new KREST(username, password);
+		String jobid = null;
 		try {
 			// checks if the request actually contains upload file
 			if (request.getContentType().equals("application/json")) {
@@ -101,6 +136,8 @@ public class EinsendeValidator extends HttpServlet {
 				}
 
 				inputs.put("json-input-1147", sObj);
+				jobid = getFreeJobID(jobidJson);
+				isJson = true;
 			} else if (!ServletFileUpload.isMultipartContent(request)) {
 				message = "Request does not contain upload data";
 			} else {
@@ -165,13 +202,12 @@ public class EinsendeValidator extends HttpServlet {
 
 				// go on and do!
 				if (storeFile != null && storeFile.exists()) {
-					inputs.put("file-upload-211:210", storeFile);
+					inputs.put("file-upload-210", storeFile);
+					jobid = getFreeJobID(jobidXls);
 				}
 			}
 
-			System.err.println("sag_start: " + (""+(System.currentTimeMillis() / 1000)).substring(6));
-			message = sendAndGet(inputs);
-			System.err.println("sag_end: " + (""+(System.currentTimeMillis() / 1000)).substring(6));
+			message = sendAndGet(inputs, jobid, isJson);
 			
 		} catch (Exception ex) {
 			message = "There was an error: " + ex.getMessage();
@@ -188,30 +224,55 @@ public class EinsendeValidator extends HttpServlet {
 		PrintWriter out = response.getWriter();
 		out.println(message);
 		out.flush();
-		System.err.println("dp_end: " + (""+(System.currentTimeMillis() / 1000)).substring(6));
+	}
+	private static String getFreeJobID(Map<String, List<String>> jobidMap) {
+		String result = null;
+		List<String> s = jobidMap.get(sWorkflowPath);
+		if (s != null && s.size() > 0) {
+			result = s.get(0);
+			s.remove(0);
+		}
+		if (result == null) {
+			result = krest.getNewJobID("repository/" + sWorkflowPath + ":jobs");
+		}
+		return result;
 	}
 
-	private String sendAndGet(Map<String, Object> inputs)
+	private String sendAndGet(Map<String, Object> inputs, String jobid, boolean isJson)
 			throws ParserConfigurationException, SAXException, IOException, URISyntaxException, ParseException {
-		String username = "";
-		String password = "";
-		InputStream in = Thread.currentThread().getContextClassLoader()
-				.getResourceAsStream("/de/bund/bfr/lims/importer/validator/servlet/userdata.xml");
-		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-		DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-		Document document = documentBuilder.parse(in);
-		username = document.getElementsByTagName("user").item(0).getTextContent();
-		password = document.getElementsByTagName("password").item(0).getTextContent();
-
 		System.err.println(sWorkflowPath);
 		Map<String, Boolean> outputs = new HashMap<>(); // doStream bedeutet bei true: file download, bei false: sichtbarkeit im browser
 		outputs.put("json-output-918:4", false);
 		System.err.println("dw_start: " + (""+(System.currentTimeMillis() / 1000)).substring(6));
-		Map<String, String> r = new KREST().doWorkflow(sWorkflowPath, username, password, inputs, outputs, true);
+		System.err.println(jobid);
+		boolean success = krest.executeJob(jobid, inputs);
+		Map<String, String> r = null;
+		if (success) r = krest.getResult(jobid, outputs);
+		
+		//Map<String, String> r = krest.getJobPoolResult(sWorkflowPath, inputs, outputs);
 		System.err.println("dw_end: " + (""+(System.currentTimeMillis() / 1000)).substring(6));
-		return r.get("json-output-918:4");
+		String result = r == null ? null : r.get("json-output-918:4");
+		if (isJson) {
+			if (!jobidJson.containsKey(sWorkflowPath)) jobidJson.put(sWorkflowPath, new ArrayList<String>());
+			jobidJson.get(sWorkflowPath).add(jobid);			
+		}
+		else {
+			if (!jobidXls.containsKey(sWorkflowPath)) jobidXls.put(sWorkflowPath, new ArrayList<String>());
+			jobidXls.get(sWorkflowPath).add(jobid);			
+		}
+		return result;
 	}
 
+	private int cleanJobs(Map<String, List<String>> wfs) {
+		int numCleaned = 0;
+		for (List<String> ids : wfs.values()) {
+			for (String id : ids) {
+				System.out.println("discardJob: " + id + " -> " + krest.discardJob(id));
+				numCleaned++;
+			}
+		}
+		return numCleaned;
+	}
 	private String readFile(String path, Charset encoding) throws IOException {
 		byte[] encoded = Files.readAllBytes(Paths.get(path));
 		return new String(encoded, encoding);

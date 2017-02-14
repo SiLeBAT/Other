@@ -9,6 +9,7 @@
     <display-name>EinsendeValidator</display-name>
     <servlet-name>EinsendeValidator</servlet-name>
     <servlet-class>de.bund.bfr.lims.importer.validator.servlet.EinsendeValidator</servlet-class>
+    <load-on-startup>0</load-on-startup>
   </servlet>
   <servlet-mapping>
     <servlet-name>EinsendeValidator</servlet-name>

@@ -262,7 +262,7 @@
         <section>
             <div id="dropzone">
                 <form method="post" action="result" enctype="multipart/form-data" class="dropzone needsclick" id="my-dropzone">
-            	<input type="text" name="workflowname" style="width: 400px;" value="testing/Alex_testing/Proben-Einsendung_Web7d" />
+            	<input type="text" name="workflowname" style="width: 400px;" value="testing/Alex_testing/Proben-Einsendung_Web7e" />
 
 	            <div class="dz-message needsclick">
 	                Wähle deinen Einsendebogen oder ziehe ihn hierauf<br />
