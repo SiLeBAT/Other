@@ -1,0 +1,27 @@
+
+body {
+    font-family: 'lucida grande', tahoma, verdana, arial, sans-serif;
+    font-size: 11px;
+}
+
+h1 {
+    font-size: 15px;
+}
+
+a {
+    color: #548dc4;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.handsontable th {
+    white-space: normal !important;
+}
+
+.handsontable table thead th {
+  word-wrap:break-word;
+  white-space: pre-line;
+}

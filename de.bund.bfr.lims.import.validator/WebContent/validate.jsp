@@ -11,9 +11,9 @@
 <link rel="stylesheet" href="js/pikaday/pikaday.css">
 <link rel="stylesheet" href="css/bootstrap.min.css">
 <link rel="stylesheet" href="css/bootstrap-theme.min.css">
-<link rel="stylesheet" type="text/css"
-	href="css/tooltipster.bundle.min.css" />
+<link rel="stylesheet" type="text/css" href="css/tooltipster.bundle.min.css" />
 <link rel="stylesheet" type="text/css" href="css/my.tooltipster.css" />
+<link rel="stylesheet" type="text/css" href="css/my.HOT.css" />
 
 <script type="text/javascript" src="js/pikaday/pikaday.js"></script>
 <script type="text/javascript" src="js/moment/moment.js"></script>
@@ -26,29 +26,6 @@
 
 <script type="text/javascript" src="js/tooltipster.bundle.min.js"></script>
 
-<style>
-body {
-	font-family: 'lucida grande', tahoma, verdana, arial, sans-serif;
-	font-size: 11px;
-}
-
-h1 {
-	font-size: 15px;
-}
-
-a {
-	color: #548dc4;
-	text-decoration: none;
-}
-
-a:hover {
-	text-decoration: underline;
-}
-
-.handsontable th {
-	white-space: normal !important;
-}
-</style>
 </head>
 <body>
 
@@ -68,7 +45,7 @@ a:hover {
 					mydiv.style.display = "none";
 					//file.previewElement.classList.get('dz-image').css({"width":"100%", "height":"auto"});
 					//console.log(file);
-					console.log(jsonText);
+					//console.log(jsonText);
 					fillHOT(JSON.parse(jsonText));
 				});
 				this.on("addedfile", function(file) {
@@ -135,6 +112,8 @@ a:hover {
 						}
 
 						if (change != null) {
+				            console.log("fhot_change: "
+				                    + ("" + (new Date().getTime() / 1000)).substring(6));
 							var data = JSON.stringify({
 								data : hot.getSourceData()
 							}); // [rowNumber]
@@ -147,7 +126,7 @@ a:hover {
 							xhr.onreadystatechange = function() {
 								if (xhr.readyState == XMLHttpRequest.DONE
 										&& xhr.status == 200) {
-									console.log(xhr.responseText);
+									//console.log(xhr.responseText);
 									fillHOT(JSON.parse(xhr.responseText));
 								}
 							}
@@ -200,38 +179,7 @@ a:hover {
 						+ ("" + (new Date().getTime() / 1000)).substring(6));
 			}
 		}
-		function sanitizeData(jsonArray) {
-			var newKey;
-			jsonArray.forEach(function(item) {
-				for (key in item) {
-					newKey = key.replace(/\s/g, '').replace(/\./g, '');
-					if (key != newKey) {
-						item[newKey] = item[key];
-						delete item[key];
-					}
-				}
-			})
-			return jsonArray;
-		}
-		//remove whitespace and dots from data : <propName> references
-		function sanitizeColumns(jsonArray) {
-			var dataProp;
-			jsonArray.forEach(function(item) {
-				dataProp = item['data'].replace(/\s/g, '').replace(/\./g, '');
-				item['data'] = dataProp;
-			})
-			return jsonArray;
-		}
-		function unsanitizeData(jsonString, headerArray) {
-			var newKey;
-			for (var i = 0, len = headerArray.length; i < len; i++) {
-				newKey = headerArray[i].replace(/\s/g, '').replace(/\./g, '');
-				if (jsonString.indexOf(newKey) >= 0) {
-					jsonString = jsonString.split(newKey).join(headerArray[i]);
-				}
-			}
-			return jsonString;
-		}
+
 		function cellRenderer(instance, td, row, col, prop, value,
 				cellProperties) {
 			Handsontable.renderers.TextRenderer.apply(this, arguments);
@@ -332,7 +280,7 @@ a:hover {
 		<form method="post" action="result" enctype="multipart/form-data"
 			class="dropzone needsclick" id="my-dropzone">
 			<input type="text" name="workflowname" style="width: 400px;"
-				value="testing/Alex_testing/Proben-Einsendung_Web7e" />
+				value="testing/Alex_testing/Proben-Einsendung_Web7f" />
 
 			<div class="dz-message needsclick">
 				Wähle deinen Einsendebogen oder ziehe ihn hierauf<br />
