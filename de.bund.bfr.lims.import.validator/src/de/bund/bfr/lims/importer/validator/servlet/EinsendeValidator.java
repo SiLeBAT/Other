@@ -207,7 +207,8 @@ public class EinsendeValidator extends HttpServlet {
 				}
 			}
 
-			message = sendAndGet(inputs, jobid, isJson);
+			if (jobid == null) message = "There is an unknown problem with the submitted file<BR>Please write an email to foodrisklabs@bfr.bund.de with your submitted file.";
+			else message = sendAndGet(inputs, jobid, isJson);
 			
 		} catch (Exception ex) {
 			message = "There was an error: " + ex.getMessage();
