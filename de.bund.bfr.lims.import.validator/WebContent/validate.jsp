@@ -112,6 +112,7 @@
 						}
 
 						if (change != null) {
+							document.body.style.cursor = 'progress';
 				            console.log("fhot_change: "
 				                    + ("" + (new Date().getTime() / 1000)).substring(6));
 							var data = JSON.stringify({
@@ -129,6 +130,7 @@
 									//console.log(xhr.responseText);
 									fillHOT(JSON.parse(xhr.responseText));
 								}
+								document.body.style.cursor = 'default';
 							}
 							console.log(data);
 							xhr.send(data);

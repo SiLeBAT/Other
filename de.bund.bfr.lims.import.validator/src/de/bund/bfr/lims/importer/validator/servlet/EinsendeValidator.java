@@ -242,7 +242,7 @@ public class EinsendeValidator extends HttpServlet {
 			throws ParserConfigurationException, SAXException, IOException, URISyntaxException, ParseException {
 		System.err.println(sWorkflowPath);
 		Map<String, Boolean> outputs = new HashMap<>(); // doStream bedeutet bei true: file download, bei false: sichtbarkeit im browser
-		outputs.put("json-output-918:4", false);
+		outputs.put("json-output-4", false);
 		System.err.println("dw_start: " + (""+(System.currentTimeMillis() / 1000)).substring(6));
 		System.err.println(jobid);
 		boolean success = krest.executeJob(jobid, inputs);
@@ -251,7 +251,7 @@ public class EinsendeValidator extends HttpServlet {
 		
 		//Map<String, String> r = krest.getJobPoolResult(sWorkflowPath, inputs, outputs);
 		System.err.println("dw_end: " + (""+(System.currentTimeMillis() / 1000)).substring(6));
-		String result = r == null ? null : r.get("json-output-918:4");
+		String result = r == null ? null : r.get("json-output-4");
 		if (isJson) {
 			if (!jobidJson.containsKey(sWorkflowPath)) jobidJson.put(sWorkflowPath, new ArrayList<String>());
 			jobidJson.get(sWorkflowPath).add(jobid);			
