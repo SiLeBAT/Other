@@ -279,7 +279,7 @@ public class MyImporterNodeModel extends NodeModel {
 		                    	if (bl == null) continue; // kann evtl. auch weg
 
 		                    	if (firstDataRow == 0) {
-		                    		genError(buf2, i, 0, "firstDataRow = 0...");
+		                    		genError(buf2, row.getRowNum() + 1, 1, "firstDataRow = 0...");
 		                    		continue;
 		                    	}
 		        				int plusIndex = firstDataRow;
@@ -342,7 +342,7 @@ public class MyImporterNodeModel extends NodeModel {
 								                    				for (;posssi<poss.length;posssi++) {
 								                    					if (!poss[posssi].isEmpty()) break;
 								                    				}
-										                    		int posi = posssi >= poss.length ? 0 : getInt(poss[posssi], buf2, row.getRowNum());
+										                    		int posi = posssi >= poss.length ? 0 : getInt(poss[posssi], buf2, row);
 										                    		posssi++;
 											                    	tst = new Testings();
 									                    			tst.setAgent(p.trim());
@@ -359,7 +359,7 @@ public class MyImporterNodeModel extends NodeModel {
 						                    		else if (!repeat) {
 						                    			if (tst.getAgent() == null) {
 						                    				if (tst.getAgentCol() == null) {
-						        	                    		genError(buf2, i, 0, "hmmm..getAgentCol sollte definiert sein...");
+						        	                    		genError(buf2, row.getRowNum() + 1, 1, "hmmm..getAgentCol sollte definiert sein...");
 						                    				}
 						                    				else {
 						                    					cell = row.getCell(tst.getAgentCol());
@@ -369,7 +369,7 @@ public class MyImporterNodeModel extends NodeModel {
 						                    					}
 						                    				}
 						                    			}
-							                    		int posi = getInt(pos, buf2, row.getRowNum());
+							                    		int posi = getInt(pos, buf2, row);
 						                    			tst.getQuants().get(j).setAmount(posi);
 						                    			if (j == 7) allPositive = posi;
 						                    			else sumPositive += posi;
@@ -535,14 +535,14 @@ public class MyImporterNodeModel extends NodeModel {
 		wb.close();
         return new BufferedDataTable[]{buf.getTable(), buf2.getTable(), buf3.getTable()};
     }
-    private int getInt(String number, BufferedDataContainer buf2, int row) {
+    private int getInt(String number, BufferedDataContainer buf2, Row row) {
 		int posi = 0;
 		if (number != null) {
 			try {
 	    		posi = Integer.parseInt(number);						                    			
 			}
 			catch (Exception e) {
-        		genError(buf2, row, 0, e + "");
+        		genError(buf2, row.getRowNum() + 1, 1, e + "");
 			} 
 		}
 		return posi;
@@ -601,7 +601,7 @@ public class MyImporterNodeModel extends NodeModel {
     			PAB = "K";
     		}
 			if (!checkInteger(Ebene)) {
-        		genError(buf2, row.getRowNum(), 0, "Row " + row.getRowNum() + ": Ebene ist kein Integerwert (" + Ebene + ")!!!");
+        		genError(buf2, row.getRowNum() + 1, 1, "Row " + row.getRowNum() + ": Ebene ist kein Integerwert (" + Ebene + ")!!!");
 			}
     	}
     	result.setEbene(Ebene);
@@ -610,7 +610,7 @@ public class MyImporterNodeModel extends NodeModel {
     	cell = row.getCell(6); // Spalte G
     	str = getStrVal(cell, buf2);
     	if (str != null && str.trim().length() > 0) Anzahl = str.trim();
-		int posi = getInt(Anzahl, buf2, row.getRowNum());
+		int posi = getInt(Anzahl, buf2, row);
 		if (posi == 0) result.setAmount(0);//return null;
 		//if (Anzahl == null || Integer.parseInt(Anzahl) == 0) result.setAmount(null);
 		else result.setAmount(posi);
@@ -741,7 +741,7 @@ public class MyImporterNodeModel extends NodeModel {
 				if (result.equals("#N/A")) {
 					result = null;
 				} else if (result.length() > maxChars) {
-	        		genError(buf2, cell.getRowIndex(), 0, "string too long (" + result.length() + ") - shortened to " + maxChars + " chars... '" + result + "' -> '" + result.substring(0, maxChars)
+	        		genError(buf2, cell.getRowIndex() + 1, 1, "string too long (" + result.length() + ") - shortened to " + maxChars + " chars... '" + result + "' -> '" + result.substring(0, maxChars)
 					+ "'");
 					result = result.substring(0, maxChars);
 				}

@@ -92,6 +92,7 @@
 					data : data,
 					columns : cols,
 					colHeaders : colH,
+					rowHeaders: true,
 					stretchH : 'all',
 					colWidths : [ 40 ],
 					autoWrapRow : true,
@@ -99,7 +100,7 @@
 					debug : true,
 					manualColumnResize : true,
 					manualRowResize : true,
-					renderAllRows : true,
+					renderAllRows : data.length < 200,
 					//minSpareRows: 1,	  	                
 					cells : function(row, col, prop) {
 						var cellProperties = {};
@@ -132,7 +133,7 @@
 								}
 								document.body.style.cursor = 'default';
 							}
-							console.log(data);
+							//console.log(data);
 							xhr.send(data);
 						}
 					}
@@ -282,7 +283,7 @@
 		<form method="post" action="result" enctype="multipart/form-data"
 			class="dropzone needsclick" id="my-dropzone">
 			<input type="text" name="workflowname" style="width: 400px;"
-				value="testing/Alex_testing/Proben-Einsendung_Web7f" />
+				value="testing/Hartung_Weba" />
 
 			<div class="dz-message needsclick">
 				Wähle deinen Einsendebogen oder ziehe ihn hierauf<br />
