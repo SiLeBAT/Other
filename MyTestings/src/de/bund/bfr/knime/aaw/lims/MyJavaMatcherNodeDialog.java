@@ -1,7 +1,9 @@
 package de.bund.bfr.knime.aaw.lims;
 
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
+import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentString;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
@@ -48,6 +50,7 @@ public class MyJavaMatcherNodeDialog extends DefaultNodeSettingsPane {
     	SettingsModelString limsProjectName = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_PROJECT_NAME, "");
     	SettingsModelString limsSamplingOrt = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_SAMPLING_ORT, "");
     	SettingsModelString limsBetriebsart = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_BETRIEBSART, "");
+    	SettingsModelString limsID = new SettingsModelString(MyJavaMatcherNodeModel.LIMS_ID, "");
     	addDialogComponent(new DialogComponentString(smsLims, "Enter a columnname -> Kundennummer:"));
     	addDialogComponent(new DialogComponentString(limsAVV, "Enter a columnname -> AVV:"));
     	addDialogComponent(new DialogComponentString(limsSample, "Columnname for Sample Vorbefund:"));
@@ -58,6 +61,11 @@ public class MyJavaMatcherNodeDialog extends DefaultNodeSettingsPane {
     	addDialogComponent(new DialogComponentString(limsProjectName, "Columnname for project name:"));
     	addDialogComponent(new DialogComponentString(limsSamplingOrt, "Columnname for sampling Ort:"));
     	addDialogComponent(new DialogComponentString(limsBetriebsart, "Columnname for Betriebsart:"));
+    	addDialogComponent(new DialogComponentString(limsID, "Columnname for DB_ID:"));
+
+    	createNewGroup("Other:"); 
+    	SettingsModelBoolean bfrView = new SettingsModelBoolean(MyJavaMatcherNodeModel.LIMS_VIEW, Boolean.FALSE);
+       	addDialogComponent(new DialogComponentBoolean(bfrView, "BfR View:"));
 	}
 }
 

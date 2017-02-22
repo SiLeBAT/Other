@@ -2,14 +2,6 @@ package de.bund.bfr.knime.aaw.lims;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataRow;
@@ -19,6 +11,7 @@ import org.knime.core.data.def.StringCell;
 public class MyBvlDs {
 
 	private final SimpleDateFormat bvlFormatter = new SimpleDateFormat("dd-MMM-yy"); //"17-Feb-15";
+	private final SimpleDateFormat bvlFormatter2 = new SimpleDateFormat("yyyy-MM-dd"); //"2016-12-15"
 
 	private String PROBEN_NR = null;
 	private Integer TEILPROBEN_NR = null;
@@ -108,10 +101,15 @@ public class MyBvlDs {
 	}
 	public Long getProbenahmeDate() {
 		if (PROBENAHME_MILLIS != null) return PROBENAHME_MILLIS;
+		Long result = getDate(bvlFormatter, PROBENAHME_DAT, false);
+		if (result == null) result = getDate(bvlFormatter2, PROBENAHME_DAT, true);
+		return result;
+	}
+	private Long getDate(SimpleDateFormat formatter, String datum, boolean throwError) {
 		try {
-			return bvlFormatter.parse(PROBENAHME_DAT).getTime();
+			return formatter.parse(datum).getTime();
 		} catch (ParseException e) {
-			e.printStackTrace();
+			if (throwError) e.printStackTrace();
 			return null;
 		}
 	}
@@ -121,43 +119,5 @@ public class MyBvlDs {
 
 	public String getBetriebsart() {
 		return Betriebsart;
-	}
-	
-	private Map<List<MyLimsDs>, Double> similarityMap = new HashMap<>();
-	
-	public void addStringComparison(List<MyLimsDs> mldl, double val) {
-		similarityMap.put(mldl, val);
-	}
-	public Map<List<MyLimsDs>, Double> getSortedMap() {
-		return sortByComparator(similarityMap);
-	}
-	public void printMap(Map<List<MyLimsDs>, Double> map, int top) {
-		Map<List<MyLimsDs>, Double> sortedMap = map;
-		int i=0;
-		for (Map.Entry<List<MyLimsDs>, Double> entry : sortedMap.entrySet()) {
-			System.out.println("[Key] : " + entry.getKey() + " [Value] : " + entry.getValue());
-			i++;
-			if (i >= top) break;
-		}
-	}
-	private static Map<List<MyLimsDs>, Double> sortByComparator(Map<List<MyLimsDs>, Double> unsortMap) {
-
-		// Convert Map to List
-		List<Map.Entry<List<MyLimsDs>, Double>> list = new LinkedList<>(unsortMap.entrySet());
-
-		// Sort list with comparator, to compare the Map values
-		Collections.sort(list, new Comparator<Map.Entry<List<MyLimsDs>, Double>>() {
-			public int compare(Map.Entry<List<MyLimsDs>, Double> o1, Map.Entry<List<MyLimsDs>, Double> o2) {
-				return (o2.getValue()).compareTo(o1.getValue());
-			}
-		});
-
-		// Convert sorted map back to a Map
-		Map<List<MyLimsDs>, Double> sortedMap = new LinkedHashMap<>();
-		for (Iterator<Map.Entry<List<MyLimsDs>, Double>> it = list.iterator(); it.hasNext();) {
-			Map.Entry<List<MyLimsDs>, Double> entry = it.next();
-			sortedMap.put(entry.getKey(), entry.getValue());
-		}
-		return sortedMap;
 	}
 }

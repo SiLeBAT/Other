@@ -4,6 +4,20 @@ public class MyBLTResults {
 
 	private double vorbefundScore, v_pnScore, betriebsartMatch, probenahmeortMatch;
 	private Boolean v_date, v_adv, v_status;
+	private MyBvlDs mbd;
+	public MyBvlDs getMbd() {
+		return mbd;
+	}
+	public void setMbd(MyBvlDs mbd) {
+		this.mbd = mbd;
+	}
+	public MyLimsDs getMld() {
+		return mld;
+	}
+	public void setMld(MyLimsDs mld) {
+		this.mld = mld;
+	}
+	private MyLimsDs mld;
 	
 	public double getVorbefundScore() {
 		return vorbefundScore;

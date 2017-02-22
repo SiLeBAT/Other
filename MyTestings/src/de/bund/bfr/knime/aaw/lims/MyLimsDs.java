@@ -17,6 +17,7 @@ public class MyLimsDs {
 	private Long Probenahme = null;
 	private String ProbenahmeOrt = null;
 	private String Betriebsart = null;
+	private String DB_ID = null;
 	private DataRow dr;
 	private int col_limsKundenNr;
 	private int col_limsAVV;
@@ -28,8 +29,9 @@ public class MyLimsDs {
 	private int col_LimsProjectName;
 	private int col_LimsSamplingOrt;
 	private int col_LimsBetriebsart;
+	private int col_LimsID;
 	
-	public MyLimsDs(int col_limsKundenNr, int col_limsAVV, int col_LimsVorbefund, int col_limsResult, int col_limsStatus, int col_LimsAdvCode, int col_LimsSamplingDate, int col_LimsProjectName, int col_LimsSamplingOrt, int col_LimsBetriebsart) {
+	public MyLimsDs(int col_limsKundenNr, int col_limsAVV, int col_LimsVorbefund, int col_limsResult, int col_limsStatus, int col_LimsAdvCode, int col_LimsSamplingDate, int col_LimsProjectName, int col_LimsSamplingOrt, int col_LimsBetriebsart, int col_LimsID) {
 		this.col_limsKundenNr = col_limsKundenNr;		
 		this.col_limsAVV = col_limsAVV;		
 		this.col_LimsVorbefund = col_LimsVorbefund;		
@@ -40,6 +42,7 @@ public class MyLimsDs {
 		this.col_LimsProjectName = col_LimsProjectName;		
 		this.col_LimsSamplingOrt = col_LimsSamplingOrt;		
 		this.col_LimsBetriebsart = col_LimsBetriebsart;		
+		this.col_LimsID = col_LimsID;		
 	}
 	
 	private void fillData() {
@@ -83,9 +86,13 @@ public class MyLimsDs {
 			DataCell dc = dr.getCell(col_LimsBetriebsart);
 			if (dc != null && !dc.isMissing()) Betriebsart = ((StringCell) dc).getStringValue();
 		}
+		if (col_LimsID >= 0) {
+			DataCell dc = dr.getCell(col_LimsID);
+			if (dc != null && !dc.isMissing()) DB_ID = ((StringCell) dc).getStringValue();
+		}
 	}
 	public String getKey() {
-		return KundenProbenr + ";:_" + AVV + ";:_" + Vorbefund + ";:_" + Ergebnis + ";:_" + MatrixACode + ";:_" + Probenahme + ";:_" + ProbenahmeOrt + ";:_" + Betriebsart + ";:_" + Status;
+		return DB_ID;//KundenProbenr + ";:_" + AVV + ";:_" + Vorbefund + ";:_" + Ergebnis + ";:_" + MatrixACode + ";:_" + Probenahme + ";:_" + ProbenahmeOrt + ";:_" + Betriebsart + ";:_" + Status;
 	}
 	
 	public DataRow getDr() {
@@ -137,41 +144,11 @@ public class MyLimsDs {
 	public String getBetriebsart() {
 		return Betriebsart;
 	}
+	public String getDB_ID() {
+		return DB_ID;
+	}
 
-	
-	private MyBLTResults mblt = null;
-	
-	public MyBLTResults getMblt(boolean refresh) {
-		if (refresh || mblt == null) mblt = new MyBLTResults();
-		return mblt;
+	public void setDB_ID(String dB_ID) {
+		DB_ID = dB_ID;
 	}
-	public MyBLTResults setMblt(MyLimsDs mld, MyBvlDs mbd) {
-		mblt = new MyBLTResults();
-		mblt.setV_status(mld.getStatus() == null ? null : mld.getStatus().toLowerCase().indexOf("v") >= 0);
-		Boolean b_date = checkDates(mbd.getProbenahmeDate(), mld.getProbenahme());
-		mblt.setV_date(b_date);
-		Boolean b_adv = checkAdv(mbd.getZERL_MATRIX(), mld.getMatrixACode());		
-		mblt.setV_adv(b_adv);
-		Double d_befund = StringSimilarity.diceCoefficientOptimized(mbd.getVORBEFUND(), mld.getVorbefund());
-		if (mld.getProjectName() != null && mbd.getVORBEFUND() != null && mld.getProjectName().startsWith("Moni-ESBL-") && mbd.getVORBEFUND().indexOf("ESBL") >= 0) d_befund = 1.0;
-		if (mld.getVorbefund() != null && mbd.getVORBEFUND() != null && mld.getVorbefund().equals("MRSA") && mbd.getVORBEFUND().indexOf("MRSA positiv") >= 0) d_befund = 1.0;
-		mblt.setVorbefundScore(d_befund);
-		double betriebsartMatch = StringSimilarity.diceCoefficientOptimized(mbd.getBetriebsart(), mld.getBetriebsart());
-		double probenahmeortMatch = StringSimilarity.diceCoefficientOptimized(mbd.getProbenahmeOrt(), mld.getProbenahmeOrt());
-		mblt.setBetriebsartMatch(betriebsartMatch);
-		mblt.setProbenahmeortMatch(probenahmeortMatch);
-		return mblt;
-	}
-	
-	private final long ONE_DAY = 24*60*60*1000;
-    private Boolean checkDates(Long date1, Long date2) {
-    	if (date1 == null || date2 == null) return null;
-		boolean criterium = date1 >= date2 - ONE_DAY && date1 <= date2 + ONE_DAY;
-		return criterium;
-    }
-    private Boolean checkAdv(String adv1, String adv2) {
-    	if (adv1 == null || adv2 == null) return null;
-    	if (adv1.equals("899999") || adv2.equals("899999")) return null;
-    	return adv1.equals(adv2);
-    }
 }

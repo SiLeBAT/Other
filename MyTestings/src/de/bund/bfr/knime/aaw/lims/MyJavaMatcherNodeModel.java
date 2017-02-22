@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
@@ -26,6 +28,7 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
@@ -53,6 +56,8 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 	static final String BVL_BETRIEBSART = "bvlbetriebsart";
 	static final String LIMS_SAMPLING_ORT = "limssamplingort";
 	static final String LIMS_BETRIEBSART = "limsbetriebsart";
+	static final String LIMS_ID = "limsid";
+	static final String LIMS_VIEW = "limsview";
 	
 	private final SettingsModelString m_bvlProbenNr = new SettingsModelString(BVL_PROBENNR, "");
 	private final SettingsModelString m_bvlTeilProbenNr = new SettingsModelString(BVL_TEILPROBENNR, "");
@@ -69,8 +74,11 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 	private final SettingsModelString m_limsProjectName = new SettingsModelString(LIMS_PROJECT_NAME, "");
 	private final SettingsModelString m_limsBetriebsart = new SettingsModelString(LIMS_BETRIEBSART, "");
 	private final SettingsModelString m_limsSamplingOrt = new SettingsModelString(LIMS_SAMPLING_ORT, "");
+	private final SettingsModelString m_limsID = new SettingsModelString(LIMS_ID, "");
 	private final SettingsModelString m_bvlBetriebsart = new SettingsModelString(BVL_BETRIEBSART, "");
 	private final SettingsModelString m_bvlSamplingOrt = new SettingsModelString(BVL_SAMPLING_ORT, "");
+	
+	private final SettingsModelBoolean m_bfrView = new SettingsModelBoolean(LIMS_VIEW, Boolean.FALSE);
 	
 
 	/**
@@ -96,7 +104,6 @@ public class MyJavaMatcherNodeModel extends NodeModel {
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
-    	boolean doAll = true;
     	DataTableSpec dts0 = inData[0].getSpec();
     	DataTableSpec dts1 = inData[1].getSpec();
     	
@@ -117,19 +124,18 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 		int col_BvlBetriebsart = getCol(dts0, m_bvlBetriebsart.getStringValue()); // ""
 		int col_LimsSamplingOrt = getCol(dts1, m_limsSamplingOrt.getStringValue()); // ""
 		int col_LimsBetriebsart = getCol(dts1, m_limsBetriebsart.getStringValue()); // ""
+		int col_LimsID = getCol(dts1, m_limsID.getStringValue()); // ""
 
-    	Map<String, List<MyLimsDs>> limsMap = new LinkedHashMap<>();
+    	Map<String, MyLimsDs> limsMap = new LinkedHashMap<>();
 		for (DataRow row1 : inData[1]) {
-			MyLimsDs mld = new MyLimsDs(col_limsKundenNr, col_limsAVV, col_LimsVorbefund, col_limsResult, col_limsStatus, col_LimsAdvCode, col_LimsSamplingDate, col_LimsProjectName, col_LimsSamplingOrt, col_LimsBetriebsart);
+			MyLimsDs mld = new MyLimsDs(col_limsKundenNr, col_limsAVV, col_LimsVorbefund, col_limsResult, col_limsStatus, col_LimsAdvCode, col_LimsSamplingDate, col_LimsProjectName, col_LimsSamplingOrt, col_LimsBetriebsart, col_LimsID);
 			mld.setDr(row1);
 			if (limsMap.containsKey(mld.getKey())) {
-				//System.err.println("LIMS: " + mld.getKey() + " already existing...");
+				System.err.println("LIMS: " + mld.getKey() + " already existing...");
 			}
 			else {
-				limsMap.put(mld.getKey(), new ArrayList<MyLimsDs>());
+				limsMap.put(mld.getKey(), mld);
 			}
-			List<MyLimsDs> l = limsMap.get(mld.getKey());
-			l.add(mld);
 		}
     	Map<String, MyBvlDs> bvlMap = new LinkedHashMap<>();
 		for (DataRow row0 : inData[0]) {
@@ -147,70 +153,78 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 		BufferedDataContainer buf = exec.createDataContainer(getSpec(dts0,dts1));
 		double percent;
     	int rowLfd = 0;
-    	//long ttt = System.currentTimeMillis();
-		for (String key : bvlMap.keySet()) {			
-			boolean success = false;
-			MyBvlDs mbd = bvlMap.get(key);
-			String bdo = mbd.getPROBEN_NR().replaceAll("[^0-9]","");
-			if (mbd.getPROBEN_NR().equals("N15007019-002")) {
-				System.err.print("");
-			}
+    	
+    	if (m_bfrView.getBooleanValue()) {
+        	// LIMS perspective
 			for (String limsKey : limsMap.keySet()) {
-				List<MyLimsDs> mldl = limsMap.get(limsKey);
-				String limsKPN = mldl.get(0).getKundenProbenr();
-				String limsAVV = mldl.get(0).getAVV();
-				if (limsKPN != null && limsKPN.equals("N15007019/2")) {
-					System.err.print("");
-				}
-				double score = StringSimilarity.diceCoefficientOptimized(mbd.getPROBEN_NR(), limsKPN);			
-				double scoreAVV = StringSimilarity.diceCoefficientOptimized(mbd.getPROBEN_NR(), limsAVV);
-				double maxS = Math.max(score, scoreAVV);
-				if (score > 0 && scoreAVV > 0 && score != scoreAVV) maxS = maxS - 0.01;
-				if (maxS < 0.7) { // Spezialfälle
-					 // z.B. aus Campy 2015, z.B. 50201151567 -> 1567/1
-					if (mbd.getPROBEN_NR().startsWith("5020115") && limsKPN.startsWith(mbd.getPROBEN_NR().substring(mbd.getPROBEN_NR().length() - 4) + "/" + mbd.getTEILPROBEN_NR())) maxS = 1;
-					// z.B. MRSA 1551211UKF  513
-					if (mbd.getPROBEN_NR().startsWith("1551211UKF") && limsKPN.startsWith("15UKF" + mbd.getPROBEN_NR().substring(mbd.getPROBEN_NR().length() - 3) + "/")) maxS = 1;
-					// 101201515559 Diagnostik
-					// 2015OWL016581 Diagnostik
-					int ind = limsKPN.indexOf("(");
-					if (ind >= 0) {
-						score = StringSimilarity.diceCoefficientOptimized(mbd.getPROBEN_NR(), limsKPN.substring(0, ind));
-						if (score > maxS) maxS = score;
-					}
-				}
-				int minLength = 3;
-				boolean contains = false;
-				if (limsAVV != null && mbd.getPROBEN_NR().length() >= minLength && limsAVV.length() >= minLength) contains = limsAVV.indexOf(mbd.getPROBEN_NR()) >= 0 || mbd.getPROBEN_NR().indexOf(limsAVV) >= 0;
-				if (!contains && mbd.getPROBEN_NR().length() >= minLength && limsKPN.length() >= minLength) contains = limsKPN.indexOf(mbd.getPROBEN_NR()) >= 0 || mbd.getPROBEN_NR().indexOf(limsKPN) >= 0;
-				boolean numberOnlyContains = false;
-				if (limsAVV != null) {
-					String ldoAVV = limsAVV.replaceAll("[^0-9]","");	
-					if (ldoAVV.length() >= minLength) numberOnlyContains = ldoAVV.indexOf(bdo) >= 0 || bdo.indexOf(ldoAVV) >= 0;
-				}
-				if (!numberOnlyContains) {
-					String ldo = limsKPN.replaceAll("[^0-9]","");
-					if (ldo.length() >= minLength) numberOnlyContains = ldo.indexOf(bdo) >= 0 || bdo.indexOf(ldo) >= 0;
-				}
-				
-				if (maxS >= 0.7 || contains || numberOnlyContains) {
-					if (!contains && !numberOnlyContains) maxS = maxS / 3;
-					mbd.addStringComparison(mldl, maxS);
+				MyLimsDs mld = limsMap.get(limsKey);
+				SimiMap sim = new SimiMap();
+				for (String key : bvlMap.keySet()) {		
+					MyBvlDs mbd = bvlMap.get(key);
+    				doScore(mbd, mld, sim);
+    			}
+    			percent = ((double)rowLfd)/limsMap.size();
+    			Map<Double, List<MyBLTResults>> bestScores = doCalcs(sim);
+    			
+    			if (bestScores.size() == 0) addRow(dts0, null, dts1, mld.getDr(), buf, RowKey.createRowKey(buf.size()), -1, null);
+    			else doOutput(buf, bestScores, dts0, dts1);
+    			
+        		exec.setProgress(percent);
+        		exec.checkCanceled();
+        		rowLfd++;
+    		}
+    	}
+    	else {
+        	// BVL perspective
+    		for (String key : bvlMap.keySet()) {		
+    			MyBvlDs mbd = bvlMap.get(key);
+    			SimiMap sim = new SimiMap();
+    			for (String limsKey : limsMap.keySet()) {
+    				MyLimsDs mld = limsMap.get(limsKey);
+    				doScore(mbd, mld, sim);
+    			}
+    			percent = ((double)rowLfd)/bvlMap.size();
+    			Map<Double, List<MyBLTResults>> bestScores = doCalcs(sim);
+    			
+    			if (bestScores.size() == 0) addRow(dts0, mbd.getDr(), dts1, null, buf, RowKey.createRowKey(buf.size()), -1, null);
+    			else doOutput(buf, bestScores, dts0, dts1);
+    			
+        		exec.setProgress(percent);
+        		exec.checkCanceled();
+        		rowLfd++;
+    		}
+    	}
+		
+		exec.setProgress(1);
+		
+    	buf.close();
+        return new BufferedDataTable[]{buf.getTable()};
+    }
+    private void doOutput(BufferedDataContainer buf, Map<Double, List<MyBLTResults>> bestScores, DataTableSpec dts0, DataTableSpec dts1) {
+		List<String> alreadyIn = new ArrayList<>();
+		for (Double score : bestScores.keySet()) {
+			List<MyBLTResults> mbltl = bestScores.get(score);
+			for (MyBLTResults mblt : mbltl) {
+				String d_result = mblt.getMld().getErgebnis();
+				if (d_result != null && !alreadyIn.contains(d_result)) {
+					alreadyIn.add(d_result);
+					addRow(dts0, mblt.getMbd().getDr(), dts1, mblt.getMld().getDr(), buf, RowKey.createRowKey(buf.size()), score, mblt);					
 				}
 			}
-			percent = ((double)rowLfd)/bvlMap.size();
-			//if (rowLfd % 100 == 0) System.err.println(rowLfd + "\t" + percent + "\t" + (System.currentTimeMillis()-ttt));
-			//System.out.println(mbd.getPROBEN_NR());
-			//mbd.printMap(5);
-			Map<List<MyLimsDs>, Double> sm = mbd.getSortedMap();
-			double topScore = 0;
-			List<MyLimsDs> bestScore = new ArrayList<>();
-			for (Map.Entry<List<MyLimsDs>, Double> entry : sm.entrySet()) {
-				double pnScore = entry.getValue();
-				for (MyLimsDs mld : entry.getKey())  {
-					
+		}
+    }
+    private Map<Double, List<MyBLTResults>> doCalcs(SimiMap sim) {
+		Map<Object[], Double> sm = sim.getSortedMap();
+		double topScore = -1;
+		Map<Double, List<MyBLTResults>> bestScores = new TreeMap<>();
+		for (Entry<Object[], Double> entry : sm.entrySet()) {
+			double pnScore = entry.getValue();
+				Object[] oa = (Object[]) entry.getKey();
+				//for (Object o : liste)  {
+				MyBvlDs mbd = (MyBvlDs) oa[0];
+				MyLimsDs mld = (MyLimsDs) oa[1];
+				
 					double matchQuality = pnScore;
-					MyBLTResults mblt = null;
 					//if (pnScore >= 0.99 || contains || numberOnlyContains) {
 						//matchQuality = matchQuality * 0.3;
 						/*
@@ -218,11 +232,8 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 						matchQuality = mblt.getBetriebsartMatch() * 0.1 + mblt.getProbenahmeortMatch() * 0.1 + mblt.getVorbefundScore() * 0.1 +
 								(mblt.getV_adv() != null && mblt.getV_adv() ? 0.1 : 0) + (mblt.getV_date() != null && mblt.getV_date() ? 0.1 : 0);
 								*/
-						if (mbd.getPROBEN_NR().equals("101201514787") && (mld.getKundenProbenr().equals("10-12015-14787"))) {
-							System.err.print("");
-						}
 						if (matchQuality >= topScore) {
-							if (mblt == null) mblt = mld.setMblt(mld, mbd);
+							MyBLTResults mblt = sim.setMblt(mbd, mld);
 							mblt.setV_pnScore(pnScore);							
 
 							//if (mblt.getBetriebsartMatch() < 1) matchQuality = matchQuality * 0.5;
@@ -232,42 +243,69 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 							if (mblt.getV_date() == null) matchQuality = matchQuality * 0.8; else if (!mblt.getV_date()) matchQuality = matchQuality * 0.5; 
 							if (mblt.getV_status() != null && !mblt.getV_status()) matchQuality = matchQuality * 0.7;
 							if (mblt.getV_adv() == null) matchQuality = matchQuality * 0.75; else if (!mblt.getV_adv()) matchQuality = matchQuality * 0.5; 
-							
-							if (matchQuality >= topScore && mbd.getPROBEN_NR().startsWith("15TRB1054-001")) {
-								System.err.println(matchQuality + "\t" + mbd.getPROBEN_NR() + "\t" + mbd.getTEILPROBEN_NR() + "\t" + mbd.getVORBEFUND() + "\t" + mld.getDr());
-							}
-							
+														
 							if (matchQuality == topScore) {
-								bestScore.add(mld);
+								mblt.setMbd(mbd);
+								mblt.setMld(mld);
+								if (bestScores.get(topScore) == null) {
+									System.err.println("");
+								}
+								bestScores.get(topScore).add(mblt);
 							}
 							else if (matchQuality > topScore) {
-								bestScore.clear();
+								bestScores.clear();
 								topScore = matchQuality;
-								bestScore.add(mld);
+								bestScores.put(topScore, new ArrayList<>());
+								mblt.setMbd(mbd);
+								mblt.setMld(mld);
+								bestScores.get(topScore).add(mblt);
 							}
-			    			success = true;
 						}
 					//}
 					
-				}
-			}
-			List<String> alreadyIn = new ArrayList<>();
-			for (MyLimsDs mld : bestScore) {
-				String d_result = mld.getErgebnis();
-				if (d_result != null && !alreadyIn.contains(d_result)) {
-					alreadyIn.add(d_result);
-					addRow(dts0, mbd.getDr(), dts1, mld.getDr(), buf, RowKey.createRowKey(buf.size()), topScore, mld.getMblt(false));					
-				}
-			}
-    		if (doAll && !success) addRow(dts0, mbd.getDr(), dts1, null, buf, RowKey.createRowKey(buf.size()), -1, null);
-    		exec.setProgress(percent);
-    		exec.checkCanceled();
-    		rowLfd++;
+				//}
 		}
-		exec.setProgress(1);
-	
-    	buf.close();
-        return new BufferedDataTable[]{buf.getTable()};
+		return bestScores;
+    }
+    private void doScore(MyBvlDs mbd, MyLimsDs mld, SimiMap sim) {
+		String bdo = mbd.getPROBEN_NR().replaceAll("[^0-9]","");
+		String limsKPN = mld.getKundenProbenr();
+		String limsAVV = mld.getAVV();
+		double score = StringSimilarity.diceCoefficientOptimized(mbd.getPROBEN_NR(), limsKPN);			
+		double scoreAVV = StringSimilarity.diceCoefficientOptimized(mbd.getPROBEN_NR(), limsAVV);
+		double maxS = Math.max(score, scoreAVV);
+		if (score > 0 && scoreAVV > 0 && score != scoreAVV) maxS = maxS - 0.01;
+		if (maxS < 0.7) { // Spezialfälle
+			 // z.B. aus Campy 2015, z.B. 50201151567 -> 1567/1
+			if (mbd.getPROBEN_NR().startsWith("5020115") && limsKPN.startsWith(mbd.getPROBEN_NR().substring(mbd.getPROBEN_NR().length() - 4) + "/" + mbd.getTEILPROBEN_NR())) maxS = 1;
+			// z.B. MRSA 1551211UKF  513
+			if (mbd.getPROBEN_NR().startsWith("1551211UKF") && limsKPN.startsWith("15UKF" + mbd.getPROBEN_NR().substring(mbd.getPROBEN_NR().length() - 3) + "/")) maxS = 1;
+			// 101201515559 Diagnostik
+			// 2015OWL016581 Diagnostik
+			int ind = limsKPN.indexOf("(");
+			if (ind >= 0) {
+				score = StringSimilarity.diceCoefficientOptimized(mbd.getPROBEN_NR(), limsKPN.substring(0, ind));
+				if (score > maxS) maxS = score;
+			}
+		}
+		int minLength = 3;
+		boolean contains = false;
+		if (limsAVV != null && mbd.getPROBEN_NR().length() >= minLength && limsAVV.length() >= minLength) contains = limsAVV.indexOf(mbd.getPROBEN_NR()) >= 0 || mbd.getPROBEN_NR().indexOf(limsAVV) >= 0;
+		if (!contains && mbd.getPROBEN_NR().length() >= minLength && limsKPN.length() >= minLength) contains = limsKPN.indexOf(mbd.getPROBEN_NR()) >= 0 || mbd.getPROBEN_NR().indexOf(limsKPN) >= 0;
+		boolean numberOnlyContains = false;
+		if (limsAVV != null) {
+			String ldoAVV = limsAVV.replaceAll("[^0-9]","");	
+			if (ldoAVV.length() >= minLength) numberOnlyContains = ldoAVV.indexOf(bdo) >= 0 || bdo.indexOf(ldoAVV) >= 0;
+		}
+		if (!numberOnlyContains) {
+			String ldo = limsKPN.replaceAll("[^0-9]","");
+			if (ldo.length() >= minLength) numberOnlyContains = ldo.indexOf(bdo) >= 0 || bdo.indexOf(ldo) >= 0;
+		}
+		
+		if (maxS >= 0.7 || contains || numberOnlyContains) {
+			if (!contains && !numberOnlyContains) maxS = maxS / 3;
+			sim.addStringComparison(mbd, mld, maxS);
+		}
     }
     private void addRow(DataTableSpec dts0, DataRow rowBvl, DataTableSpec dts1, DataRow rowLims, BufferedDataContainer buf, RowKey key, double matchQuality, MyBLTResults mblt) {
     	int numOutCols = dts0.getNumColumns() + dts1.getNumColumns() + 6;
@@ -348,8 +386,11 @@ public class MyJavaMatcherNodeModel extends NodeModel {
     	m_limsProjectName.saveSettingsTo(settings);
     	m_limsBetriebsart.saveSettingsTo(settings);
     	m_limsSamplingOrt.saveSettingsTo(settings);
+    	m_limsID.saveSettingsTo(settings);
     	m_bvlBetriebsart.saveSettingsTo(settings);
     	m_bvlSamplingOrt.saveSettingsTo(settings);
+    	
+    	m_bfrView.saveSettingsTo(settings);
     }
 
     /**
@@ -373,8 +414,11 @@ public class MyJavaMatcherNodeModel extends NodeModel {
     	if (settings.containsKey(LIMS_PROJECT_NAME)) m_limsProjectName.loadSettingsFrom(settings);
     	if (settings.containsKey(LIMS_BETRIEBSART)) m_limsBetriebsart.loadSettingsFrom(settings);
     	if (settings.containsKey(LIMS_SAMPLING_ORT)) m_limsSamplingOrt.loadSettingsFrom(settings);
+    	if (settings.containsKey(LIMS_ID)) m_limsID.loadSettingsFrom(settings);
     	if (settings.containsKey(BVL_BETRIEBSART)) m_bvlBetriebsart.loadSettingsFrom(settings);
     	if (settings.containsKey(BVL_SAMPLING_ORT)) m_bvlSamplingOrt.loadSettingsFrom(settings);
+    	
+    	if (settings.containsKey(LIMS_VIEW)) m_bfrView.loadSettingsFrom(settings);
     }
 
     /**
@@ -398,8 +442,11 @@ public class MyJavaMatcherNodeModel extends NodeModel {
     	if (settings.containsKey(LIMS_PROJECT_NAME)) m_limsProjectName.validateSettings(settings);
     	if (settings.containsKey(LIMS_BETRIEBSART)) m_limsBetriebsart.validateSettings(settings);
     	if (settings.containsKey(LIMS_SAMPLING_ORT)) m_limsSamplingOrt.validateSettings(settings);
+    	if (settings.containsKey(LIMS_ID)) m_limsID.validateSettings(settings);
     	if (settings.containsKey(BVL_BETRIEBSART)) m_bvlBetriebsart.validateSettings(settings);
     	if (settings.containsKey(BVL_SAMPLING_ORT)) m_bvlSamplingOrt.validateSettings(settings);
+    	
+    	if (settings.containsKey(LIMS_VIEW)) m_bfrView.validateSettings(settings);
     }
     
     /**
