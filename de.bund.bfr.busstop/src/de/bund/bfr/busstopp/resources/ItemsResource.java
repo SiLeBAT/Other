@@ -203,7 +203,8 @@ public class ItemsResource {
 	@Produces({ MediaType.APPLICATION_XML})
 	public Response itemFile(@FormDataParam("file") InputStream fileInputStream,
 			@FormDataParam("file") FormDataContentDisposition contentDispositionHeader,
-			@FormDataParam("comment") String comment) {
+			@FormDataParam("comment") String comment,
+			@QueryParam("environment") String environment) {
 
 		ResponseX response = new ResponseX();
 		Status status = Response.Status.OK;
@@ -214,7 +215,7 @@ public class ItemsResource {
 				if (contentDispositionHeader != null) {
 					String filename = contentDispositionHeader.getFileName();
 
-					String environment = getRole();
+					if (environment == null || !securityContext.isUserInRole("bfr")) environment = getRole();
 					long newId = System.currentTimeMillis();
 					ItemLoader item = new ItemLoader(newId, filename, comment, environment);
 					String filePath = item.save(fileInputStream);
@@ -284,7 +285,7 @@ public class ItemsResource {
 			try {
 				File zipfile = File.createTempFile("busstop_xmls", ".zip");
 				ZipArchive za = new ZipArchive(zipfile.getAbsolutePath());
-				List<Item> li = getOutputs(true);
+				List<Item> li = getOutputs(true, environment);
 				for (Item i : li) {
 					Long id = i.getId();
 					String filename = Constants.SERVER_UPLOAD_LOCATION_FOLDER + id + "/" + i.getIn().getFilename();
