@@ -34,7 +34,7 @@ public class XmlValidator {
 		// XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/bbk/bbk1.xml"));
 		// System.err.println(new
 		// XmlValidator().validate("/Users/arminweiser/Desktop/xml_test/out.xml"));
-		System.err.println(new XmlValidator().validateViaRequest("C:/Users/weiser/Desktop/null.txt", new String[] {"kontrollpunktmeldung"}));
+		System.err.println(new XmlValidator().validateViaRequest("/Users/arminweiser/Downloads/null15.txt", new String[] {"kontrollpunktmeldung"}));
 		// System.err.println(new
 		// XmlValidator().validateViaRequest("C:/Users/weiser/Downloads/kontrollpunktmeldung.txt"));
 	}

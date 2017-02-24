@@ -82,7 +82,8 @@ public class Tester {
 
     // Get Fälle for application
     System.out.println(service.path("rest").path("items").path("faelle").request().accept(MediaType.TEXT_PLAIN).get(String.class));
-
+    InputStream stream = service.path("rest").path("items").path("kpms").queryParam("fallNummer", "2017-1").request().accept(MediaType.APPLICATION_OCTET_STREAM).get(InputStream.class);
+    System.err.println(stream.available());
     //System.out.println(service.path("rest").path("items").queryParam("environment", "bfr").request().accept(MediaType.APPLICATION_XML).delete(String.class));
     //System.out.println(service.path("rest").path("items").path("bin").queryParam("environment", "bfr").request().accept(MediaType.APPLICATION_XML).delete(String.class));
     //Delete ItemLoader with id 1    
@@ -95,7 +96,7 @@ public class Tester {
     //InputStream stream = service.path("rest").path("items").path("1482191578314").path("file").request().accept(MediaType.APPLICATION_OCTET_STREAM).get(InputStream.class); System.out.println(stream.available());
     
     //Upload a ItemLoader
-    //upload(usr, pwd, "/Users/arminweiser/Downloads/null6.txt", "kommentar_gs1");
+    //upload(usr, pwd, "/Users/arminweiser/Downloads/null15.txt", "kommentar_gs1");
     //upload(usr, pwd, "/Users/arminweiser/Desktop/xml_test/bbk/bbk1.xml", "kommentar_gs1");
     //upload(usr, pwd, "/Users/arminweiser/Desktop/xml_test/Anleitung_pmmlab.txt", "kommentar_gs2");
     //upload(usr, pwd, "C:/Users/weiser/Downloads/null1.txt", "kommentar_gs1");
