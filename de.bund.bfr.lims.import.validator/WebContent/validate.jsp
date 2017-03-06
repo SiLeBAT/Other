@@ -45,7 +45,7 @@
 					mydiv.style.display = "none";
 					//file.previewElement.classList.get('dz-image').css({"width":"100%", "height":"auto"});
 					//console.log(file);
-					//console.log(jsonText);
+					console.log(jsonText);
 					fillHOT(JSON.parse(jsonText));
 				});
 				this.on("addedfile", function(file) {
@@ -283,7 +283,7 @@
 		<form method="post" action="result" enctype="multipart/form-data"
 			class="dropzone needsclick" id="my-dropzone">
 			<input type="text" name="workflowname" style="width: 400px;"
-				value="testing/Hartung_Weba" />
+				value="testing/Alex_testing/Proben-Einsendung_Web7g1" /> <!-- testing/Hartung_Weba -->
 
 			<div class="dz-message needsclick">
 				Wähle deinen Einsendebogen oder ziehe ihn hierauf<br />

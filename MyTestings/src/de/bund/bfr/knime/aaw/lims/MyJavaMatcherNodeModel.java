@@ -239,7 +239,7 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 							//if (mblt.getBetriebsartMatch() < 1) matchQuality = matchQuality * 0.5;
 							//if (mblt.getProbenahmeortMatch() < 0.8) matchQuality = matchQuality * 0.5;
 							
-							matchQuality = matchQuality * mblt.getVorbefundScore();
+							matchQuality = matchQuality * mblt.getVorbefundScore(); // salmonelle only! kein serovar! BVL Campy sin Serovar sollte als 1 matchen unabhängig vom LIMS Eintrag!
 							if (mblt.getV_date() == null) matchQuality = matchQuality * 0.8; else if (!mblt.getV_date()) matchQuality = matchQuality * 0.5; 
 							if (mblt.getV_status() != null && !mblt.getV_status()) matchQuality = matchQuality * 0.7;
 							if (mblt.getV_adv() == null) matchQuality = matchQuality * 0.75; else if (!mblt.getV_adv()) matchQuality = matchQuality * 0.5; 
