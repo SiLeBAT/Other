@@ -288,6 +288,9 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 				if (score > maxS) maxS = score;
 			}
 		}
+		if (score > 0.7 && limsKPN != null && (limsKPN.equals("04-51116-000062"))) { // limsKPN.equals("VL-2016/01163(L/2016/000166)") || 
+			System.err.print("");
+		}
 		int minLength = 3;
 		boolean contains = false;
 		if (limsAVV != null && mbd.getPROBEN_NR().length() >= minLength && limsAVV.length() >= minLength) contains = limsAVV.indexOf(mbd.getPROBEN_NR()) >= 0 || mbd.getPROBEN_NR().indexOf(limsAVV) >= 0;
@@ -311,7 +314,8 @@ public class MyJavaMatcherNodeModel extends NodeModel {
     	int numOutCols = dts0.getNumColumns() + dts1.getNumColumns() + 6;
 		DataCell[] cells = new DataCell[numOutCols];
 		for (int i=0;i<dts0.getNumColumns();i++) {
-			cells[i] = rowBvl.getCell(i);
+			if (rowBvl == null) cells[i] = DataType.getMissingCell();
+			else cells[i] = rowBvl.getCell(i);
 		}
 		for (int i=0;i<dts1.getNumColumns();i++) {
 			if (rowLims == null) cells[dts0.getNumColumns()+i] = DataType.getMissingCell();
