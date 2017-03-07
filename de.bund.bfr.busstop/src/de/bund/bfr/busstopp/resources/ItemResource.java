@@ -78,15 +78,9 @@ public class ItemResource {
 		response.setAction("DELETE");
 		if (true || securityContext.isUserInRole("x2bfr")) {
 			Map<Long, ItemLoader> map = Dao.instance.getModel(environment);
-			Map<Long, ItemLoader> mapBfR = Dao.instance.getModel("bfr");
-			if (map != null || mapBfR != null) {
-				String env = environment;
-				ItemLoader c = null;
-				if (map != null) c = map.get(id);
-				if (c == null && mapBfR != null) {
-					c = mapBfR.get(id);
-					env = "bfr";
-				}
+			//Map<Long, ItemLoader> mapBfR = Dao.instance.getModel("bfr");
+			if (map != null) {
+				ItemLoader c = map.get(id);
 				if (c != null) {
 					try {
 						c.delete();
@@ -96,7 +90,7 @@ public class ItemResource {
 						status = Response.Status.INTERNAL_SERVER_ERROR;
 						response.setError(e.getMessage());
 					}
-					Dao.instance.delete(env, id, c);
+					Dao.instance.delete(environment, id, c);
 					response.setSuccess(true);
 				}
 				else  {
