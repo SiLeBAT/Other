@@ -87,7 +87,7 @@ public class Tester {
     InputStream stream = service.path("rest").path("items").path("kpms").queryParam("fallNummer", "2017-1").request().accept(MediaType.APPLICATION_OCTET_STREAM).get(InputStream.class);
     System.err.println(stream.available());
     */
-    //Response response = service.path("rest").path("items").path("1488848499002").request().delete(); System.out.println("Form response " + response.getStatus() + "\n" + response.readEntity(String.class));
+    //Response response = service.path("rest").path("items").path("1488850152689").request().delete(); System.out.println("Form response " + response.getStatus() + "\n" + response.readEntity(String.class));
     //System.out.println(service.path("rest").path("items").queryParam("environment", "bfr").request().accept(MediaType.APPLICATION_XML).delete(String.class));
     //System.out.println(service.path("rest").path("items").queryParam("environment", "bfr").request().accept(MediaType.APPLICATION_XML).delete(String.class));
     //Delete ItemLoader with id 1    

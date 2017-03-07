@@ -12,6 +12,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
+import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -58,7 +59,7 @@ public class KREST {
 
 		System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
 		Builder builder = client.target(restResource).path("repository").path(wfPath + ":job-pool").request().accept(MediaType.APPLICATION_JSON);
-		Response res = builder.post(Entity.entity(multipartEntity, MediaType.MULTIPART_FORM_DATA));
+		Response res = builder.cacheControl(getCC()).post(Entity.entity(multipartEntity, MediaType.MULTIPART_FORM_DATA));
 		
 		Map<String, String> result = getResult(res, outputs);
 		
@@ -67,12 +68,19 @@ public class KREST {
 
 		return result;
 	}
+	private CacheControl getCC() {
+        CacheControl cc = new CacheControl();
+        cc.setNoCache( true );
+        cc.setMaxAge( -1 );
+        cc.setMustRevalidate( true );
+        return cc;
+	}
 
 	public String discardJob(String jobid) {
 		Builder builder = client.target(restResource).path("jobs").path(jobid).request()
 		// .accept(MediaType.APPLICATION_JSON)
 		;
-		Response res = builder.delete();
+		Response res = builder.cacheControl(getCC()).delete();
 		String result = res.getStatus() + "\t" + res.readEntity(String.class);
 
 		res.close();
@@ -108,7 +116,7 @@ public class KREST {
 	public Map<String, String> getResult(String jobid, Map<String, Boolean> outputs)
 			throws IOException, ParseException {
 		Builder builder = client.target(restResource).path("jobs").path(jobid).request().accept(MediaType.APPLICATION_JSON);
-		Response res = builder.get();
+		Response res = builder.cacheControl(getCC()).get();
 		return getResult(res, outputs);
 	}
 
@@ -132,7 +140,7 @@ public class KREST {
 
 		System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
 		Builder builder = client.target(restResource).path("jobs").path(jobid).request().accept(MediaType.APPLICATION_JSON);
-		Response res = builder.post(Entity.entity(multipartEntity, MediaType.MULTIPART_FORM_DATA));
+		Response res = builder.cacheControl(getCC()).post(Entity.entity(multipartEntity, MediaType.MULTIPART_FORM_DATA));
 
 		boolean result = res.getStatus() == 200;
 		// System.err.println(res.readEntity(String.class));
@@ -148,7 +156,7 @@ public class KREST {
 	public String getNewJobID(String path) {
 		String jobid = null;
 		Builder builder = client.target(restResource).path(path).request().accept(MediaType.APPLICATION_JSON);
-		Response res = builder.post(null);
+		Response res = builder.cacheControl(getCC()).post(null);
 
 		// System.err.println(res.getStatus());
 		if (res.getStatus() == 201) { // succesfully created
@@ -165,7 +173,7 @@ public class KREST {
 	public List<String> getAllJobIDs(String path) throws ParseException {
 		List<String> result = new ArrayList<>();
 		Builder builder = client.target(restResource).path(path).request().accept(MediaType.APPLICATION_JSON);
-		Response res = builder.get();
+		Response res = builder.cacheControl(getCC()).get();
 
 		String json = res.readEntity(String.class);
 

@@ -21,7 +21,7 @@ a:hover {
     white-space: normal !important;
 }
 
-.handsontable table thead th {
+.handsontable table {
   word-wrap:break-word;
   white-space: pre-line;
 }
