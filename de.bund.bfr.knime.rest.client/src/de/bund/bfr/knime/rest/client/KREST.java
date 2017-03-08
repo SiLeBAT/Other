@@ -41,6 +41,7 @@ public class KREST {
 	private Client client = null;
 
 	public KREST(String username, String password) {
+		/*
         final InputStream trustStore = KREST.class.getResourceAsStream("/de/bund/bfr/knime/rest/client/res/truststore.jks");
         byte[] ba = null;
 		try {
@@ -58,16 +59,11 @@ public class KREST {
 			
 
 		client = ClientBuilder.newBuilder().sslContext(sslContext).build();
-//	    client = ClientBuilder.newClient();
+		*/
+	    client = ClientBuilder.newClient();
 
 		client.register(HttpAuthenticationFeature.basic(username, password));
 		client.register(MultiPartFeature.class);
-		/*
-		RestAssured.config = RestAssured.newConfig().sslConfig(new SSLConfig("/truststore_javanet.jks", "test1234");
-		 
-		or
-		 given().config(newConfig().sslConfig(new SSLConfig("/truststore_javanet.jks", "test1234")). ..
-		 */
 	}
 	private byte[] getByteArray(InputStream is) throws IOException {
 		      ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -96,7 +92,7 @@ public class KREST {
 			}
 		}
 
-		System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
+		System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2,SSLv3");
 		Builder builder = client.target(restResource).path("repository").path(wfPath + ":job-pool").request().accept(MediaType.APPLICATION_JSON);
 		Response res = builder.cacheControl(getCC()).post(Entity.entity(multipartEntity, MediaType.MULTIPART_FORM_DATA));
 		
