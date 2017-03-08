@@ -1,5 +1,6 @@
 package de.bund.bfr.knime.rest.client;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -8,6 +9,7 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.net.ssl.SSLContext;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -16,6 +18,9 @@ import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.glassfish.jersey.SslConfigurator;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
@@ -36,9 +41,43 @@ public class KREST {
 	private Client client = null;
 
 	public KREST(String username, String password) {
-		client = ClientBuilder.newClient();
+        final InputStream trustStore = KREST.class.getResourceAsStream("/de/bund/bfr/knime/rest/client/res/truststore.jks");
+        byte[] ba = null;
+		try {
+			ba = getByteArray(trustStore);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+       SslConfigurator sslConfig = SslConfigurator.newInstance()
+                .trustStoreBytes(ba)
+                .trustStorePassword("pmmlab")
+                .keyStoreBytes(ba)
+                .keyPassword("pmmlab");
+
+		SSLContext sslContext = sslConfig.createSSLContext();
+			
+
+		client = ClientBuilder.newBuilder().sslContext(sslContext).build();
+//	    client = ClientBuilder.newClient();
+
 		client.register(HttpAuthenticationFeature.basic(username, password));
 		client.register(MultiPartFeature.class);
+		/*
+		RestAssured.config = RestAssured.newConfig().sslConfig(new SSLConfig("/truststore_javanet.jks", "test1234");
+		 
+		or
+		 given().config(newConfig().sslConfig(new SSLConfig("/truststore_javanet.jks", "test1234")). ..
+		 */
+	}
+	private byte[] getByteArray(InputStream is) throws IOException {
+		      ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+		        byte[] buffer = new byte[4096];
+		        int bytesRead = 0;
+		        while ((bytesRead = is.read(buffer)) != -1) {
+		            bos.write(buffer, 0, bytesRead);
+		        }
+		        return bos.toByteArray();
 	}
 
 	public Map<String, String> getJobPoolResult(String wfPath, Map<String, Object> inputs, Map<String, Boolean> outputs)
