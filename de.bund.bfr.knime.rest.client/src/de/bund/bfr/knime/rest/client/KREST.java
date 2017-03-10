@@ -93,7 +93,7 @@ public class KREST {
 			}
 		}
 
-		//System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
+		System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
 		Builder builder = client.target(restResource).path("repository").path(wfPath + ":job-pool").request().accept(MediaType.APPLICATION_JSON);
 		Response res = builder.post(Entity.entity(multipartEntity, MediaType.MULTIPART_FORM_DATA));
 		
@@ -113,7 +113,7 @@ public class KREST {
 	}
 
 	public String discardJob(String jobid) {
-		//System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
+		System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
 		Builder builder = client.target(restResource).path("jobs").path(jobid).request()
 		// .accept(MediaType.APPLICATION_JSON)
 		;
@@ -152,7 +152,7 @@ public class KREST {
 	}
 	public Map<String, String> getResult(String jobid, Map<String, Boolean> outputs)
 			throws IOException, ParseException {
-		//System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
+		System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
 		Builder builder = client.target(restResource).path("jobs").path(jobid).request().accept(MediaType.APPLICATION_JSON);
 		Response res = builder.get();
 		return getResult(res, outputs);
@@ -176,7 +176,7 @@ public class KREST {
 			}
 		}
 
-		//System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
+		System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
 		Builder builder = client.target(restResource).path("jobs").path(jobid).request().accept(MediaType.APPLICATION_JSON);
 		Response res = builder.post(Entity.entity(multipartEntity, MediaType.MULTIPART_FORM_DATA));
 
@@ -193,7 +193,7 @@ public class KREST {
 
 	public String getNewJobID(String path) {
 		String jobid = null;
-		//System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
+		System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
 		Builder builder = client.target(restResource).path(path).request().accept(MediaType.APPLICATION_JSON);
 		Response res = builder.post(null);
 
@@ -211,7 +211,7 @@ public class KREST {
 	/*
 	public List<String> getAllJobIDs(String path) throws ParseException {
 		List<String> result = new ArrayList<>();
-		//System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
+		System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
 		Builder builder = client.target(restResource).path(path).request().accept(MediaType.APPLICATION_JSON);
 		Response res = builder.get();
 

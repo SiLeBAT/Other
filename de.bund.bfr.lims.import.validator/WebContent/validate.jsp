@@ -149,32 +149,35 @@
 					// Status, Zeile, Spalte(n), Fehler-Nr, Kommentar
 					var status = errs[i]["Status"];
 					//console.log(errs[i]);
-					var row = errs[i]["Zeile"] - 1;
-					var cols = errs[i]["Spalte"];
-					if (row != null && cols != null) {
-						var errnum = errs[i]["Fehler-Nr"];
-						var comment = errs[i]["Kommentar"];
-						cols += "";
-						var colarr = cols.split(";");
-						for (var j = 0; j < colarr.length; j++) {
-							var col = colarr[j] - 1;
-							//console.log(row + " - " + col);
-							if (status == 1) {
-								if (!hot.getCellMeta(row, col).warningMessage)
-									hot.getCellMeta(row, col).warningMessage = "<li>"
-											+ comment + "</li>";
-								else
-									hot.getCellMeta(row, col).warningMessage += "<li>"
-											+ comment + "</li>";
-							} else if (status == 2) {
-								if (!hot.getCellMeta(row, col).errorMessage)
-									hot.getCellMeta(row, col).errorMessage = "<li>"
-											+ comment + "</li>";
-								else
-									hot.getCellMeta(row, col).errorMessage += "<li>"
-											+ comment + "</li>";
-							}
-						}
+					var row = errs[i]["Zeile"];
+					if (row != null) {
+						row = row - 1;
+	                    var cols = errs[i]["Spalte"];
+	                    if (cols != null) {
+	                        var errnum = errs[i]["Fehler-Nr"];
+	                        var comment = errs[i]["Kommentar"];
+	                        cols += "";
+	                        var colarr = cols.split(";");
+	                        for (var j = 0; j < colarr.length; j++) {
+	                            var col = colarr[j] - 1;
+	                            //console.log(row + " - " + col);
+	                            if (status == 1) {
+	                                if (!hot.getCellMeta(row, col).warningMessage)
+	                                    hot.getCellMeta(row, col).warningMessage = "<li>"
+	                                            + comment + "</li>";
+	                                else
+	                                    hot.getCellMeta(row, col).warningMessage += "<li>"
+	                                            + comment + "</li>";
+	                            } else if (status == 2) {
+	                                if (!hot.getCellMeta(row, col).errorMessage)
+	                                    hot.getCellMeta(row, col).errorMessage = "<li>"
+	                                            + comment + "</li>";
+	                                else
+	                                    hot.getCellMeta(row, col).errorMessage += "<li>"
+	                                            + comment + "</li>";
+	                            }
+	                        }
+	                    }
 					}
 				}
 				hot.render();
@@ -283,7 +286,7 @@
 		<form method="post" action="result" enctype="multipart/form-data"
 			class="dropzone needsclick" id="my-dropzone">
 			<input type="text" name="workflowname" style="width: 400px;"
-				value="testing/Alex_testing/Proben-Einsendung_Web7g2" /> <!-- testing/Hartung_Weba -->
+				value="testing/Alex_testing/Proben-Einsendung_Web8" /> <!-- testing/Hartung_Weba -->
 
 			<div class="dz-message needsclick">
 				Wähle deinen Einsendebogen oder ziehe ihn hierauf<br />
