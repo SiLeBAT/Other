@@ -150,10 +150,10 @@
 					var status = errs[i]["Status"];
 					//console.log(errs[i]);
 					var row = errs[i]["Zeile"];
-					if (row != null) {
+					if (row !== null) {
 						row = row - 1;
 	                    var cols = errs[i]["Spalte"];
-	                    if (cols != null) {
+	                    if (cols !== null) {
 	                        var errnum = errs[i]["Fehler-Nr"];
 	                        var comment = errs[i]["Kommentar"];
 	                        cols += "";
@@ -168,13 +168,20 @@
 	                                else
 	                                    hot.getCellMeta(row, col).warningMessage += "<li>"
 	                                            + comment + "</li>";
-	                            } else if (status == 2) {
-	                                if (!hot.getCellMeta(row, col).errorMessage)
-	                                    hot.getCellMeta(row, col).errorMessage = "<li>"
-	                                            + comment + "</li>";
-	                                else
-	                                    hot.getCellMeta(row, col).errorMessage += "<li>"
-	                                            + comment + "</li>";
+                                } else if (status == 2) {
+                                    if (!hot.getCellMeta(row, col).errorMessage)
+                                        hot.getCellMeta(row, col).errorMessage = "<li>"
+                                                + comment + "</li>";
+                                    else
+                                        hot.getCellMeta(row, col).errorMessage += "<li>"
+                                                + comment + "</li>";
+                                } else if (status == 4) {
+                                    if (!hot.getCellMeta(row, col).infoMessage)
+                                        hot.getCellMeta(row, col).infoMessage = "<li>"
+                                                + comment + "</li>";
+                                    else
+                                        hot.getCellMeta(row, col).infoMessage += "<li>"
+                                                + comment + "</li>";
 	                            }
 	                        }
 	                    }
@@ -192,7 +199,7 @@
 
 			var meta = instance.getCellMeta(row, col);
 
-			if (meta.errorMessage || meta.warningMessage) {
+			if (meta.errorMessage || meta.warningMessage || meta.infoMessage) {
 				//console.log(row + " - " + col + " - " + td.className);
 				//if ($(td).tooltipster) {
 				//$(td).tooltipster('destroy');
@@ -248,6 +255,32 @@
 								});
 					}
 				}
+
+                if (meta.infoMessage) {
+                    var multi = true;
+                    if (!meta.errorMessage && !meta.warningMessage) {
+                        td.style.background = '#F0F8FF'; //green     
+                        multi = false;
+                    }
+                    if (!td.tipster) {
+                        $(td).tooltipster(
+                                {
+                                    repositionOnScroll : true,
+                                    animation : 'grow',
+                                    delay : 0,
+                                    theme : [ 'tooltipster-info' ],
+                                    touchDevices : false,
+                                    trigger : 'hover',
+                                    contentAsHTML : true,
+                                    // don't forget to provide content here as the first tooltip will have deleted the original title attribute of the element
+                                    content : "<ul type='disc'>"
+                                            + meta.infoMessage + "</ul>", // row+"-"+col+":<br>"+ 
+                                    side : 'top',
+                                    arrowColor : '#F0F8FF',
+                                    multiple : multi
+                                });
+                    }
+                }
 				td.tipster = true;
 				//$(td).tooltipster('destroy');
 			} else {
@@ -286,7 +319,7 @@
 		<form method="post" action="result" enctype="multipart/form-data"
 			class="dropzone needsclick" id="my-dropzone">
 			<input type="text" name="workflowname" style="width: 400px;"
-				value="testing/Alex_testing/Proben-Einsendung_Web8" /> <!-- testing/Hartung_Weba -->
+				value="testing/Alex_testing/Proben-Einsendung_Web11" /> <!-- testing/Hartung_Weba -->
 
 			<div class="dz-message needsclick">
 				Wähle deinen Einsendebogen oder ziehe ihn hierauf<br />

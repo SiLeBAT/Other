@@ -39,9 +39,11 @@ public class KREST {
 	//private static final String restResource = "http://vm-knime:8095/vm-knime/rest/v4/";
 	
 	private Client client = null;
+	private CacheControl cc = null;
 
 	public KREST(String username, String password) {
 		System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
+		cc = getCC();
 		/*
         final InputStream trustStore = KREST.class.getResourceAsStream("/de/bund/bfr/knime/rest/client/res/truststore.jks");
         byte[] ba = null;
@@ -95,7 +97,7 @@ public class KREST {
 
 		System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
 		Builder builder = client.target(restResource).path("repository").path(wfPath + ":job-pool").request().accept(MediaType.APPLICATION_JSON);
-		Response res = builder.post(Entity.entity(multipartEntity, MediaType.MULTIPART_FORM_DATA));
+		Response res = builder.cacheControl(cc).post(Entity.entity(multipartEntity, MediaType.MULTIPART_FORM_DATA));
 		
 		Map<String, String> result = getResult(res, outputs);
 		
@@ -117,7 +119,7 @@ public class KREST {
 		Builder builder = client.target(restResource).path("jobs").path(jobid).request()
 		// .accept(MediaType.APPLICATION_JSON)
 		;
-		Response res = builder.delete();
+		Response res = builder.cacheControl(cc).delete();
 		String result = res.getStatus() + "\t" + res.readEntity(String.class);
 
 		res.close();
@@ -154,7 +156,7 @@ public class KREST {
 			throws IOException, ParseException {
 		System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
 		Builder builder = client.target(restResource).path("jobs").path(jobid).request().accept(MediaType.APPLICATION_JSON);
-		Response res = builder.get();
+		Response res = builder.cacheControl(cc).get();
 		return getResult(res, outputs);
 	}
 
@@ -178,7 +180,7 @@ public class KREST {
 
 		System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
 		Builder builder = client.target(restResource).path("jobs").path(jobid).request().accept(MediaType.APPLICATION_JSON);
-		Response res = builder.post(Entity.entity(multipartEntity, MediaType.MULTIPART_FORM_DATA));
+		Response res = builder.cacheControl(cc).post(Entity.entity(multipartEntity, MediaType.MULTIPART_FORM_DATA));
 
 		boolean result = res.getStatus() == 200;
 		// System.err.println(res.readEntity(String.class));
@@ -195,7 +197,7 @@ public class KREST {
 		String jobid = null;
 		System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
 		Builder builder = client.target(restResource).path(path).request().accept(MediaType.APPLICATION_JSON);
-		Response res = builder.post(null);
+		Response res = builder.cacheControl(cc).post(null);
 
 		// System.err.println(res.getStatus());
 		if (res.getStatus() == 201) { // succesfully created
@@ -213,7 +215,7 @@ public class KREST {
 		List<String> result = new ArrayList<>();
 		System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
 		Builder builder = client.target(restResource).path(path).request().accept(MediaType.APPLICATION_JSON);
-		Response res = builder.get();
+		Response res = builder.cacheControl(cc).get();
 
 		String json = res.readEntity(String.class);
 
