@@ -38,7 +38,7 @@ import org.w3c.dom.Document;
 public class Tester {
     private static final String TRUSTSTORE_FILE = "C:/Users/weiser/tomcat/keystore/client.jks";
     private static final String TRUSTSTORE_PASSWORD = "bfrbfr";
-    private static final String APP_URL = "https://localhost:8443/de.bund.bfr.busstopp";
+    private static final String APP_URL = "https://foodrisklabs.bfr.bund.de/de.bund.bfr.busstopp/";
     
 	static {
 	    //for localhost testing only
@@ -94,6 +94,7 @@ public class Tester {
     //Response response = service.path("rest").path("items").path("1482190594918").request().delete(); System.out.println("Form response " + response.getStatus() + "\n" + response.readEntity(String.class));
     //response = service.path("rest").path("items").path("1482190594918").path("bin").queryParam("environment", "bfr").request().delete(); System.out.println("Form response " + response.getStatus() + "\n" + response.readEntity(String.class));
     //response = service.path("rest").path("items").path("1475223631107").path("bin").request().delete(); System.out.println("Form response " + response.getStatus() + "\n" + response.readEntity(String.class));
+    //Response response = service.path("rest").path("items").queryParam("environment", "lanuv_test").path("bin").request().delete(); System.out.println("Form response " + response.getStatus() + "\n" + response.readEntity(String.class));
 
     //System.out.println(service.path("rest").path("items").path("rdt_json").request().accept(MediaType.APPLICATION_JSON).get(String.class));
     //InputStream stream = service.path("rest").path("items").path("kpms").path("2016-38").request().accept(MediaType.APPLICATION_OCTET_STREAM).get(InputStream.class); System.out.println(stream.available());
