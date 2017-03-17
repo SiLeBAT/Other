@@ -188,6 +188,9 @@
 					}
 				}
 				hot.render();
+				hot.updateSettings({
+					rowHeaders: true
+				});
 				console.log("fhot_end: "
 						+ ("" + (new Date().getTime() / 1000)).substring(6));
 			}
