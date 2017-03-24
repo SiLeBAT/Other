@@ -38,7 +38,7 @@ import org.w3c.dom.Document;
 public class Tester {
     private static final String TRUSTSTORE_FILE = "C:/Users/weiser/tomcat/keystore/client.jks";
     private static final String TRUSTSTORE_PASSWORD = "bfrbfr";
-    private static final String APP_URL = "https://foodrisklabs.bfr.bund.de/de.bund.bfr.busstopp/";
+    private static final String APP_URL = "http://localhost:8080/de.bund.bfr.busstopp/";
     
 	static {
 	    //for localhost testing only
@@ -80,7 +80,10 @@ public class Tester {
     //System.out.println(service.path("rest").path("items").request().accept(MediaType.TEXT_XML).get(String.class));
 
     // Get XML for application
-    System.out.println(service.path("rest").path("items").request().accept(MediaType.APPLICATION_XML).get(String.class));
+    for (int i=0;i<100;i++) {
+        System.out.println(i + "\t" + service.path("rest").path("items").request().accept(MediaType.APPLICATION_XML).get(String.class));  
+        Thread.sleep(5000);
+    }
     /*
     // Get Fälle for application
     System.out.println(service.path("rest").path("items").path("faelle").request().accept(MediaType.TEXT_PLAIN).get(String.class));
@@ -113,8 +116,8 @@ public class Tester {
   }
 
   private static URI getBaseURI() {
-	    //return UriBuilder.fromUri("http://localhost:8080/de.bund.bfr.busstopp").build();
-	    return UriBuilder.fromUri("https://foodrisklabs.bfr.bund.de/de.bund.bfr.busstopp/").build();
+	    return UriBuilder.fromUri("http://localhost:8080/de.bund.bfr.busstopp").build();
+	    //return UriBuilder.fromUri("https://foodrisklabs.bfr.bund.de/de.bund.bfr.busstopp/").build();
 	    //return UriBuilder.fromUri("https://foodrisklabs.bfr.berlin/de.bund.bfr.busstopp/").build();
 	    //return UriBuilder.fromUri("https://localhost:8443/de.bund.bfr.busstopp/").build();
   }

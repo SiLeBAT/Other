@@ -5,10 +5,14 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.Principal;
+import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -100,7 +104,27 @@ public class ItemsResource {
 	private List<Item> getOutputs(boolean inclDeletedAndAllEnvironments) {
 		return getOutputs(inclDeletedAndAllEnvironments, null);
 	}
+	private String getRAMStats() {
+		Runtime runtime = Runtime.getRuntime();
+		NumberFormat format = NumberFormat.getInstance();
+
+		StringBuilder sb = new StringBuilder();
+		long maxMemory = runtime.maxMemory();
+		long allocatedMemory = runtime.totalMemory();
+		long freeMemory = runtime.freeMemory();
+
+		sb.append("free memory: " + format.format(freeMemory / 1024) + "\n");
+		sb.append("allocated memory: " + format.format(allocatedMemory / 1024) + "\n");
+		sb.append("max memory: " + format.format(maxMemory / 1024) + "\n");
+		sb.append("total free memory: " + format.format((freeMemory + (maxMemory - allocatedMemory)) / 1024));	
+		return sb.toString();
+	}
 	private List<Item> getOutputs(boolean inclDeletedAndAllEnvironments, String environment) {
+		long t = System.currentTimeMillis();
+        long sek = (t / 1000) % 60; 
+        long min = (t / 60000) % 60; 
+        long std = ((t / 3600000)) % 24;
+		System.out.println("getOutputs started: " + std + ":" + min + ":" + sek + "\nused RAM: " + getRAMStats());
 		List<Item> items = new ArrayList<Item>();
 		if (!inclDeletedAndAllEnvironments) { // normal users
 			Map<Long, ItemLoader> map = Dao.instance.getModel(getRole());
@@ -142,6 +166,12 @@ public class ItemsResource {
 				}
 			}
 		}
+		//System.gc();
+		t = System.currentTimeMillis();
+        sek = (t / 1000) % 60; 
+        min = (t / 60000) % 60; 
+        std = ((t / 3600000)) % 24;
+		System.out.println("getOutputs ended: " + std + ":" + min + ":" + sek);
 		return items;
 	}
 
