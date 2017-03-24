@@ -116,8 +116,12 @@
 							document.body.style.cursor = 'progress';
 				            console.log("fhot_change: "
 				                    + ("" + (new Date().getTime() / 1000)).substring(6));
+				            var sData = hot.getSourceData();
+				            undoSuggestions(sData, errs, change[0][0], change[0][1]);
+				            console.log("fhot_change_undo_end: "
+				                    + ("" + (new Date().getTime() / 1000)).substring(6));
 							var data = JSON.stringify({
-								data : hot.getSourceData()
+								data : sData
 							}); // [rowNumber]
 							//data = unsanitizeData(data, colH);
 
@@ -193,6 +197,31 @@
 				});
 				console.log("fhot_end: "
 						+ ("" + (new Date().getTime() / 1000)).substring(6));
+			}
+		}
+		
+		function undoSuggestions(sData, errs, omitRow, omitProp) {
+			var omitCol = hot.propToCol(omitProp);
+			for (var i = 0; i < errs.length; i++) {
+				// Status, Zeile, Spalte(n), Fehler-Nr, Kommentar
+				var status = errs[i]["Status"];
+				if (status == 4) {
+					var row = errs[i]["Zeile"];
+					if (row !== null) {
+						row = row - 1;
+	                    var cols = errs[i]["Spalte"];
+	                    if (cols !== null) {
+	                        cols += "";
+	                        var colarr = cols.split(";");
+	                        for (var j = 0; j < colarr.length; j++) {
+	                            var col = colarr[j] - 1;
+	                        	if (row != omitRow || col != omitCol) {
+	                        		if (errs[i]["Original"]) sData[row][hot.colToProp(col)] = errs[i]["Original"];
+	            				}
+	                        }
+	                    }
+					}
+				}
 			}
 		}
 
@@ -322,7 +351,7 @@
 		<form method="post" action="result" enctype="multipart/form-data"
 			class="dropzone needsclick" id="my-dropzone">
 			<input type="text" name="workflowname" style="width: 400px;"
-				value="testing/Alex_testing/Proben-Einsendung_Web11" /> <!-- testing/Hartung_Weba -->
+				value="testing/Alex_testing/Proben-Einsendung_Web16" /> <!-- testing/Hartung_Weba -->
 
 			<div class="dz-message needsclick">
 				Wähle deinen Einsendebogen oder ziehe ihn hierauf<br />
