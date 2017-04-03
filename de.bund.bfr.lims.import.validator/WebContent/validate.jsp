@@ -343,6 +343,22 @@
 			}
 			 */
 		}
+			 
+			 function $_GET(param) {
+					var vars = {};
+					window.location.href.replace( location.hash, '' ).replace( 
+						/[?&]+([^=&]+)=?([^&]*)?/gi, // regexp
+						function( m, key, value ) { // callback
+							vars[key] = value !== undefined ? value : '';
+						}
+					);
+
+					if ( param ) {
+						return vars[param] ? vars[param] : null;	
+					}
+					return vars;
+				}
+			 
 	</script>
 
 
@@ -351,13 +367,18 @@
 		<form method="post" action="result" enctype="multipart/form-data"
 			class="dropzone needsclick" id="my-dropzone">
 			
-			<script>
-			  console.log(${param.wfo});
-			</script>
-			
-			<input type="hidden" name="workflowname" style="width: 400px;"
+			<input type="text" name="workflowname" id="wfn" style="width: 400px;"
 				value="testing/Alex_testing/Proben-Einsendung_Web20" /> <!-- testing/Hartung_Weba -->
-
+				
+			<script>
+			  if ($_GET('wfo') == 1) {
+				  document.getElementById('wfn').type = 'text';
+			  }
+			  else {
+				  document.getElementById('wfn').type = 'hidden';
+			  }
+			</script>
+			  
 			<div class="dz-message needsclick">
 				Wähle deinen Einsendebogen oder ziehe ihn hierauf<br />
 			</div>
