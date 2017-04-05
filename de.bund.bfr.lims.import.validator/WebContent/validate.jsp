@@ -46,7 +46,14 @@
 					//file.previewElement.classList.get('dz-image').css({"width":"100%", "height":"auto"});
 					//console.log(file);
 					console.log(jsonText);
-					fillHOT(JSON.parse(jsonText));
+					var jsonO = getJson(jsonText);
+					if (jsonO) {
+						fillHOT(jsonO);						
+					}
+					else {
+						var errMsg = "<br>" + jsonText;
+						document.getElementById('errmsg').innerHTML = errMsg;
+					}
 				});
 				this.on("addedfile", function(file) {
 					console
@@ -198,6 +205,14 @@
 				console.log("fhot_end: "
 						+ ("" + (new Date().getTime() / 1000)).substring(6));
 			}
+		}
+		
+		function getJson(str) {
+		    try {
+		        return JSON.parse(str);
+		    } catch (e) {
+		        return null;
+		    }
 		}
 		
 		function undoSuggestions(sData, errs, omitRow, omitProp) {
@@ -368,7 +383,7 @@
 			class="dropzone needsclick" id="my-dropzone">
 			
 			<input type="text" name="workflowname" id="wfn" style="width: 400px;"
-				value="testing/Alex_testing/Proben-Einsendung_Web20" /> <!-- testing/Hartung_Weba -->
+				value="testing/Alex_testing/Proben-Einsendung_Web21" /> <!-- testing/Hartung_Weba -->
 				
 			<script>
 			  if ($_GET('wfo') == 1) {
