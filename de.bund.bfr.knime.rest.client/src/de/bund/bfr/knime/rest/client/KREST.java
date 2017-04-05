@@ -134,6 +134,8 @@ public class KREST {
 		JSONParser parser = new JSONParser();
 		Object obj = parser.parse(json);
 		JSONObject jsonObject = (JSONObject) obj;
+		//JSONObject state = (JSONObject) jsonObject.get("state");
+		if (!jsonObject.get("state").toString().equalsIgnoreCase("executed")) return null;
 		JSONObject ov = (JSONObject) jsonObject.get("outputValues");
 		if (ov != null) {
 			for (String param : outputs.keySet()) {
