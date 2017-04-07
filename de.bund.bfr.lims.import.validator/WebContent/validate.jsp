@@ -276,6 +276,31 @@
 								});
 					}
 				}
+				else if (meta.infoMessage) {
+                    var multi = true;
+                    if (!meta.errorMessage && !meta.warningMessage) {
+                        td.style.background = '#F0F8FF'; //green     
+                        multi = false;
+                    }
+                    if (!td.tipster) {
+                        $(td).tooltipster(
+                                {
+                                    repositionOnScroll : true,
+                                    animation : 'grow',
+                                    delay : 0,
+                                    theme : [ 'tooltipster-info' ],
+                                    touchDevices : false,
+                                    trigger : 'hover',
+                                    contentAsHTML : true,
+                                    // don't forget to provide content here as the first tooltip will have deleted the original title attribute of the element
+                                    content : "<ul type='disc'>"
+                                            + meta.infoMessage + "</ul>", // row+"-"+col+":<br>"+ 
+                                    side : 'top',
+                                    arrowColor : '#F0F8FF',
+                                    multiple : multi
+                                });
+                    }
+                }
 
 				if (meta.warningMessage) {
 					var multi = true;
@@ -303,31 +328,6 @@
 					}
 				}
 
-                if (meta.infoMessage) {
-                    var multi = true;
-                    if (!meta.errorMessage && !meta.warningMessage) {
-                        td.style.background = '#F0F8FF'; //green     
-                        multi = false;
-                    }
-                    if (!td.tipster) {
-                        $(td).tooltipster(
-                                {
-                                    repositionOnScroll : true,
-                                    animation : 'grow',
-                                    delay : 0,
-                                    theme : [ 'tooltipster-info' ],
-                                    touchDevices : false,
-                                    trigger : 'hover',
-                                    contentAsHTML : true,
-                                    // don't forget to provide content here as the first tooltip will have deleted the original title attribute of the element
-                                    content : "<ul type='disc'>"
-                                            + meta.infoMessage + "</ul>", // row+"-"+col+":<br>"+ 
-                                    side : 'top',
-                                    arrowColor : '#F0F8FF',
-                                    multiple : multi
-                                });
-                    }
-                }
 				td.tipster = true;
 				//$(td).tooltipster('destroy');
 			} else {
