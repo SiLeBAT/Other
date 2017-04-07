@@ -380,7 +380,7 @@
 	<section>
 	<div id="dropzone">
 		<form method="post" action="result" enctype="multipart/form-data"
-			class="dropzone needsclick" id="my-dropzone">
+			class="dropzone needsclick" id="my-dropzone" style="height: 800px;">
 			
 			<input type="text" name="workflowname" id="wfn" style="width: 400px;"
 				value="testing/Alex_testing/Proben-Einsendung_Web21" /> <!-- testing/Hartung_Weba -->
