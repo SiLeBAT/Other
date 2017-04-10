@@ -265,6 +265,9 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 					
 				//}
 		}
+		if (topScore < 0) {
+			System.err.print("");
+		}
 		return bestScores;
     }
     private void doScore(MyBvlDs mbd, MyLimsDs mld, SimiMap sim) {
