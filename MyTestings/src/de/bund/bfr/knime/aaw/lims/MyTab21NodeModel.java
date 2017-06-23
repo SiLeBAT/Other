@@ -78,7 +78,7 @@ public class MyTab21NodeModel extends NodeModel {
      * Constructor for the node model.
      */
     protected MyTab21NodeModel() {
-        super(2, 1);
+        super(3, 1);
     }
 
     /**
@@ -91,12 +91,31 @@ public class MyTab21NodeModel extends NodeModel {
     	
     	// Expected data Wirkstoffe: "Gruppe","Name","Kurz","cutoff","Sort"
     	// Expected data Datensatz: "Programm_kurz", "Serovar_Schreibweise", Wirkstoffe
+    	// dataset einlesen
+    	// Bezeichnungen
+    	HashMap<String, Programm> ps = new HashMap<String, Programm>();
+    	DataTableSpec dts = inData[2].getSpec();
+    	String[] cns = dts.getColumnNames();
+    	for (DataRow row : inData[2]) {
+			DataCell dc = row.getCell(0);
+			if (!dc.isMissing()) {
+				Programm p = new Programm(false);
+				p.setName(((StringCell) dc).getStringValue());
+				ps.put(p.getName(), p);
+				dc = row.getCell(1); // Tierart
+				if (!dc.isMissing()) p.setTierart(((StringValue) dc).getStringValue());
+				dc = row.getCell(2); // Matrix
+				if (!dc.isMissing()) p.setMatrix(((StringValue) dc).getStringValue());
+				dc = row.getCell(3); // Probenahmeort
+				if (!dc.isMissing()) p.setProbenahmeort(((StringValue) dc).getStringValue());
+			}
+    	}
     	
     	// Wirkstoffe cutoffs einlesen
     	HashMap<String, Wirkstoff> wss = new HashMap<String, Wirkstoff>();
     	HashMap<Integer, Wirkstoff> ws = new HashMap<Integer, Wirkstoff>();
-    	DataTableSpec dts = inData[1].getSpec();
-    	String[] cns = dts.getColumnNames();
+    	dts = inData[1].getSpec();
+    	cns = dts.getColumnNames();
     	for (DataRow row : inData[1]) {
     		Wirkstoff w = new Wirkstoff();
     		for (int i=0;i<dts.getNumColumns();i++) {
@@ -119,7 +138,6 @@ public class MyTab21NodeModel extends NodeModel {
 
     	// dataset einlesen
     	// preTab
-    	HashMap<String, Programm> ps = new HashMap<String, Programm>();
     	dts = inData[0].getSpec();
     	cns = dts.getColumnNames();
     	ExcelWriter ew = new ExcelWriter();
@@ -138,7 +156,7 @@ try {
     	for (DataRow row : inData[0]) {
     		exec.checkCanceled();
         	//System.err.println("Wirkstofferow:\t" + row);
-    		Programm p = new Programm();
+    		Programm p = new Programm(true);
     		rowIndex++; xrow = ew.createRow(rowIndex);
     		colIndex = 0;
     		int dtsci = dts.findColumnIndex("Programm_kurz");
@@ -496,10 +514,13 @@ catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();t
        			String lang = w.getName();
        			tab122Row.add(lang);
        			for (String pkey : pkeys) {
-       				Programm p = ps.get(pkey);
-       				HashMap<String, Integer> pw = p.getNumPositive();
-       				int num = pw.containsKey(w.getKurz()) ? pw.get(w.getKurz()) : 0;
-    	   	   		tab122Row.add(num); tab122Row.add(100.0 * num / p.getNumSamples());
+       				if (ps.containsKey(pkey)) {
+           				Programm p = ps.get(pkey);
+           				HashMap<String, Integer> pw = p.getNumPositive();
+           				int num = pw.containsKey(w.getKurz()) ? pw.get(w.getKurz()) : 0;
+        	   	   		tab122Row.add(num);
+        	   	   		if (p.getNumSamples() > 0) tab122Row.add(100.0 * num / p.getNumSamples()); else tab122Row.add("");
+       				}
        			}
        			tab122.add(tab122Row);
        		}
@@ -511,7 +532,8 @@ catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();t
        			for (String pkey : pkeys) {
        				Programm p = ps.get(pkey);
        				int num = p.getNumResistent(i);
-       	   	   		tab122Row.add(num); tab122Row.add(100.0 * num / p.getNumSamples());
+       	   	   		tab122Row.add(num);
+       	   	   		if (p.getNumSamples() > 0) tab122Row.add(100.0 * num / p.getNumSamples()); else tab122Row.add("");
        			}
        	   		tab122.add(tab122Row);
        		}
