@@ -46,12 +46,18 @@
 					//file.previewElement.classList.get('dz-image').css({"width":"100%", "height":"auto"});
 					//console.log(file);
 					console.log(jsonText);
-					var jsonO = getJson(jsonText);
-					if (jsonO) {
-						fillHOT(jsonO);						
+					if (jsonText && jsonText.length > 5) {
+						var jsonO = getJson(jsonText);
+						if (jsonO) {
+							fillHOT(jsonO);						
+						}
+						else {
+							var errMsg = "<br>" + jsonText;
+							document.getElementById('errmsg').innerHTML = errMsg;
+						}
 					}
 					else {
-						var errMsg = "<br>" + jsonText;
+						var errMsg = "<br>Die Exceldatei hat offenbar kein korrektes Format.<br>Eine mögliche Ursache: der Name des Tabellenblattes ist nicht 'Einsendeformular'!";
 						document.getElementById('errmsg').innerHTML = errMsg;
 					}
 				});

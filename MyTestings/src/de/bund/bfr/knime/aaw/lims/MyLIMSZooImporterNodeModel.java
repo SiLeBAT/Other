@@ -102,6 +102,7 @@ public class MyLIMSZooImporterNodeModel extends NodeModel {
 				
 		long rowNumber = 0;
 		sheet = wb.getSheet("Einsendeformular");
+		if (sheet == null) sheet = wb.getSheetAt(0);
 		
 		if (sheet != null) {
 			
