@@ -255,7 +255,7 @@ public class MyJavaMatcherNodeModel extends NodeModel {
 							else if (matchQuality > topScore) {
 								bestScores.clear();
 								topScore = matchQuality;
-								bestScores.put(topScore, new ArrayList<>());
+								bestScores.put(topScore, new ArrayList<MyBLTResults>());
 								mblt.setMbd(mbd);
 								mblt.setMld(mld);
 								bestScores.get(topScore).add(mblt);

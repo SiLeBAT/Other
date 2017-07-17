@@ -46,7 +46,7 @@
 					//file.previewElement.classList.get('dz-image').css({"width":"100%", "height":"auto"});
 					//console.log(file);
 					console.log(jsonText);
-					if (jsonText && jsonText.length > 5) {
+					if (jsonText && jsonText.length > 10) {
 						var jsonO = getJson(jsonText);
 						if (jsonO) {
 							fillHOT(jsonO);						
