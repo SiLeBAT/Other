@@ -18,8 +18,8 @@ public class Programm {
 	private HashMap<String, Integer> numPostive;
 	private HashMap<String, List<String>> parameterVals;
 
-	public Programm() {
-		numSamples = 1;
+	public Programm(boolean isSample) {
+		numSamples = isSample ? 1 : 0;
 		wirkstoffVals = new HashMap<String, List<Double>>();
 		parameterVals = new HashMap<String, List<String>>();
 		groupResistance = new HashSet<String>();
