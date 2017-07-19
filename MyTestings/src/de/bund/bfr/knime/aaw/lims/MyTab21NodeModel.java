@@ -431,7 +431,8 @@ catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();t
        				Programm p = ps.get(pkey);
        				HashMap<String, Integer> pw = p.getNumPositive();
        				int num = pw.containsKey(kurz) ? pw.get(kurz) : 0;
-    	   	   		tab1Row.add(p.getNumSamples()); tab1Row.add(num); tab1Row.add(100.0 * num / p.getNumSamples());   				
+    	   	   		tab1Row.add(p.getNumSamples()); tab1Row.add(num); 				
+    	   	   		if (p.getNumSamples() > 0) tab1Row.add(100.0 * num / p.getNumSamples()); else tab1Row.add("");
        			}
        			tab1.add(tab1Row);
        		}
@@ -443,7 +444,8 @@ catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();t
        			for (String pkey : pkeys) {
        				Programm p = ps.get(pkey);
        				int num = p.getNumResistent(i);
-       	   	   		tab1Row.add(p.getNumSamples()); tab1Row.add(num); tab1Row.add(100.0 * num / p.getNumSamples());   				
+       	   	   		tab1Row.add(p.getNumSamples()); tab1Row.add(num);  				
+    	   	   		if (p.getNumSamples() > 0) tab1Row.add(100.0 * num / p.getNumSamples()); else tab1Row.add("");
        			}
        	   		tab1.add(tab1Row);
        		}
