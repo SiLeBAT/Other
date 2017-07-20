@@ -107,7 +107,11 @@ public class MyLIMSZooImporterNodeModel extends NodeModel {
 		if (sheet != null) {
 			
 			Footer footer = sheet.getFooter();
-			this.pushFlowVariableString("Version", footer.getLeft());
+			String version = footer.getLeft();
+			if (version.toLowerCase().startsWith("validiert")) {
+				version = getStrVal(sheet.getRow(2).getCell(1));
+			}
+			this.pushFlowVariableString("Version", version);
 			
 			int i=38;
 	       	for (i=0;i<sheet.getPhysicalNumberOfRows();i++) {
@@ -205,7 +209,7 @@ public class MyLIMSZooImporterNodeModel extends NodeModel {
 			}
 		} catch (Exception e) {
 		}
-		return result;
+		return result == null ? null : result.trim();
 	}
 
     /**
