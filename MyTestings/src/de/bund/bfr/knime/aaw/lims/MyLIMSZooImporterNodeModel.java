@@ -132,7 +132,7 @@ public class MyLIMSZooImporterNodeModel extends NodeModel {
 			}
 			this.pushFlowVariableString("EMail", email);
 
-        	for (;i<sheet.getPhysicalNumberOfRows();i++) {
+        	for (;i<=sheet.getPhysicalNumberOfRows();i++) {
         		row = sheet.getRow(i);
         		if (row != null) {
     				DataCell[] cells = specNotDefined?null:new DataCell[columns.size()];
