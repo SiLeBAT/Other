@@ -176,7 +176,7 @@ public class EinsendeValidator extends HttpServlet {
 						String filePath = uploadPath + File.separator + fileName;
 						storeFile = new File(filePath);
 
-						String ext = getFileExtension(fileName);
+						String ext = getFileExtension(fileName).toLowerCase();
 						if (!ext.equals("xls") && !ext.equals("xlsx")) {
 							message = "The submitted file '" + fileName + "' has no correct file extension.";
 							break;
