@@ -79,11 +79,13 @@ public class Tester {
     // Get Items
     //System.out.println(service.path("rest").path("items").request().accept(MediaType.TEXT_XML).get(String.class));
 
-    // Get XML for application
+    /*
+    // Get XML for application   
     for (int i=0;i<100;i++) {
         System.out.println(i + "\t" + service.path("rest").path("items").request().accept(MediaType.APPLICATION_XML).get(String.class));  
         Thread.sleep(5000);
     }
+    */
     /*
     // Get Fälle for application
     System.out.println(service.path("rest").path("items").path("faelle").request().accept(MediaType.TEXT_PLAIN).get(String.class));
@@ -104,6 +106,9 @@ public class Tester {
     //InputStream stream = service.path("rest").path("items").path("1482191578314").path("file").request().accept(MediaType.APPLICATION_OCTET_STREAM).get(InputStream.class); System.out.println(stream.available());
     
     //Upload a ItemLoader
+    
+    upload(usr, pwd, "/Users/arminweiser/Downloads/KontrollpunktmeldungUebermitteln_1300.xml", "kommentar_gs1");
+    //upload(usr, pwd, "/Users/arminweiser/Downloads/kontrollpunktmeldungKwetters.xml", "kommentar_gs1");
     //upload(usr, pwd, "/Users/arminweiser/Downloads/null15.txt", "kommentar_gs1");
     //upload(usr, pwd, "/Users/arminweiser/Desktop/xml_test/bbk/bbk1.xml", "kommentar_gs1");
     //upload(usr, pwd, "/Users/arminweiser/Desktop/xml_test/Anleitung_pmmlab.txt", "kommentar_gs2");
@@ -116,8 +121,8 @@ public class Tester {
   }
 
   private static URI getBaseURI() {
-	    return UriBuilder.fromUri("http://localhost:8080/de.bund.bfr.busstopp").build();
-	    //return UriBuilder.fromUri("https://foodrisklabs.bfr.bund.de/de.bund.bfr.busstopp/").build();
+	    //return UriBuilder.fromUri("http://localhost:8080/de.bund.bfr.busstopp").build();
+	    return UriBuilder.fromUri("https://foodrisklabs.bfr.bund.de/de.bund.bfr.busstopp/").build();
 	    //return UriBuilder.fromUri("https://foodrisklabs.bfr.berlin/de.bund.bfr.busstopp/").build();
 	    //return UriBuilder.fromUri("https://localhost:8443/de.bund.bfr.busstopp/").build();
   }
@@ -134,7 +139,7 @@ public class Tester {
       Client client = ClientBuilder.newBuilder().sslContext(sslContext).build();
       //client.register(HttpAuthenticationFeature.digest(usr, pwd));
 
-      WebTarget service = client.target(APP_URL); // APP_URL
+      WebTarget service = client.target(APP_URL); // APP_URL 
       System.out.println(service.request().get());
       
       System.out.println(service.path("rest").path("items").request().accept(MediaType.TEXT_XML).get(String.class));

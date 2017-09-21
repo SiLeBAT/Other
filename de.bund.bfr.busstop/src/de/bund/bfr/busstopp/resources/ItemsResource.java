@@ -236,10 +236,12 @@ public class ItemsResource {
 			@FormDataParam("comment") String comment,
 			@QueryParam("environment") String environment) {
 
+		System.out.println("upload start");
 		ResponseX response = new ResponseX();
 		Status status = Response.Status.OK;
 		response.setAction("UPLOAD");
 		String un = securityContext.getUserPrincipal().getName();
+		System.out.println(un);
 		if (!un.equals("prod_bfr2lanuv")) {
 			try {
 				if (contentDispositionHeader != null) {
@@ -248,6 +250,7 @@ public class ItemsResource {
 					if (environment == null || !securityContext.isUserInRole("bfr")) environment = getRole();
 					long newId = System.currentTimeMillis();
 					ItemLoader item = new ItemLoader(newId, filename, comment, environment);
+					System.out.println(fileInputStream == null ? "fileInputStream ist null" : fileInputStream.available());
 					String filePath = item.save(fileInputStream);
 					Map<Long, ItemLoader> map = Dao.instance.getModel(environment);
 					if (map == null) {
