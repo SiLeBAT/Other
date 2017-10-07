@@ -163,34 +163,43 @@ public class KREST {
 	}
 
 	public boolean executeJob(String jobid, Map<String, Object> inputs) throws IOException {
+		FileDataBodyPart filePart = null;
 		FormDataMultiPart formDataMultiPart = new FormDataMultiPart();
-		MultiPart multipartEntity = formDataMultiPart;
 		if (inputs != null) {
 			for (String param : inputs.keySet()) {
 				Object o = inputs.get(param);
 				if (o instanceof File) {
 					File f = (File) o;
-					FileDataBodyPart filePart = new FileDataBodyPart("file", f);
+					filePart = new FileDataBodyPart("file", f);
 					filePart.setContentDisposition(FormDataContentDisposition.name(param).fileName(f.getName()).build()); // "file-upload-1"
-					multipartEntity = formDataMultiPart.bodyPart(filePart);
 				} else {
-					multipartEntity = formDataMultiPart.field(param, inputs.get(param), MediaType.APPLICATION_JSON_TYPE); // "line-count-3"
-																															// "{\"integer\":2}"
+					if (o instanceof String) {
+						formDataMultiPart = formDataMultiPart.field(param, o, MediaType.APPLICATION_JSON_TYPE); // "line-count-3"		
+						//System.err.println(o);
+					}
+					else if (o instanceof Integer) {
+						//formDataMultiPart = formDataMultiPart.field(param, Integer.toString((int) o));																													// "{\"integer\":2}"
+					}// "{\"integer\":2}"
+					else {
+						//formDataMultiPart = formDataMultiPart.field(param, (String) o);																													// "{\"integer\":2}"
+					}// "{\"integer\":2}"
 				}
 			}
 		}
+		if (filePart != null) formDataMultiPart.bodyPart(filePart);
+
+		formDataMultiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
 
 		System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2");
 		Builder builder = client.target(restResource).path("jobs").path(jobid).request().accept(MediaType.APPLICATION_JSON);
-		Response res = builder.cacheControl(cc).post(Entity.entity(multipartEntity, MediaType.MULTIPART_FORM_DATA));
-
+		Response res = builder.cacheControl(cc).post(Entity.entity(formDataMultiPart, MediaType.MULTIPART_FORM_DATA));
+		
 		boolean result = res.getStatus() == 200;
 		// System.err.println(res.readEntity(String.class));
 		//System.out.println(jobid + " - " + res);
 
 		res.close();
 		formDataMultiPart.close();
-		multipartEntity.close();
 
 		return result;
 	}

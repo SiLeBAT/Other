@@ -107,6 +107,7 @@ public class EinsendeValidator extends HttpServlet {
 		Map<String, Object> inputs = new HashMap<>();
 		File uploadDir = null;
 		boolean isJson = false;
+		Integer isBfR = 0;
 
 		if (krest == null) krest = new KREST(username, password);
 		String jobid = null;
@@ -121,7 +122,7 @@ public class EinsendeValidator extends HttpServlet {
 					while ((line = reader.readLine()) != null)
 						jb.append(line);
 				} catch (Exception ex) {
-					message = "There was an error: " + ex.getMessage();
+					message += "<br>There was an error: " + ex.getMessage();
 					StringWriter sw = new StringWriter();
 					ex.printStackTrace(new PrintWriter(sw));
 					message += sw.toString();
@@ -135,11 +136,12 @@ public class EinsendeValidator extends HttpServlet {
 					message = "Error parsing JSON request string";
 				}
 
-				inputs.put("json-input-1147", sObj);
+				inputs.put("json-input-1410", sObj);
+				inputs.put("int-input-1558", isBfR);
 				jobid = getFreeJobID(jobidJson);
 				isJson = true;
 			} else if (!ServletFileUpload.isMultipartContent(request)) {
-				message = "Request does not contain upload data";
+				message = "<br>Request does not contain upload data";
 			} else {
 				// configures upload settings
 				DiskFileItemFactory factory = new DiskFileItemFactory();
@@ -170,7 +172,7 @@ public class EinsendeValidator extends HttpServlet {
 					if (!item.isFormField()) {
 						String fileName = new File(item.getName()).getName();
 						if (fileName.trim().length() == 0) {
-							message = "No file to validate!";
+							message = "<br>No file to validate!";
 							break;
 						}
 						String filePath = uploadPath + File.separator + fileName;
@@ -178,7 +180,7 @@ public class EinsendeValidator extends HttpServlet {
 
 						String ext = getFileExtension(fileName).toLowerCase();
 						if (!ext.equals("xls") && !ext.equals("xlsx")) {
-							message = "The submitted file '" + fileName + "' has no correct file extension.";
+							message = "<br>The submitted file '" + fileName + "' has no correct file extension.";
 							break;
 						}
 
@@ -186,7 +188,7 @@ public class EinsendeValidator extends HttpServlet {
 						item.write(storeFile);
 
 						if (storeFile == null || !storeFile.exists() || !storeFile.isFile()) {
-							message = "There is an unknown problem with the submitted file '" + fileName
+							message = "<br>There is an unknown problem with the submitted file '" + fileName
 									+ "'<BR>Please write an email to foodrisklabs@bfr.bund.de with your submitted file.";
 							break;
 						}
@@ -197,21 +199,25 @@ public class EinsendeValidator extends HttpServlet {
 						if (item.getFieldName().equals("workflowname")) {
 							sWorkflowPath = item.getString();
 						}
+						else if (item.getFieldName().equals("isBfR")) {
+							isBfR = item.getString() == null ? 0 : 1;
+						}
 					}
 				}
 
 				// go on and do!
 				if (storeFile != null && storeFile.exists()) {
 					inputs.put("file-upload-210", storeFile);
+					inputs.put("int-input-1558", isBfR);
 					jobid = getFreeJobID(jobidXls);
 				}
 			}
 
-			if (jobid == null) message = "There is an unknown problem with the submitted file<BR>Please write an email to foodrisklabs@bfr.bund.de with your submitted file.";
+			if (jobid == null) message = "<br>There is an unknown problem with the submitted file -> job<BR>Please write an email to foodrisklabs@bfr.bund.de with your submitted file.";
 			else message = sendAndGet(inputs, jobid, isJson);
 			
 		} catch (Exception ex) {
-			message = "There was an error: " + ex.getMessage();
+			message = "<br>There was an error: " + ex.getMessage();
 			StringWriter sw = new StringWriter();
 			ex.printStackTrace(new PrintWriter(sw));
 			message += sw.toString();

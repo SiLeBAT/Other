@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.json.JsonArray;
+import javax.json.JsonNumber;
 import javax.json.JsonObject;
 import javax.json.JsonValue;
 
@@ -69,7 +70,11 @@ public class MyJSON2TableNodeModel extends NodeModel {
             			newCol++;
             		}
             		if (obji.get(key) == JsonValue.NULL) rowmap.put(key, null);
-            		else rowmap.put(key, obji.getString(key));
+            		else {
+            			Object o = obji.get(key);
+            			if (o instanceof JsonNumber) rowmap.put(key, o.toString());
+            			else rowmap.put(key, obji.getString(key));
+            		}
             	}
            		map.put(i, rowmap);
             }

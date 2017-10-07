@@ -6,6 +6,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>Einsendebogen Portal</title>
 <script src="js/dropzone.js"></script>
+
 <link rel="stylesheet" href="css/mydropzone.css">
 <link rel="stylesheet" href="css/handsontable.css">
 <link rel="stylesheet" href="js/pikaday/pikaday.css">
@@ -32,6 +33,7 @@
 	<script>
 		// myDropzone is the configuration for the element that has an id attribute
 		// with the value my-dropzone (or myDropzone)
+		
 		Dropzone.options.myDropzone = {
 			createImageThumbnails : false,
 			acceptedFiles : ".xls,.xlsx",
@@ -212,7 +214,6 @@
 						+ ("" + (new Date().getTime() / 1000)).substring(6));
 			}
 		}
-		
 		function getJson(str) {
 		    try {
 		        return JSON.parse(str);
@@ -384,33 +385,34 @@
 
 
 	<section>
-	<div id="dropzone">
-		<form method="post" action="result" enctype="multipart/form-data"
-			class="dropzone needsclick" id="my-dropzone" style="height: 800px;">
-			
-			<input type="text" name="workflowname" id="wfn" style="width: 400px;"
-				value="testing/Alex_testing/Proben-Einsendung_Web21" /> <!-- testing/Hartung_Weba -->
+		<div id="dropzone">
+			<form method="post" action="result" enctype="multipart/form-data"
+				class="dropzone needsclick" id="my-dropzone" style="height: 800px;">
 				
-			<script>
-			  if ($_GET('wfo') == 1) {
-				  document.getElementById('wfn').type = 'text';
-			  }
-			  else {
-				  document.getElementById('wfn').type = 'hidden';
-			  }
-			</script>
-			  
-			<div class="dz-message needsclick">
-				Wähle deinen Einsendebogen oder ziehe ihn hierauf<br />
-			</div>
-
-		</form>
-	</div>
+				<input type="text" name="workflowname" id="wfn" style="width: 400px;"
+					value="EpiLab/MiBi-Portal_vt14_02" /> <!-- testing/Hartung_Weba -->
+				<input type="hidden" name="isBfR" id="isBfR" value="0" />
+					
+				<script>
+				  if ($_GET('wfo') == 1) {
+					  document.getElementById('wfn').type = 'text';
+				  }
+				  else {
+					  document.getElementById('wfn').type = 'hidden';
+				  }
+				</script>
+				  
+				<div class="dz-message needsclick">
+					Wähle deinen Einsendebogen oder ziehe ihn hierauf<br />
+				</div>
+	
+			</form>
+		</div>
 	</section>
 
 	<section>
-	<div id="errmsg"></div>
-	<div id="hot"></div>
+		<div id="errmsg"></div>
+		<div id="hot"></div>
 	</section>
 
 	<script>

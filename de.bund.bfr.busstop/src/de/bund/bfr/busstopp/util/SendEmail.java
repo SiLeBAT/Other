@@ -13,7 +13,7 @@ public class SendEmail {
 
    public void doSend(String fqdn, String messageText, String filePath) {    
       // Recipient's email ID needs to be mentioned.
-      String to = "armin.weiser@bfr.bund.de";
+      String to = "foodrisklabs@bfr.bund.de";
       
       // Sender's email ID needs to be mentioned
       String from = "busstop@" + (fqdn != null ? fqdn : "foodrisklabs.bfr.berlin"); // "busstop@foodrisklabs.bfr.bund.de";
