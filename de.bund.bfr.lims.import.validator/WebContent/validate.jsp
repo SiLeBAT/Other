@@ -390,7 +390,7 @@
 				class="dropzone needsclick" id="my-dropzone" style="height: 800px;">
 				
 				<input type="text" name="workflowname" id="wfn" style="width: 400px;"
-					value="EpiLab/MiBi-Portal_v14_03" /> <!-- testing/Hartung_Weba -->
+					value="EpiLab/MiBi-Portal_v14_04" /> <!-- testing/Hartung_Weba -->
 				<input type="hidden" name="isBfR" id="isBfR" value="0" />
 					
 				<script>
