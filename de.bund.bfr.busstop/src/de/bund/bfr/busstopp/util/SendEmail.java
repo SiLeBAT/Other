@@ -54,7 +54,7 @@ public class SendEmail {
 
          // Set text message part
          multipart.addBodyPart(messageBodyPart);
-
+/*
          // Part two is attachment
          File f = new File(filePath);
          messageBodyPart = new MimeBodyPart();
@@ -62,7 +62,7 @@ public class SendEmail {
          messageBodyPart.setDataHandler(new DataHandler(source));
          messageBodyPart.setFileName(f.getName());
          multipart.addBodyPart(messageBodyPart);
-
+*/
          // Send the complete message parts
          message.setContent(multipart );
          // Now set the actual message
