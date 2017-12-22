@@ -275,7 +275,8 @@ public class ItemsResource {
 					//isValid = true;
 					response.setSuccess(isValid);
 					response.setId(newId);
-														
+									
+					String fn = "?";
 					if (!isValid) {
 						status = Response.Status.PRECONDITION_FAILED;
 						response.setError("'" + filename + "' couldn't be validated!");
@@ -285,10 +286,13 @@ public class ItemsResource {
 						}
 						if (map != null) map.remove(newId);
 					}
+					else {
+						fn = getFallnummer(filePath, "kontrollpunktmeldung");
+					}
 					
 					String fqdn = null;
 				    if (uriInfo != null && uriInfo.getBaseUri() != null) fqdn = uriInfo.getBaseUri().getHost();
-					new SendEmail().doSend(fqdn, "'" + un + "' aus dem Environment '" + environment + "' hat die Datei '" + filename + "' mit id '" + newId + "' hochgeladen: Valide -> " + isValid, filePath);
+					new SendEmail().doSend(fqdn, "'" + un + "' aus dem Environment '" + environment + "' hat die Datei '" + filename + "' mit id '" + newId + "' und Fallnummer '" + fn + "' hochgeladen: Valide -> " + isValid, filePath);
 				}
 				else {
 					response.setSuccess(false);
