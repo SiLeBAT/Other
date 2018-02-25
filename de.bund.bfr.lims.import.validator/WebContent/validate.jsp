@@ -77,8 +77,8 @@
 					+ ("" + (new Date().getTime() / 1000)).substring(6));
 			var origdata = json.origdata;
 			var errors = json.errors;
-			console.log(errors);
-			console.log(origdata);
+			//console.log(errors);
+			//console.log(origdata);
 			//hot.loadData(data.data);
 
 			var showTable = true;
@@ -381,48 +381,7 @@
 					return vars;
 				}
 			 
-			 function handleFileSelect()
-			  {               
-			    if (!window.File || !window.FileReader || !window.FileList || !window.Blob) {
-			      alert('The File APIs are not fully supported in this browser.');
-			      return;
-			    }   
-
-			    input = document.getElementById('fileinput');
-			    if (!input) {
-			      alert("Um, couldn't find the fileinput element.");
-			    }
-			    else if (!input.files) {
-			      alert("This browser doesn't seem to support the `files` property of file inputs.");
-			    }
-			    else if (!input.files[0]) {
-			      alert("Please select a file before clicking 'Load'");               
-			    }
-			    else {
-			      file = input.files[0];
-			      fr = new FileReader();
-			      fr.onload = function(e) { 
-				      var jsonText = e.target.result;
-				      console.log(jsonText);
-				      var jsonO = getJson(jsonText);
-						if (jsonO) {
-							var mydiv = document.getElementById("dropzone");
-							mydiv.style.visibility = "";
-							mydiv.style.display = "none";
-							
-							fillHOT(jsonO);						
-						}	
-						else {
-							alert('W');
-						}
-			      }
-			      jsonText = fr.readAsText(file);
-					
-				}
-
-			  }
-			 
-			 </script>
+	</script>
 
 
 	<section>
@@ -434,9 +393,6 @@
 					value="EpiLab/MiBi-Portal_v14_05" /> <!-- testing/Hartung_Weba -->
 				<input type="hidden" name="isBfR" id="isBfR" value="0" />
 					
-				<input type="file" style="width:200px"  id="fileinput">
-				<input type='button' id='btnLoad' value='Load' onclick='handleFileSelect();'>
-				
 				<script>
 				  if ($_GET('wfo') == 1) {
 					  document.getElementById('wfn').type = 'text';

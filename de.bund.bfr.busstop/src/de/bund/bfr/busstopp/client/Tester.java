@@ -77,7 +77,7 @@ public class Tester {
     //((Builder) service).header(HttpHeaders.USER_AGENT, "application/json");
     
     // Get Items
-    //System.out.println(service.path("rest").path("items").request().accept(MediaType.TEXT_XML).get(String.class));
+    System.out.println(service.path("rest").path("items").request().accept(MediaType.TEXT_XML).get(String.class));
 
     /*
     // Get XML for application   
@@ -107,9 +107,9 @@ public class Tester {
     
     //Upload a ItemLoader
     
-    upload(usr, pwd, "/Users/arminweiser/Downloads/KontrollpunktmeldungUebermitteln_1300.xml", "kommentar_gs1");
+    //upload(usr, pwd, "/Users/arminweiser/Downloads/KontrollpunktmeldungUebermitteln_1300.xml", "kommentar_gs1");
     //upload(usr, pwd, "/Users/arminweiser/Downloads/kontrollpunktmeldungKwetters.xml", "kommentar_gs1");
-    //upload(usr, pwd, "/Users/arminweiser/Downloads/null15.txt", "kommentar_gs1");
+    upload(usr, pwd, "/Users/arminweiser/Downloads/null15.txt", "kommentar_gs1");
     //upload(usr, pwd, "/Users/arminweiser/Desktop/xml_test/bbk/bbk1.xml", "kommentar_gs1");
     //upload(usr, pwd, "/Users/arminweiser/Desktop/xml_test/Anleitung_pmmlab.txt", "kommentar_gs2");
     //upload(usr, pwd, "C:/Users/weiser/Downloads/null1.txt", "kommentar_gs1");
@@ -122,8 +122,8 @@ public class Tester {
 
   private static URI getBaseURI() {
 	    //return UriBuilder.fromUri("http://localhost:8080/de.bund.bfr.busstopp").build();
-	    return UriBuilder.fromUri("https://foodrisklabs.bfr.bund.de/de.bund.bfr.busstopp/").build();
-	    //return UriBuilder.fromUri("https://foodrisklabs.bfr.berlin/de.bund.bfr.busstopp/").build();
+	    //return UriBuilder.fromUri("https://foodrisklabs.bfr.bund.de/de.bund.bfr.busstopp/").build();
+	    return UriBuilder.fromUri("https://foodrisklabs.bfr.berlin/de.bund.bfr.busstopp/").build();
 	    //return UriBuilder.fromUri("https://localhost:8443/de.bund.bfr.busstopp/").build();
   }
   private static Client getCertClient(String usr, String pwd) throws KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException {
