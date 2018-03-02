@@ -51,7 +51,7 @@
 				for (var i = 0; i < err.length; i++) {
 					var msg = err[i].message; 					
 					var level = err[i].level; 
-					console.log(prop + ' -> ' + level + ' -> ' + msg);
+					//console.log(prop + ' -> ' + level + ' -> ' + msg);
                     if (level == 1) {
                         if (!warns) warns = "<li>" + msg + "</li>";
                         else warns += "<li>" + msg + "</li>";
@@ -156,6 +156,7 @@
 		function fillHOT() {
 			console.log("fhot_start: "
 					+ ("" + (new Date().getTime() / 1000)).substring(6));
+		      //console.log(jsondata);
 			//var data = jsondata.data;
 			//var errors = jsondata.errors;
 			var data = jsonPath(jsondata, "$..data");
@@ -191,6 +192,7 @@
 			
 		}
 		function getJson(str) {
+			//console.log(str);
 		    try {
 		        return JSON.parse(str);
 		    } catch (e) {
@@ -222,7 +224,6 @@
 			      fr.onload = function(e) { 
 				      var jsonText = e.target.result;
 				      //console.log(jsonText);
-				      jsondata = getJson(jsonText);
 						if (jsondata) {
 							fillHOT();						
 						}	
@@ -286,8 +287,8 @@
 				       xhr.setRequestHeader("Content-type", "application/json");
 				       xhr.onreadystatechange = function () {
 				           if (xhr.readyState === 4 && xhr.status === 200) {
-				               var jsondata = getJson(xhr.responseText);
-				               console.log(jsondata);
+				               jsondata = getJson(xhr.responseText);
+				               //console.log(jsondata);
 									if (jsondata) {
 										fillHOT();						
 									}	
@@ -311,9 +312,6 @@
 
 
 	<section>
-				<input type="file" style="width:200px"  id="fileinput">
-				<input type='button' id='btnLoad' value='Load' onclick='handleFileSelect();'>
-				
 				<input type="file" id="my_file_input" />
 		<div id="errmsg"></div>
 		<div id="hot"></div>
