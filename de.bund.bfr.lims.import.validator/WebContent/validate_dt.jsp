@@ -29,6 +29,8 @@
 
 <script type="text/javascript" src="js/jsonpath.js"></script>
 
+<script lang="javascript" src="js/xlsx.full.min.js"></script>
+
 </head>
 <body>
 
@@ -234,6 +236,76 @@
 
 			  }
 			 
+			 var oFileIn;
+
+			 $(function() {
+			     oFileIn = document.getElementById('my_file_input');
+			     if(oFileIn.addEventListener) {
+			         oFileIn.addEventListener('change', filePicked, false);
+			     }
+			 });
+
+
+			 function filePicked(oEvent) {
+			     // Get The File From The Input
+			     var oFile = oEvent.target.files[0];
+			     var sFilename = oFile.name;
+			     // Create A File Reader HTML5
+			     var reader = new FileReader();
+			     
+			     // Ready The Event For When A File Gets Selected
+			     reader.onload = function(e) {
+			         var data = e.target.result;
+				       var workbook = XLSX.read(data, {
+					         type: 'binary'
+					       });	
+				       var sheet = workbook.Sheets['Einsendeformular'];
+				       var json_object = XLSX.utils.sheet_to_json(sheet, {blankrows:false, range:41, defval:"", header:["sample_id","sample_id_avv","pathogen_adv","pathogen_text","sampling_date","isolation_date","sampling_location_adv","sampling_location_zip","sampling_location_text","matrix_adv","topic_adv","matrix_text","process_state","sampling_reason_adv","sampling_reason_text","operations_mode_adv","operations_mode_text","vvvo","comment"]});
+				       for (var i=0;i<json_object.length;i++) {
+				    	   var j = 0;
+				    	   var len = Object.keys(json_object[i]).length;
+				    	   	for (var key in json_object[i]) {
+				    	   		if (json_object[i][key]) break;
+				    	   		j++;
+				    	   	}
+				    	   	//console.log(j);
+				    	   	if (j == len) {
+				    	   		//console.log(i);
+				    	   		json_object.splice(i,1)
+				    	   		i--;
+				    	   	}
+				       }
+				       //console.log(json_object);
+				       //console.log(JSON.stringify(json_object))
+				       var data = JSON.stringify(json_object);
+				    // Sending and receiving data in JSON format using POST method
+				       //
+				       var xhr = new XMLHttpRequest();
+				       var url = "https://epilab.bfr.berlin/api/v1/upload";
+				       xhr.open("POST", url, true);
+				       xhr.setRequestHeader("Content-type", "application/json");
+				       xhr.onreadystatechange = function () {
+				           if (xhr.readyState === 4 && xhr.status === 200) {
+				               var jsondata = getJson(xhr.responseText);
+				               console.log(jsondata);
+									if (jsondata) {
+										fillHOT();						
+									}	
+									else {
+										alert('W');
+									}
+				           }
+				       };
+				       xhr.send(data);				       
+			     };
+			     
+
+			     reader.onerror = function(ex) {
+			       console.log(ex);
+			     };
+
+			     reader.readAsBinaryString(oFile);
+			 }
 			 </script>
 
 
@@ -241,6 +313,8 @@
 	<section>
 				<input type="file" style="width:200px"  id="fileinput">
 				<input type='button' id='btnLoad' value='Load' onclick='handleFileSelect();'>
+				
+				<input type="file" id="my_file_input" />
 		<div id="errmsg"></div>
 		<div id="hot"></div>
 	</section>
