@@ -200,43 +200,6 @@
 		    }
 		}
 		
-			 
-			 function handleFileSelect()
-			  {               
-			    if (!window.File || !window.FileReader || !window.FileList || !window.Blob) {
-			      alert('The File APIs are not fully supported in this browser.');
-			      return;
-			    }   
-
-			    input = document.getElementById('fileinput');
-			    if (!input) {
-			      alert("Um, couldn't find the fileinput element.");
-			    }
-			    else if (!input.files) {
-			      alert("This browser doesn't seem to support the `files` property of file inputs.");
-			    }
-			    else if (!input.files[0]) {
-			      alert("Please select a file before clicking 'Load'");               
-			    }
-			    else {
-			      file = input.files[0];
-			      fr = new FileReader();
-			      fr.onload = function(e) { 
-				      var jsonText = e.target.result;
-				      //console.log(jsonText);
-						if (jsondata) {
-							fillHOT();						
-						}	
-						else {
-							alert('W');
-						}
-			      }
-			      jsonText = fr.readAsText(file);
-					
-				}
-
-			  }
-			 
 			 var oFileIn;
 
 			 $(function() {
@@ -258,10 +221,10 @@
 			     reader.onload = function(e) {
 			         var data = e.target.result;
 				       var workbook = XLSX.read(data, {
-					         type: 'binary'
+					         type: 'binary',cellDates:true, cellText:false
 					       });	
 				       var sheet = workbook.Sheets['Einsendeformular'];
-				       var json_object = XLSX.utils.sheet_to_json(sheet, {blankrows:false, range:41, defval:"", header:["sample_id","sample_id_avv","pathogen_adv","pathogen_text","sampling_date","isolation_date","sampling_location_adv","sampling_location_zip","sampling_location_text","matrix_adv","topic_adv","matrix_text","process_state","sampling_reason_adv","sampling_reason_text","operations_mode_adv","operations_mode_text","vvvo","comment"]});
+				       var json_object = XLSX.utils.sheet_to_json(sheet, {dateNF:'dd"."mm"."yyyy', blankrows:false, range:41, defval:"", header:["sample_id","sample_id_avv","pathogen_adv","pathogen_text","sampling_date","isolation_date","sampling_location_adv","sampling_location_zip","sampling_location_text","matrix_adv","topic_adv","matrix_text","process_state","sampling_reason_adv","sampling_reason_text","operations_mode_adv","operations_mode_text","vvvo","comment"]});
 				       for (var i=0;i<json_object.length;i++) {
 				    	   var j = 0;
 				    	   var len = Object.keys(json_object[i]).length;
