@@ -224,7 +224,7 @@
 					         type: 'binary',cellDates:true, cellText:false
 					       });	
 				       var sheet = workbook.Sheets['Einsendeformular'];
-				       var json_object = XLSX.utils.sheet_to_json(sheet, {dateNF:'dd"."mm"."yyyy', blankrows:false, range:41, defval:"", header:["sample_id","sample_id_avv","pathogen_adv","pathogen_text","sampling_date","isolation_date","sampling_location_adv","sampling_location_zip","sampling_location_text","topic_adv","matrix_adv","matrix_text","process_state","sampling_reason_adv","sampling_reason_text","operations_mode_adv","operations_mode_text","vvvo","comment"]});
+				       var json_object = XLSX.utils.sheet_to_json(sheet, {dateNF:'dd"."mm"."yyyy', blankrows:false, range:41, defval:"", header:["sample_id","sample_id_avv","pathogen_adv","pathogen_text","sampling_date","isolation_date","sampling_location_adv","sampling_location_zip","sampling_location_text","topic_adv","matrix_adv","matrix_text","process_state_adv","sampling_reason_adv","sampling_reason_text","operations_mode_adv","operations_mode_text","vvvo","comment"]});
 				       for (var i=0;i<json_object.length;i++) {
 				    	   var j = 0;
 				    	   var len = Object.keys(json_object[i]).length;
