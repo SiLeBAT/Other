@@ -31,6 +31,8 @@
 
 <script lang="javascript" src="js/xlsx.full.min.js"></script>
 
+<script type="text/javascript" src="js/xlsx-populate.js"></script>
+
 </head>
 <body>
 
@@ -213,6 +215,8 @@
 			 function filePicked(oEvent) {
 			     // Get The File From The Input
 			     var oFile = oEvent.target.files[0];
+			     manipulateXlsx(oFile);
+			     /*
 			     var sFilename = oFile.name;
 			     // Create A File Reader HTML5
 			     var reader = new FileReader();
@@ -260,16 +264,54 @@
 									}
 				           }
 				       };
-				       xhr.send(data);				       
+				       xhr.send(data);	
+				       
 			     };
 			     
-
 			     reader.onerror = function(ex) {
 			       console.log(ex);
 			     };
 
 			     reader.readAsBinaryString(oFile);
+				     */
 			 }
+			 
+			 function getWorkbook(file) {
+		            //var file = fileInput.files[0];
+		            if (!file) return Promise.reject("You must select a file.");
+		            return XlsxPopulate.fromDataAsync(file);
+			    }			 
+			    function generate(file) {
+			        return getWorkbook(file)
+			            .then(function (workbook) {
+			                workbook.sheet(0).cell("A1").value("This was created in the browser!").style("fontColor", "ff0000");
+			                return workbook.outputAsync();
+			            });
+			    }
+
+			    function manipulateXlsx(file) {
+			    	window.IQc = { entity: 'x', ENTITIES: { x: 'x' } }
+			        return generate(file)
+			            .then(function (blob) {
+			                if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+			                    window.navigator.msSaveOrOpenBlob(blob, "out1.xlsx");
+			                } else {
+			                    var url = window.URL.createObjectURL(blob);
+			                    var a = document.createElement("a");
+			                    document.body.appendChild(a);
+			                    a.href = url;
+			                    a.download = "out2.xlsx";
+			                    a.click();
+			                    window.URL.revokeObjectURL(url);
+			                    document.body.removeChild(a);
+			                }
+			            })
+			            .catch(function (err) {
+			                alert(err.message || err);
+			                throw err;
+			            });
+			    }
+			    
 			 </script>
 
 
