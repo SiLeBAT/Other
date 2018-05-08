@@ -100,16 +100,22 @@ public class MyTab21NodeModel extends NodeModel {
     	String[] cns = dts.getColumnNames();
     	for (DataRow row : inData[2]) {
 			DataCell dc = row.getCell(0);
+			Programm p = null;
 			if (!dc.isMissing()) {
-				Programm p = new Programm(false);
+				p = new Programm(false);
 				p.setName(((StringCell) dc).getStringValue());
-				ps.put(p.getName(), p);
+				//ps.put(p.getName(), p);
 				dc = row.getCell(1); // Tierart
 				if (!dc.isMissing()) p.setTierart(((StringValue) dc).getStringValue());
 				dc = row.getCell(2); // Matrix
-				if (!dc.isMissing()) p.setMatrix(((StringValue) dc).getStringValue());
+				if (!dc.isMissing()) p.addMatrix(((StringValue) dc).getStringValue());
 				dc = row.getCell(3); // Probenahmeort
 				if (!dc.isMissing()) p.setProbenahmeort(((StringValue) dc).getStringValue());
+			}
+			if (p != null && p.getName() != null) {
+				if (!ps.containsKey(p.getName())) ps.put(p.getName(), p);
+				else ps.get(p.getName()).merge(p);
+				System.out.println(ps.get(p.getName()).getMatrices());
 			}
     	}
     	
@@ -171,6 +177,7 @@ try {
 				DataCell dc = row.getCell(dtsci);
 				if (!dc.isMissing()) p.setSerovarName(((StringValue) dc).getStringValue());
     		}
+    		/*
     		dtsci = dts.findColumnIndex("Tierart");
     		if (dtsci >= 0) {
 				DataCell dc = row.getCell(dtsci);
@@ -179,14 +186,14 @@ try {
     		dtsci = dts.findColumnIndex("Matrix");
     		if (dtsci >= 0) {
 				DataCell dc = row.getCell(dtsci);
-				if (!dc.isMissing()) p.setMatrix(((StringValue) dc).getStringValue());
+				if (!dc.isMissing()) p.addMatrix(((StringValue) dc).getStringValue());
     		}
     		dtsci = dts.findColumnIndex("Probenahmeort");
     		if (dtsci >= 0) {
 				DataCell dc = row.getCell(dtsci);
 				if (!dc.isMissing()) p.setProbenahmeort(((StringValue) dc).getStringValue());
     		}
-
+			*/
     		for (int i=0;i<dts.getNumColumns();i++) {
     			DataCell dc = row.getCell(i);
         	    if (!dc.isMissing()) {
@@ -488,7 +495,7 @@ catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();t
     		tab122Row.add("Matrix");
         	for (String pkey : pkeys) {
         		Programm p = ps.get(pkey);
-        		tab122Row.add(p.getMatrix()); tab122Row.add("");
+        		tab122Row.add(String.join("\n", p.getMatrices())); tab122Row.add("");
         		tab122BordersV.add(tab122Row.size()-1);
         	}
     		tab122.add(tab122Row);

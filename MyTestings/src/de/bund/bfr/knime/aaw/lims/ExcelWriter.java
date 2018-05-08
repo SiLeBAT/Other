@@ -14,6 +14,8 @@ import java.util.Set;
 import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFCreationHelper;
 import org.apache.poi.ss.usermodel.Header;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
+import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Footer;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFCell;
@@ -36,6 +38,8 @@ public class ExcelWriter {
 		// Create a blank sheet
 		sheet = workbook.createSheet("default");
 		defaultStyle = workbook.createCellStyle();
+		defaultStyle.setWrapText(true);
+		defaultStyle.setVerticalAlignment(VerticalAlignment.CENTER);
 	}
 
 	public ExcelWriter(LinkedHashSet<List<Object>> data) {
@@ -54,6 +58,7 @@ public class ExcelWriter {
 			int cellnum = 0;
 			for (Object obj : rowData) {
 				XSSFCell cell = row.createCell(cellnum);
+				cell.setCellStyle(defaultStyle);
 				if (obj instanceof String) {
 					String str = (String) obj;
 					int index = str.indexOf('^');
@@ -96,7 +101,6 @@ public class ExcelWriter {
 
 	public void save(String filename) {
 		try {
-			// Write the workbook in file system
 			FileOutputStream out = new FileOutputStream(new File(filename));
 			workbook.write(out);
 			out.close();

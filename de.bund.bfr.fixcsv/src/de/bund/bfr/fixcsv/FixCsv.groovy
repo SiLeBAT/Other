@@ -24,15 +24,20 @@ import java.nio.file.Files
 
 class FixCsv {
 
-	static String FILE_NAME = "G:/Abteilung-4/Antibiotikagabe/vetproof/data/160201/Schwein/nicht-behandelte_Quartale_2016-05-20T11-51-27.csv"
+	//static String FILE_NAME = "G:/Abteilung-4/Antibiotikagabe/vetproof/data/160201/Schwein/nicht-behandelte_Quartale_2016-05-20T11-51-27.csv"
+	static String FILE_NAME = "G:/Abteilung-4/Antibiotikagabe/vetproof/data/170220/Geflügel/Stammdaten_Export_Herdendaten_2017-02-20T14-55-08.csv"
 	static String SEPERATOR = ";"
 
 	static main(args) {
 		def oldFile = new File(FILE_NAME)
 		def newFile = new File(FILE_NAME.take(FILE_NAME.lastIndexOf('.')) + "_fixed.csv")
+		/*
 		def text = oldFile.getText('utf-8').replaceAll(/"[^;"]+"/,
 				{ it.replace("\"","\"\"") }).replaceAll(/[^;"]"[^;"]/,
 				{ it.replace("\"","\"\"") })
+				*/
+		def text = oldFile.getText('utf-8').replaceAll(/(,S-[0-9][0-9][0-9]),([0-9])([^\r]*)/,'$1_$2$3,')
+		text = text.replaceAll(/(,30[0-9][0-9],)(.*?),(.*?)(,30[0-9][0-9],)/,'$1$2,$4')
 
 		newFile.write(text, 'utf-8')		
 	}

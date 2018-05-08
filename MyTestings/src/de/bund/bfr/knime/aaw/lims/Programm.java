@@ -8,7 +8,8 @@ import java.util.List;
 public class Programm {
 
 	private String name;
-	private String serovarName, matrix, tierart, probenahmeort;
+	private String serovarName, tierart, probenahmeort;
+	HashSet<String> matrix;
 	private int numSamples;
 	private HashMap<String, List<Double>> wirkstoffVals;
 	private HashMap<Integer, Integer> numResistentArr;
@@ -27,6 +28,7 @@ public class Programm {
 		maxResi = 0;
 		groupResistanceCount = new HashMap<String, Integer>();
 		numPostive = new HashMap<String, Integer>();
+		matrix = new HashSet<>();
 	}
 
 	public int getNumResistent(int i) {
@@ -52,12 +54,12 @@ public class Programm {
 		this.name = name;
 	}
 
-	public String getMatrix() {
+	public HashSet<String> getMatrices() {
 		return matrix;
 	}
 
-	public void setMatrix(String matrix) {
-		this.matrix = matrix;
+	public void addMatrix(String matrix) {
+		this.matrix.add(matrix);
 	}
 
 	public String getTierart() {
@@ -154,6 +156,8 @@ public class Programm {
 	}
 
 	public void merge(Programm p) {
+		this.matrix.addAll(p.getMatrices());
+		
 		int pnr = p.getGroupResistance().size();
 		if (!numResistentArr.containsKey(pnr))
 			numResistentArr.put(pnr, 1);
