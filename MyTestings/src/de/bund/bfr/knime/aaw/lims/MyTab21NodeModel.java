@@ -61,6 +61,7 @@ public class MyTab21NodeModel extends NodeModel {
 	static final String KRITERIEN_JAHR = "kriterienjahr";
 	static final String PPID = "pruefplanid";
 	static final String ESBL = "esbl";
+	static final String ENTERO = "entero";
 	
     private final SettingsModelString baseFolder = new SettingsModelString(BASE_FOLDER, "C:/Dokumente und Einstellungen/Weiser/Desktop/tawak/");
     private final SettingsModelString erreger = new SettingsModelString(ERREGER, "SA");
@@ -71,6 +72,7 @@ public class MyTab21NodeModel extends NodeModel {
     private final SettingsModelInteger kriterienJahr = new SettingsModelInteger(KRITERIEN_JAHR, 2013);
     private final SettingsModelString pruefPlanId = new SettingsModelString(PPID, "");
     private final SettingsModelInteger esbl = new SettingsModelInteger(ESBL, 0);
+    private final SettingsModelInteger entero = new SettingsModelInteger(ENTERO, 0);
 
     private boolean doAutosize = false;
 	
@@ -675,6 +677,7 @@ catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();t
     	String ser = serovar.getStringValue().replace(":", "_");
     	String agent = erreger.getStringValue();
     	if (esbl.getIntValue() == 1) agent = "ESBL";
+    	else if (entero.getIntValue() == 1) agent = "Entero";
     	String filename = baseFolder + bfrProgramm.getStringValue() + "_" + agent + "_" + jahr.getIntValue();
         if (pruefPlanId.getStringValue() != null && !pruefPlanId.getStringValue().isEmpty()) {
         	filename += "_" + pruefPlanId.getStringValue();
@@ -736,6 +739,7 @@ catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();t
     	kriterienJahr.saveSettingsTo(settings);
     	pruefPlanId.saveSettingsTo(settings);
     	esbl.saveSettingsTo(settings);
+    	entero.saveSettingsTo(settings);
     }
 
     /**
@@ -753,6 +757,7 @@ catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();t
     	kriterienJahr.loadSettingsFrom(settings);
     	if (settings.containsKey(PPID)) pruefPlanId.loadSettingsFrom(settings);
     	if (settings.containsKey(ESBL)) esbl.loadSettingsFrom(settings);
+    	if (settings.containsKey(ENTERO)) entero.loadSettingsFrom(settings);
     }
 
     /**
@@ -770,6 +775,7 @@ catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();t
     	kriterienJahr.validateSettings(settings);
     	if (settings.containsKey(PPID)) pruefPlanId.validateSettings(settings);
     	if (settings.containsKey(ESBL)) esbl.validateSettings(settings);
+    	if (settings.containsKey(ENTERO)) entero.validateSettings(settings);
     }
     
     /**

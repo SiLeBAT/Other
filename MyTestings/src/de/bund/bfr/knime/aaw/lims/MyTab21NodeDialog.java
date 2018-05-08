@@ -24,7 +24,7 @@ public class MyTab21NodeDialog extends DefaultNodeSettingsPane {
 
 	private final DialogComponentFileChooser folderDialog;
 	private final DialogComponentString erregerDialog, bfrProgrammDialog, serovarDialog, blSubFolderDialog, pruefPlanIdDialog;
-	private final DialogComponentNumberEdit jahrDialog, kriterienJahrDialog, esblDialog;
+	private final DialogComponentNumberEdit jahrDialog, kriterienJahrDialog, esblDialog, enteroDialog;
     private final SettingsModelString baseFolder = new SettingsModelString(MyTab21NodeModel.BASE_FOLDER, "C:/Dokumente und Einstellungen/Weiser/Desktop/tawak/");
     private final SettingsModelString blSubFolder = new SettingsModelString(MyTab21NodeModel.BLSUBFOLDER, "");
     private final SettingsModelString erreger = new SettingsModelString(MyTab21NodeModel.ERREGER, "SA");
@@ -34,6 +34,7 @@ public class MyTab21NodeDialog extends DefaultNodeSettingsPane {
     private final SettingsModelInteger kriterienJahr = new SettingsModelInteger(MyTab21NodeModel.KRITERIEN_JAHR, 2013);
     private final SettingsModelString pruefPlanId = new SettingsModelString(MyTab21NodeModel.PPID, "");
     private final SettingsModelInteger esbl = new SettingsModelInteger(MyTab21NodeModel.ESBL, 0);
+    private final SettingsModelInteger entero = new SettingsModelInteger(MyTab21NodeModel.ENTERO, 0);
 
     /**
      * New pane for configuring the MyTab21 node.
@@ -52,6 +53,8 @@ public class MyTab21NodeDialog extends DefaultNodeSettingsPane {
 
     	esblDialog = new DialogComponentNumberEdit(esbl, MyTab21NodeModel.ESBL);
 
+    	enteroDialog = new DialogComponentNumberEdit(entero, MyTab21NodeModel.ENTERO);
+
     	folderDialog.setBorderTitle("Base Folder");   	
     	addDialogComponent(folderDialog);
     	
@@ -63,6 +66,7 @@ public class MyTab21NodeDialog extends DefaultNodeSettingsPane {
     	addDialogComponent(kriterienJahrDialog);
     	addDialogComponent(pruefPlanIdDialog);
     	addDialogComponent(esblDialog);
+    	addDialogComponent(enteroDialog);
     }
 }
 
