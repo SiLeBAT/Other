@@ -61,6 +61,7 @@ public class MyTab21NodeModel extends NodeModel {
 	static final String KRITERIEN_JAHR = "kriterienjahr";
 	static final String PPID = "pruefplanid";
 	static final String ESBL = "esbl";
+	static final String CARBA = "carba";
 	static final String ENTERO = "entero";
 	
     private final SettingsModelString baseFolder = new SettingsModelString(BASE_FOLDER, "C:/Dokumente und Einstellungen/Weiser/Desktop/tawak/");
@@ -72,6 +73,7 @@ public class MyTab21NodeModel extends NodeModel {
     private final SettingsModelInteger kriterienJahr = new SettingsModelInteger(KRITERIEN_JAHR, 2013);
     private final SettingsModelString pruefPlanId = new SettingsModelString(PPID, "");
     private final SettingsModelInteger esbl = new SettingsModelInteger(ESBL, 0);
+    private final SettingsModelInteger carba = new SettingsModelInteger(CARBA, 0);
     private final SettingsModelInteger entero = new SettingsModelInteger(ENTERO, 0);
 
     private boolean doAutosize = false;
@@ -247,7 +249,7 @@ try {
 catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();throw ee;}
 
     	System.err.println("preTab0:\t" + (System.currentTimeMillis()-ttt));
-    	String pfn = getFilename(baseFolder.getStringValue(), "preTab" + (containsStrings ? "_ESBL" : "21"));
+    	String pfn = getFilename(baseFolder.getStringValue(), "preTab" + (containsStrings ? (carba.getIntValue() == 1 ? "_CARBA" : "_ESBL") : "21"));
 
     	ew.setStyle(0, 0, null, null, true, true, false, false, true, null, null); // RowHeader
     	if (doAutosize) ew.autoSizeColumn(5);
@@ -356,7 +358,7 @@ catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();t
     	   			tab3.add(tab3Row);
        			}
        	   		
-       	    	String fn = getFilename(baseFolder.getStringValue(), "ESBL_" + p.getName());
+       	    	String fn = getFilename(baseFolder.getStringValue(), (carba.getIntValue() == 1 ? "CARBA_" : "ESBL_") + p.getName());
        	    	ew = new ExcelWriter(tab3);
        	    	ew.setStyle(0, 0, null, null, true, true, false, false, true, null, null); // RowHeader
        	    	ew.setStyle(null, null, 0, 0, true, false, false, true, false, null, null); // ColumnHeader
@@ -387,7 +389,7 @@ catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();t
 
 	   	   		tab1.add(tab1Row);
         	}
-   	    	String fn = getFilename(baseFolder.getStringValue(), "ESBL_gesamt");
+   	    	String fn = getFilename(baseFolder.getStringValue(), (carba.getIntValue() == 1 ? "CARBA_gesamt" : "ESBL_gesamt"));
    	    	ew = new ExcelWriter(tab1);
    	    	ew.setStyle(0, 0, null, null, true, true, false, false, true, null, null); // RowHeader
    	    	ew.setStyle(null, null, 0, 0, true, false, false, true, false, null, null); // ColumnHeader
@@ -683,7 +685,10 @@ catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();t
     	//baseFolder = "G:/Abteilung-4/43/Forschung/EFSA CFP_EFSA_BIOMO_2011_01/Tauschordner_AK_AW/";
     	String ser = serovar.getStringValue().replace(":", "_");
     	String agent = erreger.getStringValue();
-    	if (esbl.getIntValue() == 1) agent = "ESBL";
+    	if (esbl.getIntValue() == 1) {
+    		if (carba.getIntValue() == 1) agent = "CARBA";
+    		else agent = "ESBL";
+    	}
     	else if (entero.getIntValue() == 1) agent = "Entero";
     	String filename = baseFolder + bfrProgramm.getStringValue() + "_" + agent + "_" + jahr.getIntValue();
         if (pruefPlanId.getStringValue() != null && !pruefPlanId.getStringValue().isEmpty()) {
@@ -746,6 +751,7 @@ catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();t
     	kriterienJahr.saveSettingsTo(settings);
     	pruefPlanId.saveSettingsTo(settings);
     	esbl.saveSettingsTo(settings);
+    	carba.saveSettingsTo(settings);
     	entero.saveSettingsTo(settings);
     }
 
@@ -764,6 +770,7 @@ catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();t
     	kriterienJahr.loadSettingsFrom(settings);
     	if (settings.containsKey(PPID)) pruefPlanId.loadSettingsFrom(settings);
     	if (settings.containsKey(ESBL)) esbl.loadSettingsFrom(settings);
+    	if (settings.containsKey(CARBA)) carba.loadSettingsFrom(settings);
     	if (settings.containsKey(ENTERO)) entero.loadSettingsFrom(settings);
     }
 
@@ -782,6 +789,7 @@ catch (Exception ee) {System.err.println(ee.getMessage());ee.printStackTrace();t
     	kriterienJahr.validateSettings(settings);
     	if (settings.containsKey(PPID)) pruefPlanId.validateSettings(settings);
     	if (settings.containsKey(ESBL)) esbl.validateSettings(settings);
+    	if (settings.containsKey(CARBA)) carba.validateSettings(settings);
     	if (settings.containsKey(ENTERO)) entero.validateSettings(settings);
     }
     
