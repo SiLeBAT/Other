@@ -1,2 +1,4 @@
 .metadata
 bin
+/exportworkflow.jar
+/target/

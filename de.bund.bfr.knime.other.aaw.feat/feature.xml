@@ -27,12 +27,6 @@ Germany
    </requires>
 
    <plugin
-         id="de.bund.bfr.knime.Xsd2Xml"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"/>
-
-   <plugin
          id="de.bund.bfr.knime.aaw"
          download-size="0"
          install-size="0"
@@ -40,6 +34,12 @@ Germany
 
    <plugin
          id="de.bund.bfr.knime.wf"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"/>
+
+   <plugin
+         id="de.bund.bfr.knime.Xsd2Xml"
          download-size="0"
          install-size="0"
          version="0.0.0"/>
